@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Titanium v23.1 | AI DIAGNOSTICS</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
+            authDomain: "nutricion-f6e70.firebaseapp.com",
+            projectId: "nutricion-f6e70",
+            storageBucket: "nutricion-f6e70.firebasestorage.app",
+            messagingSenderId: "926932712073",
+            appId: "1:926932712073:web:d660418820d91ec4ec6458",
+            measurementId: "G-MFB78MVX9S"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.fire = { doc, setDoc, getDoc, collection, getDocs, updateDoc };
+        console.log(">> SYSTEM V23.1 DIAGNOSTICS READY");
+    </script>
+
+    <style>
+        :root {
+            --p: #0f172a; --s: #334155; --a: #2563eb; 
+            --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; 
+            --bg: #f1f5f9; --c: #ffffff; --ok: #10b981; --bad: #ef4444; --warn: #f59e0b;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; }
+        
+        #loading-screen { position: fixed; inset: 0; background: var(--p); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--car); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 20px 20px 60px 20px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .user-pill { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.1); padding: 6px 16px 6px 6px; border-radius: 50px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar { width: 36px; height: 36px; background: var(--car); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid rgba(255,255,255,0.2); }
+        
+        .date-nav { display: flex; align-items: center; gap: 15px; }
+        .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 12px; color: white; cursor: pointer; }
+        
+        .dash { display: grid; grid-template-columns: 120px 1fr; gap: 25px; align-items: center; }
+        .ring { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); display: flex; align-items: center; justify-content: center; position: relative; }
+        .ring-in { width: 100px; height: 100px; background: var(--p); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .macros { display: flex; flex-direction: column; gap: 12px; }
+        .m-row { display: flex; flex-direction: column; gap: 4px; }
+        .m-head { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; }
+        .bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 4px; }
+
+        .bio-alert { margin-top: 20px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.8rem; display: flex; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1); }
+
+        .main { max-width: 800px; margin: -30px auto 0; padding: 0 15px; position: relative; z-index: 10; }
+        .card { background: white; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
+        
+        .c-head { padding: 10px 15px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .c-left { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--s); font-size: 1rem; flex-shrink: 0; }
+        .c-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; flex-grow: 1; }
+        
+        .meal-macros { display: flex; gap: 10px; font-size: 0.8rem; font-weight: 700; font-family: monospace; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-right: 5px; }
+        .mm-item { display: flex; align-items: center; gap: 3px; }
+        .mm-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .kcal-badge { background: var(--p); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.8rem; }
+
+        .tool-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.9rem; }
+        .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tool-btn.copy { color: var(--a); border-color: var(--a); background: #eff6ff; }
+        .tool-btn.move { color: var(--warn); border-color: var(--warn); background: #fffbeb; }
+        .tool-btn.del { color: var(--bad); border-color: var(--bad); background: #fef2f2; }
+        .tool-btn.add { color: var(--ok); border-color: var(--ok); background: #ecfdf5; font-weight: bold; width: auto; padding: 0 12px; }
+
+        .item { padding: 16px 20px; border-bottom: 1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; }
+        .i-info h4 { font-size: 0.95rem; font-weight: 700; color: var(--p); margin-bottom: 4px; }
+        .i-det { font-size: 0.8rem; color: #64748b; display: flex; gap: 12px; font-family: monospace; font-weight: 600; align-items: center; }
+        .i-pill { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--p); font-family: 'Inter', sans-serif; font-weight: 700; }
+        
+        .c-actions { display: flex; gap: 8px; }
+        .act-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .act-btn:hover { border-color: var(--car); color: var(--car); }
+        .act-btn.del:hover { border-color: #ef4444; color: #ef4444; }
+
+        .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+        .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
+        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 10px; }
+        .btn.pri { background: var(--a); color: white; }
+        .btn.sec { background: #f1f5f9; color: var(--p); }
+
+        .modal-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-x { font-size: 2rem; background: none; border: none; color: #94a3b8; cursor: pointer; line-height: 1; }
+
+        /* USUARIOS - ESTRUCTURA BLINDADA */
+        .user-list-grid { display: grid; gap: 10px; }
+        .user-card-wrapper { display: flex; background: white; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; transition: all 0.2s; flex-wrap: nowrap; }
+        .user-card-wrapper:hover { border-color: var(--color-carb); }
+        .user-select-zone { flex: 1; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; min-width: 0; }
+        .user-select-zone:hover { background: #f8fafc; }
+        .user-edit-zone { width: 60px; display: flex; align-items: center; justify-content: center; border-left: 1px solid #f1f5f9; cursor: pointer; background: #f8fafc; flex-shrink: 0; }
+        .user-edit-zone:hover { background: #e2e8f0; color: var(--a); }
+        .user-card-wrapper.active { border-color: var(--color-primary); }
+        .user-card-wrapper.active .user-select-zone { background: #f0f9ff; }
+        .user-card-wrapper.active .user-avatar-small { background: var(--color-primary); }
+
+        .live-box { background: #f0f9ff; padding: 15px; border-radius: 14px; border: 1px solid #bae6fd; margin-bottom: 20px; font-size: 0.9rem; }
+        .live-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .live-row.hl { font-weight: 800; color: var(--a); border-top: 1px dashed #bae6fd; padding-top: 5px; margin-top: 5px; }
+        
+        .food-suggestion { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        .food-suggestion:hover { background: #f8fafc; }
+        .unit-selector { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; font-weight: 700; color: var(--text-dark); cursor: pointer; }
+
+        /* ESTILOS DE AI CONFIGURABLE */
+        .ai-header-btn { 
+            font-size: 0.8rem; background: #f1f5f9; color: #64748b; 
+            border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; 
+            cursor: pointer; font-weight: 700; display:flex; align-items:center; gap:5px; margin-left:10px;
+            transition: all 0.3s;
+        }
+        /* ESTADO VERDE CUANDO ESTA CONFIGURADO */
+        .ai-header-btn.configured {
+            background: #ecfdf5; color: var(--ok); border-color: var(--ok);
+        }
+        
+        .ai-input-area { margin-bottom: 20px; }
+        .ai-textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 14px; font-family: inherit; font-size: 1rem; resize: none; background: #f8fafc; margin-bottom: 10px; }
+        .ai-textarea:focus { border-color: var(--a); background: white; }
+        .ai-actions { display: flex; gap: 10px; align-items: center; }
+        .mic-btn { width: 50px; height: 50px; background: #ef4444; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .mic-btn.listening { animation: pulse 1s infinite; background: #dc2626; }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
+        .password-wrapper { position: relative; }
+        .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
+        
+        .separator { text-align: center; margin: 20px 0; color: #94a3b8; font-size: 0.8rem; position: relative; }
+        .separator::before, .separator::after { content: ''; position: absolute; top: 50%; width: 45%; height: 1px; background: #e2e8f0; }
+        .separator::before { left: 0; } .separator::after { right: 0; }
+        
+        .link-btn { background: none; border: none; color: var(--a); cursor: pointer; text-decoration: underline; font-size: 0.85rem; display: block; margin: 10px auto; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen"><div class="spinner"></div></div>
+
+    <header class="header-wrapper" id="pdf-header">
+        <div class="top-nav-bar">
+            <div class="user-pill" onclick="window.UI.openUsers()">
+                <div class="avatar" id="h-av">?</div>
+                <span id="h-name">Cargando...</span>
+                <i class="fas fa-chevron-down" style="font-size:0.8rem; margin-left:5px"></i>
+            </div>
+            <div class="date-nav">
+                <button class="nav-btn" onclick="window.Logic.day(-1)"><i class="fas fa-arrow-left"></i></button>
+                <div style="text-align:right">
+                    <h2 id="h-day" style="font-size:1rem; font-weight:700">...</h2>
+                    <p id="h-full" style="font-size:0.7rem; opacity:0.7">...</p>
+                </div>
+                <button class="nav-btn" onclick="window.Logic.day(1)"><i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <div class="dash">
+            <div class="ring" id="ring-bg">
+                <div class="ring-in">
+                    <span style="font-size:0.6rem; opacity:0.7">RESTAN</span>
+                    <span id="v-rem" style="font-size:1.8rem; font-weight:800">0</span>
+                </div>
+            </div>
+            <div class="macros">
+                <div class="m-row">
+                    <div class="m-head"><span style="color:var(--pro)">PROTEÍNAS</span><span id="v-p">0/0</span></div>
+                    <div class="bar-bg"><div class="bar-fill" id="b-p" style="background:var(--pro); width:0%"></div></div>
+                </div>
+                <div class="m-row">
+                    <div class="m-head"><span style="color:var(--car)">CARBOHIDRATOS</span><span id="v-c">0/0</span></div>
+                    <div class="bar-bg"><div class="bar-fill" id="b-c" style="background:var(--car); width:0%"></div></div>
+                </div>
+                <div class="m-row">
+                    <div class="m-head"><span style="color:var(--fat)">GRASAS</span><span id="v-f">0/0</span></div>
+                    <div class="bar-bg"><div class="bar-fill" id="b-f" style="background:var(--fat); width:0%"></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="bio-alert" id="bio-txt">...</div>
+    </header>
+
+    <main class="main" id="feed"></main>
+
+    <button class="fab" onclick="document.getElementById('m-glob').style.display='flex'"><i class="fas fa-bolt"></i></button>
+
+    <div class="modal" id="m-users">
+        <div class="sheet">
+            <h3>Perfiles</h3>
+            <div id="u-list" style="margin:20px 0" class="user-list-grid"></div>
+            <button class="btn pri" onclick="window.UI.newProfile()">+ Crear Nuevo</button>
+            <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
+        </div>
+    </div>
+
+    <div class="modal" id="m-prof">
+        <div class="sheet">
+            <h3>Editar Perfil</h3>
+            <div class="live-box">
+                <div class="live-row"><span>TMB:</span><span id="l-tmb">--</span></div>
+                <div class="live-row"><span>IMC:</span><span id="l-imc">--</span></div>
+                <div class="live-row"><span>Peso Ideal:</span><span id="l-ideal">--</span></div>
+                <div class="live-row hl"><span>META:</span><span id="l-goal">--</span></div>
+            </div>
+            
+            <label>Nombre</label><input id="e-name" class="inp">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Altura (cm)</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
+                <div><label>Peso (kg)</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Año Nac.</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
+                <div><label>Género</label>
+                    <select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Actividad</label>
+                    <select id="e-act" class="inp" onchange="window.Calc.live()">
+                        <option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option>
+                    </select>
+                </div>
+                <div><label>Objetivo</label>
+                    <select id="e-mod" class="inp" onchange="window.Calc.live()">
+                        <option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option>
+                    </select>
+                </div>
+            </div>
+            
+            <label style="margin-top:10px; display:block; text-align:center; font-size:0.8rem; font-weight:bold">MACROS (PORCENTAJE %)</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
+                <input id="pp" type="number" class="inp" placeholder="% Prot" oninput="window.Calc.live()">
+                <input id="pc" type="number" class="inp" placeholder="% Carb" oninput="window.Calc.live()">
+                <input id="pf" type="number" class="inp" placeholder="% Gras" oninput="window.Calc.live()">
+            </div>
+            <div id="p-check" style="text-align:center; font-size:0.8rem; margin-bottom:15px; color:#94a3b8">Total: 0%</div>
+            <button class="btn pri" id="btn-save-user" onclick="window.Logic.saveUser()">Guardar Cambios</button>
+            <button class="btn sec" onclick="window.UI.closeAll()">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal" id="m-add">
+        <div class="sheet">
+            <div class="modal-h">
+                <h3 id="add-ti">Añadir</h3>
+                <button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')"><i class="fas fa-cog"></i> Config</button>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+            </div>
+            
+            <div id="v-home">
+                <div class="ai-input-area">
+                    <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos cocidos y un plátano... (Dicta o escribe aquí)"></textarea>
+                    <div class="ai-actions">
+                        <button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
+                        <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">✨ Procesar con IA</button>
+                    </div>
+                </div>
+                
+                <div class="separator">O busca en tu biblioteca</div>
+                
+                <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.Logic.search()">
+                <div id="res-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
+                
+                <button class="link-btn" onclick="window.UI.view('v-json')">Tengo un código JSON</button>
+            </div>
+
+            <div id="v-conf" style="display:none">
+                <h4>Configuración IA</h4>
+                <label style="font-size:0.8rem; color:#64748b">API Key de Gemini</label>
+                <div class="password-wrapper">
+                    <input type="password" id="ai-key" class="inp" placeholder="Pega tu API Key...">
+                    <i class="fas fa-eye eye-icon" onclick="window.AI.toggleEye()"></i>
+                </div>
+                <label style="font-size:0.8rem; color:#64748b">Modelo</label>
+                <input type="text" id="ai-model" class="inp" value="gemini-1.5-flash">
+                <button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+            </div>
+
+            <div id="v-qty" style="display:none">
+                <h4 id="qty-name" style="margin-bottom:10px"></h4>
+                <div style="display:flex; gap:10px">
+                    <input type="number" id="qty-in" class="inp" placeholder="Cantidad">
+                    <select id="unit-in" class="unit-sel">
+                        <option value="g">Gramos (g)</option>
+                        <option value="ml">Mililitros (ml)</option>
+                    </select>
+                </div>
+                <button class="btn pri" onclick="window.Logic.saveItem()">Guardar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+            </div>
+
+            <div id="v-json" style="display:none">
+                <textarea id="json-in" class="inp" style="height:100px; background:#1e293b; color:#0ea5e9; font-family:monospace" placeholder="Pega el JSON aquí..."></textarea>
+                <button class="btn pri" onclick="window.Logic.parse()">Procesar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="m-copy">
+        <div class="sheet">
+            <div class="modal-h">
+                <h3 id="copy-ti">Gestionar</h3>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+            </div>
+            <label>Fecha Destino:</label>
+            <input type="date" id="copy-date" class="inp">
+            <label>Comida Destino:</label>
+            <select id="copy-meal" class="inp">
+                <option value="01_desayuno">Desayuno</option>
+                <option value="02_almuerzo">Almuerzo</option>
+                <option value="03_comida">Comida</option>
+                <option value="04_merienda">Merienda</option>
+                <option value="05_cena">Cena</option>
+            </select>
+            <button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button>
+        </div>
+    </div>
+
+    <div class="modal" id="m-glob">
+        <div class="sheet">
+            <h3>Opciones</h3>
+            <button class="btn sec" onclick="window.Logic.pdf()">PDF Diario</button>
+            <button class="btn sec" onclick="window.Logic.exportJSON()">Backup JSON</button>
+            <button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button>
+            <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
+            authDomain: "nutricion-f6e70.firebaseapp.com",
+            projectId: "nutricion-f6e70",
+            storageBucket: "nutricion-f6e70.firebasestorage.app",
+            messagingSenderId: "926932712073",
+            appId: "1:926932712073:web:d660418820d91ec4ec6458",
+            measurementId: "G-MFB78MVX9S"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const fire = { doc, setDoc, getDoc, collection, getDocs, updateDoc };
+
+        const MEALS = [
+            {k:'01_desayuno', n:'Desayuno', i:'fa-coffee'},
+            {k:'02_almuerzo', n:'Almuerzo', i:'fa-bread-slice'},
+            {k:'03_comida', n:'Comida', i:'fa-utensils'},
+            {k:'04_merienda', n:'Merienda', i:'fa-apple-alt'},
+            {k:'05_cena', n:'Cena', i:'fa-moon'}
+        ];
+
+        let S = { 
+            d: new Date(),
+            uid: localStorage.getItem('tid'),
+            u: null, day: {}, lib: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null,
+            srcMeal: null, copyMode: 'copy' 
+        };
+
+        /* --- DATABASE --- */
+        const DB = {
+            col: (n) => fire.collection(db, n),
+            doc: (p,i) => fire.doc(db, p, i),
+            norm: (u) => ({
+                id: u.id,
+                name: u.name || u.nom || 'Usuario',
+                h: parseFloat(u.height||u.altura||170), w: parseFloat(u.weight||u.peso||70),
+                y: parseInt(u.birthYear||u.nac||1990), g: u.gender||u.gen||'male',
+                act: u.activity||"1.2", mod: u.goalMod||"0",
+                mac: u.customMacros || {p:null, c:null, f:null}
+            }),
+            getUsers: async () => {
+                const snap = await fire.getDocs(DB.col('usuarios'));
+                S.allUsers = snap.docs.map(d => DB.norm(d.data()));
+                return S.allUsers;
+            },
+            getU: async(id) => { const s = await fire.getDoc(DB.doc('usuarios', id)); return s.exists()?s.data():null; },
+            setU: async(u) => await fire.setDoc(DB.doc('usuarios', u.id), u),
+            getDay: async(d) => {
+                const k = d.toISOString().split('T')[0];
+                const s = await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
+                let data = s.exists() ? s.data() : {};
+                MEALS.forEach(m => { if(!data[m.k]) data[m.k] = []; });
+                return data;
+            },
+            getDayLog: async (uid, dateStr) => {
+                const snap = await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dateStr));
+                return snap.exists() ? snap.data() : {};
+            },
+            setDay: async() => {
+                const k = S.d.toISOString().split('T')[0];
+                await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day);
+            },
+            lib: async() => {
+                const s = await fire.getDoc(DB.doc('sistema','biblioteca'));
+                S.lib = s.exists() ? s.data().items : [];
+            },
+            addLib: async(arr) => {
+                arr.forEach(n => {
+                    const ex = S.lib.find(x => x.n === n.n);
+                    if(!ex) S.lib.push(n);
+                });
+                await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+            }
+        };
+
+        /* --- LOGIC --- */
+        const Logic = {
+            day: (n) => { S.d.setDate(S.d.getDate()+n); Sys.sync(); },
+            saveUser: async () => {
+                const n = document.getElementById('e-name').value;
+                if(!n) return alert("Nombre obligatorio");
+                try {
+                    const h=parseFloat(document.getElementById('e-h').value), w=parseFloat(document.getElementById('e-w').value);
+                    const y=parseInt(document.getElementById('e-y').value), g=document.getElementById('e-g').value;
+                    const act=parseFloat(document.getElementById('e-act').value), mod=parseInt(document.getElementById('e-mod').value);
+                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
+                    const goal = Math.round(bmr*act + mod);
+                    
+                    const pp=parseInt(document.getElementById('pp').value)||30;
+                    const pc=parseInt(document.getElementById('pc').value)||50;
+                    const pf=parseInt(document.getElementById('pf').value)||20;
+                    const u = {
+                        id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
+                        customMacros: { p:Math.round((goal*(pp/100))/4), c:Math.round((goal*(pc/100))/4), f:Math.round((goal*(pf/100))/9) }
+                    };
+                    await DB.setU(u); S.allUsers = await DB.getUsers(); await Sys.load(u.id); UI.closeAll();
+                } catch(e) { alert("Error: "+e.message); }
+            },
+            openAdd: (mk) => { 
+                S.tm=mk; S.edit=false; 
+                UI.view('v-home'); // VIEW 1
+                UI.open('m-add'); 
+                if(S.lib.length>0) Logic.search(); 
+                UI.checkAI();
+            },
+            search: () => {
+                const q = document.getElementById('src-in').value.toLowerCase();
+                const b = document.getElementById('res-list'); b.innerHTML='';
+                S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
+                    const d = document.createElement('div'); d.className='item'; d.style.cursor='pointer';
+                    d.innerHTML = `<b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small>`;
+                    d.onclick = () => {
+                        S.item = f; document.getElementById('qty-name').innerText=f.n; document.getElementById('unit-in').value=f.u; document.getElementById('qty-in').value=100; UI.view('v-qty');
+                    };
+                    b.appendChild(d);
+                });
+            },
+            saveItem: async () => {
+                const q = parseFloat(document.getElementById('qty-in').value);
+                const u = document.getElementById('unit-in').value;
+                const base = S.item; 
+                let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
+                if(S.edit) { const f = base.q/100; bk/=f; bp/=f; bc/=f; bf/=f; }
+                const f = q/100;
+                const entry = { n:base.n, q:q, u:u, k:bk*f, p:bp*f, c:bc*f, f:bf*f };
+                if(S.edit) S.day[S.tm][S.eIdx] = entry; else S.day[S.tm].push(entry);
+                await DB.setDay(); UI.closeAll(); Sys.sync();
+            },
+            editItem: (mk, idx) => {
+                S.edit=true; S.tm=mk; S.eIdx=idx; S.item = JSON.parse(JSON.stringify(S.day[mk][idx]));
+                document.getElementById('qty-name').innerText = "Editar: "+S.item.n;
+                document.getElementById('qty-in').value = S.item.q; document.getElementById('unit-in').value = S.item.u;
+                UI.view('v-qty'); UI.open('m-add');
+            },
+            delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
+            wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
+            wipe: async () => { if(confirm("¿RESET DIA?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); UI.closeAll(); } },
+            openCopy: (mk, type) => {
+                S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-ti').innerText=type=='copy'?"Copiar":"Mover";
+                document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; UI.open('m-copy');
+            },
+            execCopy: async () => {
+                const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
+                const tData = (await DB.getDayLog(S.uid, d)) || {};
+                if(!tData[tm]) tData[tm]=[];
+                tData[tm] = tData[tm].concat(JSON.parse(JSON.stringify(S.day[S.srcMeal])));
+                const k = new Date(d).toISOString().split('T')[0];
+                await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), tData);
+                if(S.copyMode=='move') { S.day[S.srcMeal]=[]; await DB.setDay(); }
+                UI.closeAll(); if(k===S.d.toISOString().split('T')[0]) Sys.sync();
+                alert("Hecho");
+            },
+            parse: async () => { 
+                try {
+                    const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const json = JSON.parse(txt);
+                    const arr = Array.isArray(json) ? json : (json.detalles || [json]);
+                    const newItems = [];
+                    arr.forEach(it => {
+                        let q=100, u="g"; 
+                        if(it.cantidad) { q = parseFloat(it.cantidad)||100; if(it.cantidad.includes("ml")) u="ml"; }
+                        const fac = q/100; 
+                        const get = (ks) => { for(let k of ks) if(it[k] || (it.macros&&it.macros[k])) return parseFloat(it[k]||it.macros[k]); return 0; };
+                        const base = { n:it.nombre||it.alimento, q:100, u:u, k:get(['kcal','calorias'])/fac, p:get(['p'])/fac, c:get(['c'])/fac, f:get(['f','fat','g'])/fac };
+                        S.day[S.tm].push({ ...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac });
+                        newItems.push(base);
+                    });
+                    await DB.setDay(); await DB.addLib(newItems); UI.closeAll(); Sys.sync();
+                } catch(e) { alert("JSON Mal"); }
+            },
+            pdf: () => { UI.closeAll(); html2pdf().from(document.body).save(); },
+            exportJSON: () => {
+                const s = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(S.day));
+                const a = document.createElement('a'); a.href=s; a.download=`Backup_${S.u.id}.json`;
+                document.body.appendChild(a); a.click(); a.remove(); UI.closeAll();
+            }
+        };
+
+        /* --- AI MODULE --- */
+        const AI = {
+            saveConfig: () => {
+                localStorage.setItem('titan_ai_key', document.getElementById('ai-key').value);
+                localStorage.setItem('titan_ai_model', document.getElementById('ai-model').value);
+                UI.view('v-home'); UI.checkAI();
+            },
+            toggleEye: () => {
+                const inp = document.getElementById('ai-key');
+                inp.type = inp.type === 'password' ? 'text' : 'password';
+            },
+            listen: () => {
+                if(!('webkitSpeechRecognition' in window)) return alert("Navegador no soporta voz (usa Chrome).");
+                const rec = new window.webkitSpeechRecognition();
+                rec.lang = 'es-ES';
+                const mic = document.querySelector('.mic-btn');
+                mic.classList.add('listening');
+                rec.onresult = (e) => {
+                    const t = e.results[0][0].transcript;
+                    const txt = document.getElementById('ai-text');
+                    txt.value = (txt.value + ' ' + t).trim();
+                    mic.classList.remove('listening');
+                };
+                rec.onerror = () => mic.classList.remove('listening');
+                rec.start();
+            },
+            process: async () => {
+                const text = document.getElementById('ai-text').value;
+                const apiKey = localStorage.getItem('titan_ai_key');
+                const model = localStorage.getItem('titan_ai_model') || 'gemini-1.5-flash';
+                if(!text) return alert("Escribe o dicta algo.");
+                if(!apiKey) return UI.view('v-conf');
+                
+                const btn = document.querySelector('#v-home .btn.pri');
+                const ogText = btn.innerText;
+                btn.innerText = "Pensando...";
+                
+                try {
+                    const prompt = `Actúa como nutricionista. Analiza: "${text}". Devuelve SOLO UN JSON ARRAY (sin markdown): [{"n":"Nombre","q":cantidad_num,"u":"g" o "ml","k":kcal_total,"p":prot_total,"c":carb_total,"f":grasa_total}]. Ejemplo: [{"n":"Huevo","q":60,"u":"g","k":90,"p":7,"c":0.5,"f":6}]`;
+                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                        method: 'POST', headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    
+                    if(!resp.ok) throw new Error(`Error API: ${resp.status} ${resp.statusText}`);
+                    
+                    const data = await resp.json();
+                    if(!data.candidates) throw new Error("La IA no devolvió datos válidos.");
+                    
+                    let raw = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const items = JSON.parse(raw);
+                    
+                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat||0 }));
+                    S.day[S.tm] = S.day[S.tm].concat(mapped);
+                    await DB.setDay();
+                    
+                    const libItems = mapped.map(i => {
+                        const f = i.q/100;
+                        return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f };
+                    });
+                    await DB.addLib(libItems);
+                    
+                    UI.closeAll(); Sys.sync(); document.getElementById('ai-text').value='';
+                } catch(e) { alert(e.message); } 
+                finally { btn.innerText = ogText; }
+            }
+        };
+
+        const UI = {
+            open: (id) => document.getElementById(id).style.display='flex',
+            closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
+            view: (id) => { 
+                ['v-home','v-conf','v-qty','v-json'].forEach(x=>document.getElementById(x).style.display='none'); 
+                document.getElementById(id).style.display='block';
+                if(id === 'v-conf') {
+                    document.getElementById('ai-key').value = localStorage.getItem('titan_ai_key') || '';
+                    document.getElementById('ai-model').value = localStorage.getItem('titan_ai_model') || 'gemini-1.5-flash';
+                }
+            },
+            checkAI: () => {
+                const k = localStorage.getItem('titan_ai_key');
+                const btn = document.getElementById('btn-config-ai');
+                if(k) btn.classList.add('configured'); else btn.classList.remove('configured');
+            },
+            openUsers: async () => {
+                const list = document.getElementById('u-list'); list.innerHTML='...';
+                const users = await DB.getUsers();
+                S.allUsers = users; list.innerHTML='';
+                users.forEach(u => {
+                    const d = document.createElement('div'); d.className = 'user-card-wrapper';
+                    if(S.u && S.u.id === u.id) d.classList.add('active');
+                    let goal=0;
+                    if(u.h && u.w) {
+                        const bmr = (10*u.w)+(6.25*u.h)-(5*(2024-u.y))+(u.g=='male'?5:-161);
+                        goal = Math.round(bmr*u.act + parseInt(u.mod));
+                    }
+                    d.innerHTML = `
+                        <div class="user-select-zone" onclick="window.UI.selUser('${u.id}')">
+                            <div class="avatar">${u.name[0]}</div><div><b>${u.name}</b><br><small>${goal} kcal</small></div>
+                        </div>
+                        <div class="user-edit-zone" onclick="event.stopPropagation(); window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>`;
+                    list.appendChild(d);
+                });
+                UI.open('m-users');
+            },
+            selUser: (id) => { UI.closeAll(); Sys.load(id); },
+            editUser: (id) => {
+                const u = S.allUsers.find(x => x.id === id); if(!u) return;
+                document.getElementById('e-name').value = u.name;
+                document.getElementById('e-h').value = u.h; document.getElementById('e-w').value = u.w;
+                document.getElementById('e-y').value = u.y; document.getElementById('e-g').value = u.g;
+                document.getElementById('e-act').value = u.act; document.getElementById('e-mod').value = u.mod;
+                let pp=30, pc=50, pf=20;
+                if(u.mac.p) {
+                    const bmr = (10*u.w)+(6.25*u.h)-(5*(2024-u.y))+(u.g=='male'?5:-161);
+                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
+                    pp = Math.round((u.mac.p*4/goal)*100); pc = Math.round((u.mac.c*4/goal)*100); pf = Math.round((u.mac.f*9/goal)*100);
+                }
+                document.getElementById('pp').value = pp; document.getElementById('pc').value = pc; document.getElementById('pf').value = pf;
+                Calc.live(); UI.open('m-prof');
+            },
+            newProfile: () => { S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); UI.open('m-prof'); Calc.live(); }
+        };
+
+        const Calc = {
+            bio: () => {
+                const u = S.u; if(!u) return;
+                const h = parseFloat(u.h), w = parseFloat(u.w), y = parseInt(u.y);
+                const age = new Date().getFullYear() - y;
+                let bmr = (10*w) + (6.25*h) - (5*age) + (u.g==='male'?5:-161);
+                let tdee = bmr * parseFloat(u.act);
+                let goal = Math.round(tdee + parseInt(u.mod));
+                u.calc = { goal: goal, burn: Math.round(tdee), tdee: tdee };
+                
+                if(u.mac.p) { u.calc.p = u.mac.p; u.calc.c = u.mac.c; u.calc.f = u.mac.f; } 
+                else { u.calc.p = Math.round(w * 2); u.calc.f = Math.round(w * 0.9); u.calc.c = Math.round((goal - (u.calc.p*4) - (u.calc.f*9))/4); }
+                
+                const el = document.getElementById('h-name');
+                if(el) {
+                    el.innerText = u.name;
+                    document.getElementById('h-av').innerText = u.name[0];
+                    document.getElementById('bio-txt').innerHTML = `<span>🔥 Gasto: ${Math.round(tdee)}</span> | <span>🎯 Meta: <b>${goal} kcal</b></span>`;
+                }
+            },
+            live: () => {
+                const elH = document.getElementById('e-h'); if(!elH) return;
+                const h = parseFloat(elH.value)||0, w = parseFloat(document.getElementById('e-w').value)||0;
+                const y = parseInt(document.getElementById('e-y').value)||2000, g = document.getElementById('e-g').value;
+                const act = parseFloat(document.getElementById('e-act').value), mod = parseInt(document.getElementById('e-mod').value);
+                
+                const pp=parseInt(document.getElementById('pp').value)||0, pc=parseInt(document.getElementById('pc').value)||0, pf=parseInt(document.getElementById('pf').value)||0;
+                const tot=pp+pc+pf;
+                const check = document.getElementById('p-check');
+                if(check) { check.innerText=`Total: ${tot}% `+(tot===100?'✅':'⚠️'); check.style.color=tot===100?'var(--ok)':'var(--bad)'; }
+                
+                if(h && w) {
+                    const bmr = (10*w) + (6.25*h) - (5*(new Date().getFullYear()-y)) + (g==='male'?5:-161);
+                    const goal = Math.round(bmr*act+mod);
+                    document.getElementById('l-tmb').innerText = Math.round(bmr);
+                    document.getElementById('l-goal').innerText = Math.round(goal);
+                }
+            }
+        };
+
+        const Render = {
+            all: () => {
+                document.getElementById('h-day').innerText = S.d.toLocaleDateString('es-ES', {weekday:'long'});
+                let t = {k:0, p:0, c:0, f:0};
+                Object.values(S.day).forEach(arr => arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }));
+                const tg = S.u.calc;
+                const rem = tg.goal - t.k;
+                document.getElementById('v-rem').innerText = Math.round(rem);
+                document.getElementById('ring-bg').style.background = `conic-gradient(var(--car) 0% ${(t.k/tg.goal)*100}%, rgba(255,255,255,0.1) 0%)`;
+                
+                const bar = (k, v, max) => {
+                    document.getElementById('v-'+k).innerText = `${Math.round(v)}/${max}`;
+                    document.getElementById('b-'+k).style.width = Math.min((v/max)*100, 100)+'%';
+                };
+                bar('p', t.p, tg.p); bar('c', t.c, tg.c); bar('f', t.f, tg.f);
+                
+                const feed = document.getElementById('feed'); feed.innerHTML='';
+                MEALS.forEach(m => {
+                    const arr = S.day[m.k] || [];
+                    let mk=0, mp=0, mc=0, mf=0;
+                    let rows = '';
+                    arr.forEach((i, idx) => {
+                        mk+=i.k; mp+=i.p; mc+=i.c; mf+=i.f;
+                        rows += `
+                        <div class="item">
+                            <div class="i-info"><h4>${i.n}</h4>
+                                <div class="i-det"><span class="i-pill">${i.q}${i.u}</span> <span>🔥 ${Math.round(i.k)}</span>
+                                <span style="color:var(--pro)">P:${Math.round(i.p)}</span><span style="color:var(--car)">C:${Math.round(i.c)}</span><span style="color:var(--fat)">F:${Math.round(i.f)}</span></div>
+                            </div>
+                            <div class="c-actions">
+                                <button class="act-btn" onclick="window.Logic.editItem('${m.k}', ${idx})"><i class="fas fa-pencil-alt"></i></button>
+                                <button class="act-btn del" onclick="window.Logic.delItem('${m.k}', ${idx})"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    feed.innerHTML += `
+                    <div class="card">
+                        <div class="c-head">
+                            <div class="c-left"><i class="fas ${m.i}"></i> ${m.n}</div>
+                            <div class="c-right">
+                                <div class="meal-macros">
+                                    <span class="mm-item" style="color:var(--pro)"><span class="mm-dot" style="background:var(--pro)"></span>${Math.round(mp)}p</span>
+                                    <span class="mm-item" style="color:var(--car)"><span class="mm-dot" style="background:var(--car)"></span>${Math.round(mc)}c</span>
+                                    <span class="mm-item" style="color:var(--fat)"><span class="mm-dot" style="background:var(--fat)"></span>${Math.round(mf)}g</span>
+                                </div>
+                                <span class="kcal-badge">${Math.round(mk)} kcal</span>
+                                <button class="tool-btn copy" title="Copiar" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
+                                <button class="tool-btn move" title="Mover" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar-day"></i></button>
+                                <button class="tool-btn del" title="Vaciar" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-trash-alt"></i></button>
+                                <button class="tool-btn add" title="Añadir" onclick="window.Logic.openAdd('${m.k}')">+</button>
+                            </div>
+                        </div>
+                        <div>${rows}</div>
+                    </div>`;
+                });
+            }
+        };
+
+        // EXPOSE TO WINDOW
+        window.Logic = Logic;
+        window.UI = UI;
+        window.AI = AI;
+        window.Calc = Calc;
+
+        const Sys = {
+            init: async () => {
+                await DB.lib();
+                if(S.uid) await Sys.load(S.uid);
+                else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
+            },
+            load: async (id) => {
+                S.uid = id; localStorage.setItem('tid', id);
+                S.u = await DB.getU(id);
+                if(!S.u) { UI.openUsers(); return; }
+                S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
+                document.getElementById('loading-screen').style.display='none';
+            },
+            sync: async () => { S.day = await DB.getDay(S.d); Render.all(); }
+        };
+
+        if(document.readyState === 'complete') Sys.init();
+        else window.addEventListener('load', Sys.init);
+
+    </script>
+</body>
+</html>
