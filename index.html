@@ -3,175 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v23.1 | AI DIAGNOSTICS</title>
+    <title>Titanium v25.0 | UI & SWIPE</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
-            authDomain: "nutricion-f6e70.firebaseapp.com",
-            projectId: "nutricion-f6e70",
-            storageBucket: "nutricion-f6e70.firebasestorage.app",
-            messagingSenderId: "926932712073",
-            appId: "1:926932712073:web:d660418820d91ec4ec6458",
-            measurementId: "G-MFB78MVX9S"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        window.db = getFirestore(app);
-        window.fire = { doc, setDoc, getDoc, collection, getDocs, updateDoc };
-        console.log(">> SYSTEM V23.1 DIAGNOSTICS READY");
-    </script>
-
     <style>
-        :root {
-            --p: #0f172a; --s: #334155; --a: #2563eb; 
-            --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; 
-            --bg: #f1f5f9; --c: #ffffff; --ok: #10b981; --bad: #ef4444; --warn: #f59e0b;
-        }
+        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; overflow-x: hidden; }
         
         #loading-screen { position: fixed; inset: 0; background: var(--p); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s; }
-        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--car); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--car); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 20px 20px 60px 20px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .user-pill { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.1); padding: 6px 16px 6px 6px; border-radius: 50px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
-        .avatar { width: 36px; height: 36px; background: var(--car); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid rgba(255,255,255,0.2); }
+        /* HEADER COMPACTO */
+        .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 15px 15px 40px 15px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         
-        .date-nav { display: flex; align-items: center; gap: 15px; }
-        .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 12px; color: white; cursor: pointer; }
+        /* AVATAR SOLO (Móvil friendly) */
+        .user-pill { width: 42px; height: 42px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+        .avatar-img { font-weight: 800; color: white; }
         
-        .dash { display: grid; grid-template-columns: 120px 1fr; gap: 25px; align-items: center; }
-        .ring { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); display: flex; align-items: center; justify-content: center; position: relative; }
-        .ring-in { width: 100px; height: 100px; background: var(--p); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .date-nav { display: flex; align-items: center; gap: 10px; }
+        .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 36px; height: 36px; border-radius: 10px; color: white; cursor: pointer; }
+        .date-info { text-align: right; }
+        .date-info h2 { font-size: 0.95rem; font-weight: 700; margin: 0; }
+        .date-info p { font-size: 0.7rem; opacity: 0.7; margin: 0; }
+
+        .dash { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+        .ring { width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+        .ring-in { width: 84px; height: 84px; background: var(--p); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .ring-val { font-size: 1.4rem; font-weight: 800; }
+        .ring-lbl { font-size: 0.6rem; opacity: 0.7; }
         
-        .macros { display: flex; flex-direction: column; gap: 12px; }
-        .m-row { display: flex; flex-direction: column; gap: 4px; }
-        .m-head { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; }
-        .bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 4px; }
+        .macros { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+        .m-row { display: flex; flex-direction: column; gap: 3px; }
+        .m-head { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; }
+        .bar-bg { width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 3px; }
 
-        .bio-alert { margin-top: 20px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.8rem; display: flex; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1); }
+        .bio-alert { margin-top: 15px; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 10px; font-size: 0.75rem; display: flex; justify-content: space-between; }
 
-        .main { max-width: 800px; margin: -30px auto 0; padding: 0 15px; position: relative; z-index: 10; }
-        .card { background: white; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
+        .main { max-width: 800px; margin: -25px auto 0; padding: 0 15px; position: relative; z-index: 10; }
+        .card { background: white; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid #e2e8f0; }
         
-        .c-head { padding: 10px 15px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .c-left { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--s); font-size: 1rem; flex-shrink: 0; }
-        .c-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; flex-grow: 1; }
+        .c-head { padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .c-title { font-weight: 700; color: var(--s); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        .c-tools { display: flex; gap: 6px; }
+
+        .meal-macros { display: none; } /* Oculto en móvil por espacio, visible si hay sitio */
+        @media(min-width: 400px) { .meal-macros { display: flex; gap: 8px; font-size: 0.7rem; font-family: monospace; font-weight: 700; margin-right: 10px; } }
         
-        .meal-macros { display: flex; gap: 10px; font-size: 0.8rem; font-weight: 700; font-family: monospace; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-right: 5px; }
-        .mm-item { display: flex; align-items: center; gap: 3px; }
-        .mm-dot { width: 6px; height: 6px; border-radius: 50%; }
-        .kcal-badge { background: var(--p); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.8rem; }
+        .k-tag { background: var(--p); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
 
-        .tool-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.9rem; }
-        .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .tool-btn.copy { color: var(--a); border-color: var(--a); background: #eff6ff; }
-        .tool-btn.move { color: var(--warn); border-color: var(--warn); background: #fffbeb; }
-        .tool-btn.del { color: var(--bad); border-color: var(--bad); background: #fef2f2; }
-        .tool-btn.add { color: var(--ok); border-color: var(--ok); background: #ecfdf5; font-weight: bold; width: auto; padding: 0 12px; }
+        /* BOTONES DE ACCIÓN */
+        .act-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .act-btn.add { border-color: var(--ok); color: var(--ok); background: #ecfdf5; }
+        .act-btn.del { color: var(--bad); }
 
-        .item { padding: 16px 20px; border-bottom: 1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; }
-        .i-info h4 { font-size: 0.95rem; font-weight: 700; color: var(--p); margin-bottom: 4px; }
-        .i-det { font-size: 0.8rem; color: #64748b; display: flex; gap: 12px; font-family: monospace; font-weight: 600; align-items: center; }
-        .i-pill { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--p); font-family: 'Inter', sans-serif; font-weight: 700; }
+        .item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .i-name { font-size: 0.9rem; font-weight: 600; color: var(--p); margin-bottom: 2px; }
+        .i-meta { font-size: 0.75rem; color: #64748b; font-family: monospace; }
+        .i-opts { display: flex; gap: 8px; }
+
+        .fab { position: fixed; bottom: 25px; right: 20px; width: 60px; height: 60px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.3); font-size: 1.4rem; z-index: 100; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* MODALES */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .sheet { background: white; width: 100%; max-width: 450px; border-radius: 24px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative; }
         
-        .c-actions { display: flex; gap: 8px; }
-        .act-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .act-btn:hover { border-color: var(--car); color: var(--car); }
-        .act-btn.del:hover { border-color: #ef4444; color: #ef4444; }
+        /* ESTILO LISTA USUARIOS REPARADO */
+        .user-list { display: grid; gap: 10px; margin: 15px 0; }
+        .user-row { display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; gap: 15px; cursor: pointer; transition: 0.2s; }
+        .user-row:hover { border-color: var(--a); background: #eff6ff; }
+        .user-row.active { border-color: var(--a); background: #eff6ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+        .u-avatar { width: 40px; height: 40px; background: var(--a); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .u-info { flex-grow: 1; text-align: left; }
+        .u-info h4 { font-size: 0.95rem; margin: 0; color: var(--p); }
+        .u-info p { font-size: 0.75rem; margin: 0; color: #64748b; }
+        .u-edit { padding: 8px; color: #94a3b8; }
+        .u-edit:hover { color: var(--a); }
 
-        .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        /* PERFIL COMPACTO (FIT SCREEN) */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .inp-grp label { font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px; }
+        .inp { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; font-size: 0.95rem; }
+        
+        .stats-bar { display: flex; justify-content: space-between; background: #eff6ff; padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #dbeafe; }
+        .stat-item { text-align: center; }
+        .stat-val { font-weight: 800; color: var(--a); font-size: 0.9rem; }
+        .stat-lbl { font-size: 0.65rem; color: #64748b; text-transform: uppercase; }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
-        .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
-        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 10px; }
-        .btn.pri { background: var(--a); color: white; }
+        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; margin-bottom: 10px; }
+        .btn.pri { background: var(--p); color: white; }
         .btn.sec { background: #f1f5f9; color: var(--p); }
+        .btn.del { background: #fee2e2; color: var(--bad); font-size: 0.8rem; padding: 10px; }
 
-        .modal-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close-x { font-size: 2rem; background: none; border: none; color: #94a3b8; cursor: pointer; line-height: 1; }
-
-        /* USUARIOS - ESTRUCTURA BLINDADA */
-        .user-list-grid { display: grid; gap: 10px; }
-        .user-card-wrapper { display: flex; background: white; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; transition: all 0.2s; flex-wrap: nowrap; }
-        .user-card-wrapper:hover { border-color: var(--color-carb); }
-        .user-select-zone { flex: 1; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; min-width: 0; }
-        .user-select-zone:hover { background: #f8fafc; }
-        .user-edit-zone { width: 60px; display: flex; align-items: center; justify-content: center; border-left: 1px solid #f1f5f9; cursor: pointer; background: #f8fafc; flex-shrink: 0; }
-        .user-edit-zone:hover { background: #e2e8f0; color: var(--a); }
-        .user-card-wrapper.active { border-color: var(--color-primary); }
-        .user-card-wrapper.active .user-select-zone { background: #f0f9ff; }
-        .user-card-wrapper.active .user-avatar-small { background: var(--color-primary); }
-
-        .live-box { background: #f0f9ff; padding: 15px; border-radius: 14px; border: 1px solid #bae6fd; margin-bottom: 20px; font-size: 0.9rem; }
-        .live-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .live-row.hl { font-weight: 800; color: var(--a); border-top: 1px dashed #bae6fd; padding-top: 5px; margin-top: 5px; }
+        /* AI & ADD */
+        .ai-box { background: #f8fafc; border-radius: 16px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+        .ai-row { display: flex; gap: 10px; margin-top: 10px; }
+        .mic { width: 45px; background: var(--bad); color: white; border: none; border-radius: 10px; cursor: pointer; }
+        .mic.on { animation: pulse 1s infinite; }
+        @keyframes pulse { 50% { transform: scale(0.95); opacity: 0.8; } }
         
-        .food-suggestion { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
-        .food-suggestion:hover { background: #f8fafc; }
-        .unit-selector { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; font-weight: 700; color: var(--text-dark); cursor: pointer; }
-
-        /* ESTILOS DE AI CONFIGURABLE */
-        .ai-header-btn { 
-            font-size: 0.8rem; background: #f1f5f9; color: #64748b; 
-            border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; 
-            cursor: pointer; font-weight: 700; display:flex; align-items:center; gap:5px; margin-left:10px;
-            transition: all 0.3s;
-        }
-        /* ESTADO VERDE CUANDO ESTA CONFIGURADO */
-        .ai-header-btn.configured {
-            background: #ecfdf5; color: var(--ok); border-color: var(--ok);
-        }
+        .search-res { max-height: 150px; overflow-y: auto; margin-top: 10px; }
+        .s-item { padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
         
-        .ai-input-area { margin-bottom: 20px; }
-        .ai-textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 14px; font-family: inherit; font-size: 1rem; resize: none; background: #f8fafc; margin-bottom: 10px; }
-        .ai-textarea:focus { border-color: var(--a); background: white; }
-        .ai-actions { display: flex; gap: 10px; align-items: center; }
-        .mic-btn { width: 50px; height: 50px; background: #ef4444; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .mic-btn.listening { animation: pulse 1s infinite; background: #dc2626; }
-        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
-        .password-wrapper { position: relative; }
-        .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
-        
-        .separator { text-align: center; margin: 20px 0; color: #94a3b8; font-size: 0.8rem; position: relative; }
-        .separator::before, .separator::after { content: ''; position: absolute; top: 50%; width: 45%; height: 1px; background: #e2e8f0; }
-        .separator::before { left: 0; } .separator::after { right: 0; }
-        
-        .link-btn { background: none; border: none; color: var(--a); cursor: pointer; text-decoration: underline; font-size: 0.85rem; display: block; margin: 10px auto; }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-title { font-size: 1.1rem; font-weight: 800; }
+        .conf-btn { background: #eff6ff; color: var(--a); border: none; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+        .conf-btn.ok { background: #ecfdf5; color: var(--ok); }
     </style>
 </head>
 <body>
 
     <div id="loading-screen"><div class="spinner"></div></div>
 
-    <header class="header-wrapper" id="pdf-header">
+    <header class="header-wrapper">
         <div class="top-nav-bar">
             <div class="user-pill" onclick="window.UI.openUsers()">
-                <div class="avatar" id="h-av">?</div>
-                <span id="h-name">Cargando...</span>
-                <i class="fas fa-chevron-down" style="font-size:0.8rem; margin-left:5px"></i>
+                <div class="avatar-img" id="h-av">?</div>
             </div>
             <div class="date-nav">
                 <button class="nav-btn" onclick="window.Logic.day(-1)"><i class="fas fa-arrow-left"></i></button>
-                <div style="text-align:right">
-                    <h2 id="h-day" style="font-size:1rem; font-weight:700">...</h2>
-                    <p id="h-full" style="font-size:0.7rem; opacity:0.7">...</p>
+                <div class="date-info">
+                    <h2 id="h-day">...</h2>
+                    <p id="h-full">...</p>
                 </div>
                 <button class="nav-btn" onclick="window.Logic.day(1)"><i class="fas fa-arrow-right"></i></button>
             </div>
@@ -180,8 +139,8 @@
         <div class="dash">
             <div class="ring" id="ring-bg">
                 <div class="ring-in">
-                    <span style="font-size:0.6rem; opacity:0.7">RESTAN</span>
-                    <span id="v-rem" style="font-size:1.8rem; font-weight:800">0</span>
+                    <span class="ring-lbl">RESTAN</span>
+                    <span class="ring-val" id="v-rem">0</span>
                 </div>
             </div>
             <div class="macros">
@@ -208,112 +167,115 @@
 
     <div class="modal" id="m-users">
         <div class="sheet">
-            <h3>Perfiles</h3>
-            <div id="u-list" style="margin:20px 0" class="user-list-grid"></div>
+            <div class="modal-head">
+                <div class="modal-title">Perfiles</div>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+            </div>
+            <div id="u-list" class="user-list"></div>
             <button class="btn pri" onclick="window.UI.newProfile()">+ Crear Nuevo</button>
-            <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
         </div>
     </div>
 
     <div class="modal" id="m-prof">
         <div class="sheet">
-            <h3>Editar Perfil</h3>
-            <div class="live-box">
-                <div class="live-row"><span>TMB:</span><span id="l-tmb">--</span></div>
-                <div class="live-row"><span>IMC:</span><span id="l-imc">--</span></div>
-                <div class="live-row"><span>Peso Ideal:</span><span id="l-ideal">--</span></div>
-                <div class="live-row hl"><span>META:</span><span id="l-goal">--</span></div>
+            <div class="modal-head">
+                <div class="modal-title">Editar Perfil</div>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
             </div>
             
-            <label>Nombre</label><input id="e-name" class="inp">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <div><label>Altura (cm)</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
-                <div><label>Peso (kg)</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()"></div>
+            <div class="stats-bar">
+                <div class="stat-item"><div class="stat-val" id="l-tmb">--</div><div class="stat-lbl">TMB</div></div>
+                <div class="stat-item"><div class="stat-val" id="l-imc">--</div><div class="stat-lbl">IMC</div></div>
+                <div class="stat-item"><div class="stat-val" id="l-ideal">--</div><div class="stat-lbl">PESO IDEAL</div></div>
+                <div class="stat-item"><div class="stat-val" id="l-goal" style="color:var(--bad)">--</div><div class="stat-lbl">META</div></div>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <div><label>Año Nac.</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
-                <div><label>Género</label>
+
+            <div class="inp-grp"><label>Nombre</label><input id="e-name" class="inp"></div>
+            <div class="form-grid" style="margin-top:10px">
+                <div class="inp-grp"><label>Altura</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
+                <div class="inp-grp"><label>Peso</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()"></div>
+            </div>
+            <div class="form-grid">
+                <div class="inp-grp"><label>Año</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
+                <div class="inp-grp"><label>Sexo</label>
                     <select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select>
                 </div>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <div><label>Actividad</label>
+            <div class="form-grid">
+                <div class="inp-grp"><label>Actividad</label>
                     <select id="e-act" class="inp" onchange="window.Calc.live()">
                         <option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option>
                     </select>
                 </div>
-                <div><label>Objetivo</label>
+                <div class="inp-grp"><label>Objetivo</label>
                     <select id="e-mod" class="inp" onchange="window.Calc.live()">
                         <option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option>
                     </select>
                 </div>
             </div>
             
-            <label style="margin-top:10px; display:block; text-align:center; font-size:0.8rem; font-weight:bold">MACROS (PORCENTAJE %)</label>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
-                <input id="pp" type="number" class="inp" placeholder="% Prot" oninput="window.Calc.live()">
-                <input id="pc" type="number" class="inp" placeholder="% Carb" oninput="window.Calc.live()">
-                <input id="pf" type="number" class="inp" placeholder="% Gras" oninput="window.Calc.live()">
+            <div class="inp-grp" style="text-align:center; margin: 10px 0;">
+                <label>DISTRIBUCIÓN MACROS (%)</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
+                    <input id="pp" type="number" class="inp" placeholder="P" oninput="window.Calc.live()">
+                    <input id="pc" type="number" class="inp" placeholder="C" oninput="window.Calc.live()">
+                    <input id="pf" type="number" class="inp" placeholder="G" oninput="window.Calc.live()">
+                </div>
+                <div id="p-check" style="font-size:0.7rem; margin-top:5px"></div>
             </div>
-            <div id="p-check" style="text-align:center; font-size:0.8rem; margin-bottom:15px; color:#94a3b8">Total: 0%</div>
-            <button class="btn pri" id="btn-save-user" onclick="window.Logic.saveUser()">Guardar Cambios</button>
-            <button class="btn sec" onclick="window.UI.closeAll()">Cancelar</button>
+
+            <button class="btn pri" onclick="window.Logic.saveUser()">Guardar</button>
+            <button class="btn del" id="btn-del-user" onclick="window.Logic.deleteUser()" style="display:none">Eliminar Usuario</button>
         </div>
     </div>
 
     <div class="modal" id="m-add">
         <div class="sheet">
-            <div class="modal-h">
-                <h3 id="add-ti">Añadir</h3>
-                <button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')"><i class="fas fa-cog"></i> Config</button>
+            <div class="modal-head">
+                <div class="modal-title">Añadir</div>
+                <button class="conf-btn" id="ai-status" onclick="window.UI.view('v-conf')">⚙️ Config AI</button>
                 <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
             </div>
-            
+
             <div id="v-home">
-                <div class="ai-input-area">
-                    <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos cocidos y un plátano... (Dicta o escribe aquí)"></textarea>
-                    <div class="ai-actions">
-                        <button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
-                        <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">✨ Procesar con IA</button>
+                <div class="ai-box">
+                    <textarea id="ai-text" class="inp" style="height:80px; resize:none" placeholder="Ej: 2 huevos y un plátano..."></textarea>
+                    <div class="ai-row">
+                        <button class="mic" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
+                        <button class="btn pri" style="margin:0" onclick="window.AI.process()">Procesar con IA</button>
                     </div>
                 </div>
                 
-                <div class="separator">O busca en tu biblioteca</div>
-                
-                <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.Logic.search()">
-                <div id="res-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
-                
-                <button class="link-btn" onclick="window.UI.view('v-json')">Tengo un código JSON</button>
+                <input class="inp" id="src-in" placeholder="🔍 Buscar en biblioteca..." onkeyup="window.Logic.search()">
+                <div id="res-list" class="search-res"></div>
+                <div style="text-align:center; margin-top:10px">
+                    <button class="conf-btn" onclick="window.UI.view('v-json')">Pegar JSON</button>
+                </div>
             </div>
 
             <div id="v-conf" style="display:none">
-                <h4>Configuración IA</h4>
-                <label style="font-size:0.8rem; color:#64748b">API Key de Gemini</label>
-                <div class="password-wrapper">
-                    <input type="password" id="ai-key" class="inp" placeholder="Pega tu API Key...">
-                    <i class="fas fa-eye eye-icon" onclick="window.AI.toggleEye()"></i>
-                </div>
-                <label style="font-size:0.8rem; color:#64748b">Modelo</label>
-                <input type="text" id="ai-model" class="inp" value="gemini-1.5-flash">
+                <h4>Configurar IA</h4>
+                <div class="inp-grp"><label>API Key</label><input type="password" id="ai-key" class="inp"></div>
+                <div class="inp-grp" style="margin-bottom:15px"><label>Modelo</label><input id="ai-model" class="inp" value="gemini-1.5-flash"></div>
                 <button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button>
                 <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
 
             <div id="v-qty" style="display:none">
-                <h4 id="qty-name" style="margin-bottom:10px"></h4>
-                <div style="display:flex; gap:10px">
+                <h4 id="qty-name"></h4>
+                <div style="display:flex; gap:10px; margin-bottom:15px">
                     <input type="number" id="qty-in" class="inp" placeholder="Cantidad">
-                    <select id="unit-in" class="unit-sel">
-                        <option value="g">Gramos (g)</option>
-                        <option value="ml">Mililitros (ml)</option>
+                    <select id="unit-in" class="inp" style="width:100px">
+                        <option value="g">g</option>
+                        <option value="ml">ml</option>
                     </select>
                 </div>
-                <button class="btn pri" onclick="window.Logic.saveItem()">Guardar</button>
-                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+                <button class="btn pri" onclick="window.Logic.saveItem()">Añadir</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Cancelar</button>
             </div>
 
             <div id="v-json" style="display:none">
-                <textarea id="json-in" class="inp" style="height:100px; background:#1e293b; color:#0ea5e9; font-family:monospace" placeholder="Pega el JSON aquí..."></textarea>
+                <textarea id="json-in" class="inp" style="height:100px; background:#1e293b; color:#0ea5e9; font-family:monospace"></textarea>
                 <button class="btn pri" onclick="window.Logic.parse()">Procesar</button>
                 <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
@@ -322,20 +284,20 @@
 
     <div class="modal" id="m-copy">
         <div class="sheet">
-            <div class="modal-h">
-                <h3 id="copy-ti">Gestionar</h3>
+            <div class="modal-head">
+                <div class="modal-title">Gestionar Comida</div>
                 <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
             </div>
-            <label>Fecha Destino:</label>
-            <input type="date" id="copy-date" class="inp">
-            <label>Comida Destino:</label>
-            <select id="copy-meal" class="inp">
-                <option value="01_desayuno">Desayuno</option>
-                <option value="02_almuerzo">Almuerzo</option>
-                <option value="03_comida">Comida</option>
-                <option value="04_merienda">Merienda</option>
-                <option value="05_cena">Cena</option>
-            </select>
+            <div class="inp-grp"><label>Fecha Destino</label><input type="date" id="copy-date" class="inp"></div>
+            <div class="inp-grp" style="margin-bottom:15px"><label>Comida Destino</label>
+                <select id="copy-meal" class="inp">
+                    <option value="01_desayuno">Desayuno</option>
+                    <option value="02_almuerzo">Almuerzo</option>
+                    <option value="03_comida">Comida</option>
+                    <option value="04_merienda">Merienda</option>
+                    <option value="05_cena">Cena</option>
+                </select>
+            </div>
             <button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button>
         </div>
     </div>
@@ -343,16 +305,18 @@
     <div class="modal" id="m-glob">
         <div class="sheet">
             <h3>Opciones</h3>
-            <button class="btn sec" onclick="window.Logic.pdf()">PDF Diario</button>
-            <button class="btn sec" onclick="window.Logic.exportJSON()">Backup JSON</button>
-            <button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button>
+            <button class="btn sec" onclick="window.Logic.pdf()">📄 PDF Diario</button>
+            <button class="btn sec" onclick="window.Logic.exportJSON()">💾 Backup Completo</button>
+            <input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)">
+            <button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar Backup</button>
+            <button class="btn del" onclick="window.Logic.wipe()">🔥 Borrar Día Actual</button>
             <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
@@ -366,7 +330,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const fire = { doc, setDoc, getDoc, collection, getDocs, updateDoc };
+        const fire = { doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, writeBatch };
 
         const MEALS = [
             {k:'01_desayuno', n:'Desayuno', i:'fa-coffee'},
@@ -383,92 +347,63 @@
             srcMeal: null, copyMode: 'copy' 
         };
 
-        /* --- DATABASE --- */
+        /* --- LOGIC & DB --- */
         const DB = {
             col: (n) => fire.collection(db, n),
             doc: (p,i) => fire.doc(db, p, i),
             norm: (u) => ({
-                id: u.id,
-                name: u.name || u.nom || 'Usuario',
-                h: parseFloat(u.height||u.altura||170), w: parseFloat(u.weight||u.peso||70),
-                y: parseInt(u.birthYear||u.nac||1990), g: u.gender||u.gen||'male',
-                act: u.activity||"1.2", mod: u.goalMod||"0",
+                id: u.id, name: u.name||'Usuario', h: parseFloat(u.height||170), w: parseFloat(u.weight||70),
+                y: parseInt(u.birthYear||1990), g: u.gender||'male', act: u.activity||"1.2", mod: u.goalMod||"0",
                 mac: u.customMacros || {p:null, c:null, f:null}
             }),
-            getUsers: async () => {
-                const snap = await fire.getDocs(DB.col('usuarios'));
-                S.allUsers = snap.docs.map(d => DB.norm(d.data()));
-                return S.allUsers;
-            },
-            getU: async(id) => { const s = await fire.getDoc(DB.doc('usuarios', id)); return s.exists()?s.data():null; },
+            getUsers: async () => { const s=await fire.getDocs(DB.col('usuarios')); return S.allUsers=s.docs.map(d=>DB.norm(d.data())); },
+            getU: async(id) => { const s=await fire.getDoc(DB.doc('usuarios', id)); return s.exists()?s.data():null; },
             setU: async(u) => await fire.setDoc(DB.doc('usuarios', u.id), u),
+            delU: async(id) => await fire.deleteDoc(DB.doc('usuarios', id)),
             getDay: async(d) => {
-                const k = d.toISOString().split('T')[0];
-                const s = await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
-                let data = s.exists() ? s.data() : {};
-                MEALS.forEach(m => { if(!data[m.k]) data[m.k] = []; });
-                return data;
+                const k=d.toISOString().split('T')[0]; const s=await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
+                let data=s.exists()?s.data():{}; MEALS.forEach(m=>{ if(!data[m.k]) data[m.k]=[] }); return data;
             },
-            getDayLog: async (uid, dateStr) => {
-                const snap = await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dateStr));
-                return snap.exists() ? snap.data() : {};
-            },
-            setDay: async() => {
-                const k = S.d.toISOString().split('T')[0];
-                await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day);
-            },
-            lib: async() => {
-                const s = await fire.getDoc(DB.doc('sistema','biblioteca'));
-                S.lib = s.exists() ? s.data().items : [];
-            },
+            setDay: async() => { const k=S.d.toISOString().split('T')[0]; await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day); },
+            lib: async() => { const s=await fire.getDoc(DB.doc('sistema','biblioteca')); S.lib=s.exists()?s.data().items:[]; },
             addLib: async(arr) => {
-                arr.forEach(n => {
-                    const ex = S.lib.find(x => x.n === n.n);
-                    if(!ex) S.lib.push(n);
-                });
+                arr.forEach(n=>{ if(!S.lib.find(x=>x.n===n.n)) S.lib.push(n); });
                 await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
             }
         };
 
-        /* --- LOGIC --- */
         const Logic = {
             day: (n) => { S.d.setDate(S.d.getDate()+n); Sys.sync(); },
             saveUser: async () => {
                 const n = document.getElementById('e-name').value;
                 if(!n) return alert("Nombre obligatorio");
                 try {
-                    const h=parseFloat(document.getElementById('e-h').value), w=parseFloat(document.getElementById('e-w').value);
-                    const y=parseInt(document.getElementById('e-y').value), g=document.getElementById('e-g').value;
-                    const act=parseFloat(document.getElementById('e-act').value), mod=parseInt(document.getElementById('e-mod').value);
-                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
-                    const goal = Math.round(bmr*act + mod);
+                    const vals = (ids) => ids.map(i=>document.getElementById(i).value);
+                    const [h, w, y, g, act, mod] = vals(['e-h','e-w','e-y','e-g','e-act','e-mod']);
+                    const [pp, pc, pf] = vals(['pp','pc','pf']);
                     
-                    const pp=parseInt(document.getElementById('pp').value)||30;
-                    const pc=parseInt(document.getElementById('pc').value)||50;
-                    const pf=parseInt(document.getElementById('pf').value)||20;
+                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
+                    const goal = Math.round(bmr*act + parseInt(mod));
+
                     const u = {
                         id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
-                        customMacros: { p:Math.round((goal*(pp/100))/4), c:Math.round((goal*(pc/100))/4), f:Math.round((goal*(pf/100))/9) }
+                        customMacros: { p:Math.round(goal*(pp/100)/4), c:Math.round(goal*(pc/100)/4), f:Math.round(goal*(pf/100)/9) }
                     };
-                    await DB.setU(u); S.allUsers = await DB.getUsers(); await Sys.load(u.id); UI.closeAll();
+                    await DB.setU(u); S.allUsers=await DB.getUsers(); await Sys.load(u.id); window.UI.closeAll();
                 } catch(e) { alert("Error: "+e.message); }
             },
-            openAdd: (mk) => { 
-                S.tm=mk; S.edit=false; 
-                UI.view('v-home'); // VIEW 1
-                UI.open('m-add'); 
-                if(S.lib.length>0) Logic.search(); 
-                UI.checkAI();
+            deleteUser: async () => {
+                if(confirm("¿Eliminar usuario y todos sus datos?")) {
+                    await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload();
+                }
             },
             search: () => {
                 const q = document.getElementById('src-in').value.toLowerCase();
                 const b = document.getElementById('res-list'); b.innerHTML='';
                 S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
-                    const d = document.createElement('div'); d.className='item'; d.style.cursor='pointer';
-                    d.innerHTML = `<b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small>`;
-                    d.onclick = () => {
-                        S.item = f; document.getElementById('qty-name').innerText=f.n; document.getElementById('unit-in').value=f.u; document.getElementById('qty-in').value=100; UI.view('v-qty');
-                    };
+                    const d = document.createElement('div'); d.className='s-item';
+                    d.innerHTML = `<b>${f.n}</b> <span style="font-size:0.8em;color:#64748b">${Math.round(f.k)} kcal/100${f.u}</span>`;
+                    d.onclick = () => { S.item=f; UI.setQty(f); UI.view('v-qty'); };
                     b.appendChild(d);
                 });
             },
@@ -485,110 +420,122 @@
             },
             editItem: (mk, idx) => {
                 S.edit=true; S.tm=mk; S.eIdx=idx; S.item = JSON.parse(JSON.stringify(S.day[mk][idx]));
-                document.getElementById('qty-name').innerText = "Editar: "+S.item.n;
-                document.getElementById('qty-in').value = S.item.q; document.getElementById('unit-in').value = S.item.u;
-                UI.view('v-qty'); UI.open('m-add');
+                UI.setQty(S.item); UI.view('v-qty'); UI.open('m-add');
             },
             delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
             wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
-            wipe: async () => { if(confirm("¿RESET DIA?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); UI.closeAll(); } },
+            wipe: async () => { if(confirm("¿Borrar día entero?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); UI.closeAll(); } },
             openCopy: (mk, type) => {
-                S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-ti').innerText=type=='copy'?"Copiar":"Mover";
+                S.srcMeal=mk; S.copyMode=type; 
                 document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; UI.open('m-copy');
             },
             execCopy: async () => {
                 const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
-                const tData = (await DB.getDayLog(S.uid, d)) || {};
-                if(!tData[tm]) tData[tm]=[];
-                tData[tm] = tData[tm].concat(JSON.parse(JSON.stringify(S.day[S.srcMeal])));
-                const k = new Date(d).toISOString().split('T')[0];
-                await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), tData);
+                const ref = fire.doc(db, `usuarios/${S.uid}/diario`, d);
+                const snap = await fire.getDoc(ref);
+                let data = snap.exists() ? snap.data() : {};
+                if(!data[tm]) data[tm] = [];
+                data[tm] = data[tm].concat(S.day[S.srcMeal]);
+                await fire.setDoc(ref, data);
                 if(S.copyMode=='move') { S.day[S.srcMeal]=[]; await DB.setDay(); }
-                UI.closeAll(); if(k===S.d.toISOString().split('T')[0]) Sys.sync();
-                alert("Hecho");
+                UI.closeAll(); if(d===S.d.toISOString().split('T')[0]) Sys.sync(); alert("Hecho");
             },
-            parse: async () => { 
+            parse: async () => {
                 try {
                     const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
                     const json = JSON.parse(txt);
                     const arr = Array.isArray(json) ? json : (json.detalles || [json]);
                     const newItems = [];
                     arr.forEach(it => {
-                        let q=100, u="g"; 
-                        if(it.cantidad) { q = parseFloat(it.cantidad)||100; if(it.cantidad.includes("ml")) u="ml"; }
-                        const fac = q/100; 
-                        const get = (ks) => { for(let k of ks) if(it[k] || (it.macros&&it.macros[k])) return parseFloat(it[k]||it.macros[k]); return 0; };
-                        const base = { n:it.nombre||it.alimento, q:100, u:u, k:get(['kcal','calorias'])/fac, p:get(['p'])/fac, c:get(['c'])/fac, f:get(['f','fat','g'])/fac };
-                        S.day[S.tm].push({ ...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac });
+                        let q=100, u="g"; if(it.cantidad) { q=parseFloat(it.cantidad)||100; if(it.cantidad.includes("ml")) u="ml"; }
+                        const f=q/100; const get=(k)=>it[k]||(it.macros?it.macros[k]:0)||0;
+                        const base = { n:it.nombre||it.alimento, q:100, u:u, k:get('kcal')/f, p:get('p')/f, c:(get('c')||get('hc'))/f, f:(get('f')||get('g'))/f };
+                        S.day[S.tm].push({...base, q:q, k:base.k*f, p:base.p*f, c:base.c*f, f:base.f*f});
                         newItems.push(base);
                     });
                     await DB.setDay(); await DB.addLib(newItems); UI.closeAll(); Sys.sync();
-                } catch(e) { alert("JSON Mal"); }
+                } catch(e) { alert("JSON inválido"); }
             },
             pdf: () => { UI.closeAll(); html2pdf().from(document.body).save(); },
-            exportJSON: () => {
-                const s = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(S.day));
-                const a = document.createElement('a'); a.href=s; a.download=`Backup_${S.u.id}.json`;
-                document.body.appendChild(a); a.click(); a.remove(); UI.closeAll();
+            exportJSON: async () => {
+                const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
+                const data = { perfil: S.u, historial: {} };
+                snap.forEach(d => data.historial[d.id] = d.data());
+                const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+                const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${S.u.name}_backup.json`;
+                a.click();
+            },
+            importJSON: async (input) => {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if(!confirm(`¿Importar historial de ${data.perfil.name} a ${S.u.name}?`)) return;
+                        const batch = fire.writeBatch(db);
+                        Object.entries(data.historial).forEach(([date, dayData]) => {
+                            batch.set(fire.doc(db, `usuarios/${S.uid}/diario`, date), dayData);
+                        });
+                        await batch.commit();
+                        alert("Importación completada");
+                        location.reload();
+                    } catch(err) { alert("Error: "+err.message); }
+                };
+                reader.readAsText(file);
             }
         };
 
-        /* --- AI MODULE --- */
+        /* --- AI --- */
         const AI = {
             saveConfig: () => {
-                localStorage.setItem('titan_ai_key', document.getElementById('ai-key').value);
-                localStorage.setItem('titan_ai_model', document.getElementById('ai-model').value);
+                localStorage.setItem('t_ai_key', document.getElementById('ai-key').value);
+                localStorage.setItem('t_ai_mod', document.getElementById('ai-model').value);
                 UI.view('v-home'); UI.checkAI();
             },
             toggleEye: () => {
-                const inp = document.getElementById('ai-key');
-                inp.type = inp.type === 'password' ? 'text' : 'password';
+                const x = document.getElementById('ai-key'); x.type = x.type==='password'?'text':'password';
             },
             listen: () => {
-                if(!('webkitSpeechRecognition' in window)) return alert("Navegador no soporta voz (usa Chrome).");
+                if(!('webkitSpeechRecognition' in window)) return alert("Usa Chrome");
                 const rec = new window.webkitSpeechRecognition();
                 rec.lang = 'es-ES';
-                const mic = document.querySelector('.mic-btn');
-                mic.classList.add('listening');
-                rec.onresult = (e) => {
-                    const t = e.results[0][0].transcript;
+                const btn = document.querySelector('.mic');
+                btn.classList.add('on');
+                rec.onresult = (e) => { 
                     const txt = document.getElementById('ai-text');
-                    txt.value = (txt.value + ' ' + t).trim();
-                    mic.classList.remove('listening');
+                    txt.value = (txt.value + " " + e.results[0][0].transcript).trim();
+                    btn.classList.remove('on');
                 };
-                rec.onerror = () => mic.classList.remove('listening');
+                rec.onerror = () => btn.classList.remove('on');
                 rec.start();
             },
             process: async () => {
-                const text = document.getElementById('ai-text').value;
-                const apiKey = localStorage.getItem('titan_ai_key');
-                const model = localStorage.getItem('titan_ai_model') || 'gemini-1.5-flash';
-                if(!text) return alert("Escribe o dicta algo.");
-                if(!apiKey) return UI.view('v-conf');
+                const txt = document.getElementById('ai-text').value;
+                const key = localStorage.getItem('t_ai_key');
+                const mod = localStorage.getItem('t_ai_mod') || 'gemini-1.5-flash';
+                if(!txt) return alert("Escribe algo");
+                if(!key) return UI.view('v-conf');
                 
                 const btn = document.querySelector('#v-home .btn.pri');
-                const ogText = btn.innerText;
-                btn.innerText = "Pensando...";
+                const old = btn.innerText; btn.innerText="Pensando...";
                 
                 try {
-                    const prompt = `Actúa como nutricionista. Analiza: "${text}". Devuelve SOLO UN JSON ARRAY (sin markdown): [{"n":"Nombre","q":cantidad_num,"u":"g" o "ml","k":kcal_total,"p":prot_total,"c":carb_total,"f":grasa_total}]. Ejemplo: [{"n":"Huevo","q":60,"u":"g","k":90,"p":7,"c":0.5,"f":6}]`;
-                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                        method: 'POST', headers: {'Content-Type':'application/json'},
+                    const prompt = `Analiza nutricionalmente: "${txt}". Devuelve solo un JSON ARRAY: [{"n":"Nombre","q":cantidad_num,"u":"g"|"ml","k":kcal,"p":prot,"c":carb,"f":grasa}]. Si no se dice cantidad, usa 100g.`;
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${key}`, {
+                        method:'POST', headers:{'Content-Type':'application/json'},
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                     });
-                    
-                    if(!resp.ok) throw new Error(`Error API: ${resp.status} ${resp.statusText}`);
-                    
-                    const data = await resp.json();
-                    if(!data.candidates) throw new Error("La IA no devolvió datos válidos.");
-                    
-                    let raw = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const d = await res.json();
+                    if(!d.candidates) throw new Error("Error API");
+                    const raw = d.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
                     const items = JSON.parse(raw);
                     
-                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat||0 }));
+                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f }));
                     S.day[S.tm] = S.day[S.tm].concat(mapped);
                     await DB.setDay();
                     
+                    // Add base 100g to lib
                     const libItems = mapped.map(i => {
                         const f = i.q/100;
                         return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f };
@@ -596,122 +543,134 @@
                     await DB.addLib(libItems);
                     
                     UI.closeAll(); Sys.sync(); document.getElementById('ai-text').value='';
-                } catch(e) { alert(e.message); } 
-                finally { btn.innerText = ogText; }
+                } catch(e) { alert(e.message); } finally { btn.innerText=old; }
             }
         };
 
+        /* --- UI & CALC --- */
         const UI = {
             open: (id) => document.getElementById(id).style.display='flex',
             closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
             view: (id) => { 
-                ['v-home','v-conf','v-qty','v-json'].forEach(x=>document.getElementById(x).style.display='none'); 
+                ['v-home','v-conf','v-qty','v-json'].forEach(x=>document.getElementById(x).style.display='none');
                 document.getElementById(id).style.display='block';
-                if(id === 'v-conf') {
-                    document.getElementById('ai-key').value = localStorage.getItem('titan_ai_key') || '';
-                    document.getElementById('ai-model').value = localStorage.getItem('titan_ai_model') || 'gemini-1.5-flash';
-                }
             },
             checkAI: () => {
-                const k = localStorage.getItem('titan_ai_key');
-                const btn = document.getElementById('btn-config-ai');
-                if(k) btn.classList.add('configured'); else btn.classList.remove('configured');
+                const k = localStorage.getItem('t_ai_key');
+                const b = document.getElementById('ai-status');
+                if(k) { b.classList.add('ok'); b.innerHTML='✅ Config'; }
+                document.getElementById('ai-key').value = k||'';
+                document.getElementById('ai-model').value = localStorage.getItem('t_ai_mod')||'gemini-1.5-flash';
+            },
+            setQty: (item) => {
+                document.getElementById('qty-name').innerText = item.n;
+                document.getElementById('qty-in').value = item.q;
+                document.getElementById('unit-in').value = item.u;
             },
             openUsers: async () => {
-                const list = document.getElementById('u-list'); list.innerHTML='...';
-                const users = await DB.getUsers();
-                S.allUsers = users; list.innerHTML='';
-                users.forEach(u => {
-                    const d = document.createElement('div'); d.className = 'user-card-wrapper';
-                    if(S.u && S.u.id === u.id) d.classList.add('active');
-                    let goal=0;
-                    if(u.h && u.w) {
-                        const bmr = (10*u.w)+(6.25*u.h)-(5*(2024-u.y))+(u.g=='male'?5:-161);
-                        goal = Math.round(bmr*u.act + parseInt(u.mod));
-                    }
+                const l = document.getElementById('u-list'); l.innerHTML='Cargando...';
+                const us = await DB.getUsers(); l.innerHTML='';
+                us.forEach(u => {
+                    const d = document.createElement('div'); 
+                    d.className = `user-row ${S.u && S.u.id===u.id ? 'active':''}`;
+                    // CALC GOAL
+                    const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
+                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
+                    
                     d.innerHTML = `
-                        <div class="user-select-zone" onclick="window.UI.selUser('${u.id}')">
-                            <div class="avatar">${u.name[0]}</div><div><b>${u.name}</b><br><small>${goal} kcal</small></div>
+                        <div class="u-avatar" onclick="window.Sys.load('${u.id}')">${u.name[0]}</div>
+                        <div class="u-info" onclick="window.Sys.load('${u.id}')">
+                            <h4>${u.name}</h4><p>Meta: ${goal} kcal</p>
                         </div>
-                        <div class="user-edit-zone" onclick="event.stopPropagation(); window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>`;
-                    list.appendChild(d);
+                        <div class="u-edit" onclick="window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>
+                    `;
+                    l.appendChild(d);
                 });
                 UI.open('m-users');
             },
-            selUser: (id) => { UI.closeAll(); Sys.load(id); },
             editUser: (id) => {
-                const u = S.allUsers.find(x => x.id === id); if(!u) return;
+                const u = S.allUsers.find(x => x.id === id);
                 document.getElementById('e-name').value = u.name;
                 document.getElementById('e-h').value = u.h; document.getElementById('e-w').value = u.w;
                 document.getElementById('e-y').value = u.y; document.getElementById('e-g').value = u.g;
                 document.getElementById('e-act').value = u.act; document.getElementById('e-mod').value = u.mod;
+                
                 let pp=30, pc=50, pf=20;
                 if(u.mac.p) {
-                    const bmr = (10*u.w)+(6.25*u.h)-(5*(2024-u.y))+(u.g=='male'?5:-161);
-                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
-                    pp = Math.round((u.mac.p*4/goal)*100); pc = Math.round((u.mac.c*4/goal)*100); pf = Math.round((u.mac.f*9/goal)*100);
+                     const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
+                     const goal = Math.round(bmr*u.act + parseInt(u.mod));
+                     if(goal>0) {
+                         pp = Math.round((u.mac.p*4/goal)*100); 
+                         pc = Math.round((u.mac.c*4/goal)*100); 
+                         pf = Math.round((u.mac.f*9/goal)*100);
+                     }
                 }
-                document.getElementById('pp').value = pp; document.getElementById('pc').value = pc; document.getElementById('pf').value = pf;
+                document.getElementById('pp').value=pp; document.getElementById('pc').value=pc; document.getElementById('pf').value=pf;
+                document.getElementById('btn-del-user').style.display = 'block';
                 Calc.live(); UI.open('m-prof');
             },
-            newProfile: () => { S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); UI.open('m-prof'); Calc.live(); }
+            newProfile: () => { 
+                S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); 
+                document.getElementById('btn-del-user').style.display='none';
+                UI.open('m-prof'); Calc.live(); 
+            }
         };
 
         const Calc = {
             bio: () => {
-                const u = S.u; if(!u) return;
-                const h = parseFloat(u.h), w = parseFloat(u.w), y = parseInt(u.y);
-                const age = new Date().getFullYear() - y;
-                let bmr = (10*w) + (6.25*h) - (5*age) + (u.g==='male'?5:-161);
-                let tdee = bmr * parseFloat(u.act);
-                let goal = Math.round(tdee + parseInt(u.mod));
-                u.calc = { goal: goal, burn: Math.round(tdee), tdee: tdee };
+                if(!S.u) return;
+                const h=S.u.h, w=S.u.w, age=new Date().getFullYear()-S.u.y;
+                let bmr = (10*w)+(6.25*h)-(5*age)+(S.u.g=='male'?5:-161);
+                let tdee = bmr * parseFloat(S.u.act);
+                let goal = Math.round(tdee + parseInt(S.u.mod));
+                S.u.calc = { goal:goal, tdee:tdee };
                 
-                if(u.mac.p) { u.calc.p = u.mac.p; u.calc.c = u.mac.c; u.calc.f = u.mac.f; } 
-                else { u.calc.p = Math.round(w * 2); u.calc.f = Math.round(w * 0.9); u.calc.c = Math.round((goal - (u.calc.p*4) - (u.calc.f*9))/4); }
+                if(S.u.mac.p) { S.u.calc.p=S.u.mac.p; S.u.calc.c=S.u.mac.c; S.u.calc.f=S.u.mac.f; }
+                else { S.u.calc.p=Math.round(w*2); S.u.calc.f=Math.round(w*0.9); S.u.calc.c=Math.round((goal-(S.u.calc.p*4)-(S.u.calc.f*9))/4); }
                 
-                const el = document.getElementById('h-name');
-                if(el) {
-                    el.innerText = u.name;
-                    document.getElementById('h-av').innerText = u.name[0];
-                    document.getElementById('bio-txt').innerHTML = `<span>🔥 Gasto: ${Math.round(tdee)}</span> | <span>🎯 Meta: <b>${goal} kcal</b></span>`;
-                }
+                document.getElementById('h-av').innerText = S.u.name[0];
+                document.getElementById('bio-txt').innerHTML = `<span>🔥 Gasto: ${Math.round(tdee)}</span> <span>🎯 Meta: <b>${goal}</b></span>`;
             },
             live: () => {
-                const elH = document.getElementById('e-h'); if(!elH) return;
-                const h = parseFloat(elH.value)||0, w = parseFloat(document.getElementById('e-w').value)||0;
-                const y = parseInt(document.getElementById('e-y').value)||2000, g = document.getElementById('e-g').value;
-                const act = parseFloat(document.getElementById('e-act').value), mod = parseInt(document.getElementById('e-mod').value);
+                const val = (id) => parseFloat(document.getElementById(id).value)||0;
+                const h=val('e-h'), w=val('e-w'), y=val('e-y'), act=val('e-act'), mod=val('e-mod');
+                const g = document.getElementById('e-g').value;
                 
-                const pp=parseInt(document.getElementById('pp').value)||0, pc=parseInt(document.getElementById('pc').value)||0, pf=parseInt(document.getElementById('pf').value)||0;
-                const tot=pp+pc+pf;
-                const check = document.getElementById('p-check');
-                if(check) { check.innerText=`Total: ${tot}% `+(tot===100?'✅':'⚠️'); check.style.color=tot===100?'var(--ok)':'var(--bad)'; }
-                
+                const pp=val('pp'), pc=val('pc'), pf=val('pf');
+                document.getElementById('p-check').innerText = `Total: ${pp+pc+pf}% ` + (pp+pc+pf===100?'✅':'⚠️');
+
                 if(h && w) {
-                    const bmr = (10*w) + (6.25*h) - (5*(new Date().getFullYear()-y)) + (g==='male'?5:-161);
+                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
                     const goal = Math.round(bmr*act+mod);
+                    const imc = w/((h/100)**2);
+                    const ideal = 22*((h/100)**2);
+                    
                     document.getElementById('l-tmb').innerText = Math.round(bmr);
-                    document.getElementById('l-goal').innerText = Math.round(goal);
+                    document.getElementById('l-imc').innerText = imc.toFixed(1);
+                    document.getElementById('l-ideal').innerText = Math.round(ideal)+'kg';
+                    document.getElementById('l-goal').innerText = goal;
                 }
             }
         };
 
         const Render = {
             all: () => {
-                document.getElementById('h-day').innerText = S.d.toLocaleDateString('es-ES', {weekday:'long'});
+                document.getElementById('h-day').innerText = S.d.toLocaleDateString('es-ES',{weekday:'long'});
+                document.getElementById('h-full').innerText = S.d.toLocaleDateString('es-ES');
+                
                 let t = {k:0, p:0, c:0, f:0};
                 Object.values(S.day).forEach(arr => arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }));
+                
                 const tg = S.u.calc;
                 const rem = tg.goal - t.k;
                 document.getElementById('v-rem').innerText = Math.round(rem);
-                document.getElementById('ring-bg').style.background = `conic-gradient(var(--car) 0% ${(t.k/tg.goal)*100}%, rgba(255,255,255,0.1) 0%)`;
+                document.getElementById('ring-bg').style.background = `conic-gradient(var(--car) 0% ${(t.k/tg.goal)*100}%, rgba(255,255,255,0.05) 0%)`;
                 
-                const bar = (k, v, max) => {
+                const bar = (k,v,max) => {
                     document.getElementById('v-'+k).innerText = `${Math.round(v)}/${max}`;
                     document.getElementById('b-'+k).style.width = Math.min((v/max)*100, 100)+'%';
                 };
-                bar('p', t.p, tg.p); bar('c', t.c, tg.c); bar('f', t.f, tg.f);
+                bar('p',t.p,tg.p); bar('c',t.c,tg.c); bar('f',t.f,tg.f);
                 
                 const feed = document.getElementById('feed'); feed.innerHTML='';
                 MEALS.forEach(m => {
@@ -722,13 +681,19 @@
                         mk+=i.k; mp+=i.p; mc+=i.c; mf+=i.f;
                         rows += `
                         <div class="item">
-                            <div class="i-info"><h4>${i.n}</h4>
-                                <div class="i-det"><span class="i-pill">${i.q}${i.u}</span> <span>🔥 ${Math.round(i.k)}</span>
-                                <span style="color:var(--pro)">P:${Math.round(i.p)}</span><span style="color:var(--car)">C:${Math.round(i.c)}</span><span style="color:var(--fat)">F:${Math.round(i.f)}</span></div>
+                            <div class="i-info">
+                                <div class="i-name">${i.n}</div>
+                                <div class="i-meta">
+                                    <span class="k-tag">${i.q}${i.u.replace('100','')}</span> 
+                                    🔥 ${Math.round(i.k)} 
+                                    <span style="color:var(--pro)">P${Math.round(i.p)}</span> 
+                                    <span style="color:var(--car)">C${Math.round(i.c)}</span> 
+                                    <span style="color:var(--fat)">G${Math.round(i.f)}</span>
+                                </div>
                             </div>
-                            <div class="c-actions">
+                            <div class="i-opts">
                                 <button class="act-btn" onclick="window.Logic.editItem('${m.k}', ${idx})"><i class="fas fa-pencil-alt"></i></button>
-                                <button class="act-btn del" onclick="window.Logic.delItem('${m.k}', ${idx})"><i class="fas fa-times"></i></button>
+                                <button class="act-btn del" onclick="window.Logic.delItem('${m.k}', ${idx})"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>`;
                     });
@@ -736,18 +701,18 @@
                     feed.innerHTML += `
                     <div class="card">
                         <div class="c-head">
-                            <div class="c-left"><i class="fas ${m.i}"></i> ${m.n}</div>
-                            <div class="c-right">
+                            <div class="c-title"><i class="fas ${m.i}"></i> ${m.n}</div>
+                            <div class="c-tools">
                                 <div class="meal-macros">
-                                    <span class="mm-item" style="color:var(--pro)"><span class="mm-dot" style="background:var(--pro)"></span>${Math.round(mp)}p</span>
-                                    <span class="mm-item" style="color:var(--car)"><span class="mm-dot" style="background:var(--car)"></span>${Math.round(mc)}c</span>
-                                    <span class="mm-item" style="color:var(--fat)"><span class="mm-dot" style="background:var(--fat)"></span>${Math.round(mf)}g</span>
+                                    <span style="color:var(--pro)">${Math.round(mp)}p</span>
+                                    <span style="color:var(--car)">${Math.round(mc)}c</span>
+                                    <span style="color:var(--fat)">${Math.round(mf)}g</span>
                                 </div>
-                                <span class="kcal-badge">${Math.round(mk)} kcal</span>
-                                <button class="tool-btn copy" title="Copiar" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
-                                <button class="tool-btn move" title="Mover" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar-day"></i></button>
-                                <button class="tool-btn del" title="Vaciar" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-trash-alt"></i></button>
-                                <button class="tool-btn add" title="Añadir" onclick="window.Logic.openAdd('${m.k}')">+</button>
+                                <span class="k-tag">${Math.round(mk)} kcal</span>
+                                <button class="act-btn" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
+                                <button class="act-btn" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar"></i></button>
+                                <button class="act-btn del" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-ban"></i></button>
+                                <button class="act-btn add" onclick="window.Logic.openAdd('${m.k}')"><i class="fas fa-plus"></i></button>
                             </div>
                         </div>
                         <div>${rows}</div>
@@ -756,31 +721,29 @@
             }
         };
 
-        // EXPOSE TO WINDOW
-        window.Logic = Logic;
-        window.UI = UI;
-        window.AI = AI;
-        window.Calc = Calc;
-
-        const Sys = {
-            init: async () => {
-                await DB.lib();
-                if(S.uid) await Sys.load(S.uid);
-                else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
-            },
-            load: async (id) => {
-                S.uid = id; localStorage.setItem('tid', id);
-                S.u = await DB.getU(id);
-                if(!S.u) { UI.openUsers(); return; }
-                S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
-                document.getElementById('loading-screen').style.display='none';
+        // EXPORTAR GLOBALMENTE
+        window.Logic = Logic; window.UI = UI; window.AI = AI; window.Calc = Calc; window.Sys = {
+            init: async () => { await DB.lib(); S.uid?Sys.load(S.uid):UI.openUsers(); },
+            load: async (id) => { 
+                S.day={}; S.uid=id; localStorage.setItem('tid', id); 
+                S.u=await DB.getU(id); if(!S.u){UI.openUsers();return;}
+                S.u=DB.norm(S.u); Calc.bio(); await Sys.sync(); 
+                document.getElementById('loading-screen').style.display='none'; 
+                UI.closeAll();
             },
             sync: async () => { S.day = await DB.getDay(S.d); Render.all(); }
         };
 
-        if(document.readyState === 'complete') Sys.init();
-        else window.addEventListener('load', Sys.init);
+        // GESTURES (SWIPE)
+        let ts = 0;
+        document.addEventListener('touchstart', e => ts = e.changedTouches[0].screenX);
+        document.addEventListener('touchend', e => {
+            const te = e.changedTouches[0].screenX;
+            if(te < ts - 50) Logic.day(1);
+            if(te > ts + 50) Logic.day(-1);
+        });
 
+        if(document.readyState==='complete') window.Sys.init(); else window.addEventListener('load', window.Sys.init);
     </script>
 </body>
 </html>
