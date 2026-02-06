@@ -3,132 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v25.0 | UI & SWIPE</title>
+    <title>Titanium v25.0 | SWIPE & IMPORT</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; }
+        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f1f5f9; --c: #ffffff; --ok: #10b981; --bad: #ef4444; --warn: #f59e0b; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; overflow-x: hidden; user-select: none; }
         
         #loading-screen { position: fixed; inset: 0; background: var(--p); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s; }
-        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--car); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--car); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* HEADER COMPACTO */
-        .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 15px 15px 40px 15px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 15px 15px 50px 15px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         
-        /* AVATAR SOLO (Móvil friendly) */
-        .user-pill { width: 42px; height: 42px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
-        .avatar-img { font-weight: 800; color: white; }
+        /* DISEÑO MÓVIL: SOLO AVATAR */
+        .user-pill { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--car); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid rgba(255,255,255,0.2); font-size: 1.1rem; }
+        #h-name { display: none; } /* Ocultar nombre */
+
+        .date-nav { display: flex; align-items: center; gap: 10px; flex-grow: 1; justify-content: flex-end; }
+        .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 12px; color: white; cursor: pointer; }
         
-        .date-nav { display: flex; align-items: center; gap: 10px; }
-        .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 36px; height: 36px; border-radius: 10px; color: white; cursor: pointer; }
-        .date-info { text-align: right; }
-        .date-info h2 { font-size: 0.95rem; font-weight: 700; margin: 0; }
-        .date-info p { font-size: 0.7rem; opacity: 0.7; margin: 0; }
+        .date-txt { text-align: right; }
+        #h-day { font-size: 1rem; font-weight: 700; margin: 0; text-transform: capitalize; }
+        #h-full { font-size: 0.7rem; opacity: 0.7; margin: 0; }
 
-        .dash { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
-        .ring { width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
-        .ring-in { width: 84px; height: 84px; background: var(--p); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .ring-val { font-size: 1.4rem; font-weight: 800; }
-        .ring-lbl { font-size: 0.6rem; opacity: 0.7; }
+        .dash { display: grid; grid-template-columns: 110px 1fr; gap: 20px; align-items: center; }
+        .ring { width: 110px; height: 110px; border-radius: 50%; background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); display: flex; align-items: center; justify-content: center; position: relative; }
+        .ring-in { width: 90px; height: 90px; background: var(--p); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .val-big { font-size: 1.4rem; font-weight: 800; }
+        .lbl-small { font-size: 0.6rem; opacity: 0.7; }
         
-        .macros { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
-        .m-row { display: flex; flex-direction: column; gap: 3px; }
-        .m-head { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; }
-        .bar-bg { width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 3px; }
+        .macros { display: flex; flex-direction: column; gap: 8px; }
+        .m-row { display: flex; flex-direction: column; gap: 4px; }
+        .m-head { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; }
+        .bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 4px; }
 
-        .bio-alert { margin-top: 15px; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 10px; font-size: 0.75rem; display: flex; justify-content: space-between; }
+        .bio-alert { margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.8rem; display: flex; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1); }
 
-        .main { max-width: 800px; margin: -25px auto 0; padding: 0 15px; position: relative; z-index: 10; }
-        .card { background: white; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid #e2e8f0; }
+        .main { max-width: 800px; margin: -30px auto 0; padding: 0 15px; position: relative; z-index: 10; }
+        .card { background: white; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
         
-        .c-head { padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        .c-title { font-weight: 700; color: var(--s); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
-        .c-tools { display: flex; gap: 6px; }
-
-        .meal-macros { display: none; } /* Oculto en móvil por espacio, visible si hay sitio */
-        @media(min-width: 400px) { .meal-macros { display: flex; gap: 8px; font-size: 0.7rem; font-family: monospace; font-weight: 700; margin-right: 10px; } }
+        .c-head { padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .c-left { font-weight: 800; color: var(--s); font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+        .c-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-grow: 1; }
         
-        .k-tag { background: var(--p); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .meal-macros { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 700; font-family: monospace; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-right: 5px; }
+        .mm-item { display: flex; align-items: center; gap: 3px; }
+        .mm-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .k-badge { background: var(--p); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.8rem; }
 
-        /* BOTONES DE ACCIÓN */
-        .act-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .act-btn.add { border-color: var(--ok); color: var(--ok); background: #ecfdf5; }
-        .act-btn.del { color: var(--bad); }
+        .tool-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.9rem; }
+        .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tool-btn.copy { color: var(--a); border-color: var(--a); background: #eff6ff; }
+        .tool-btn.move { color: var(--warn); border-color: var(--warn); background: #fffbeb; }
+        .tool-btn.del { color: var(--bad); border-color: var(--bad); background: #fef2f2; }
+        .tool-btn.add { color: var(--ok); border-color: var(--ok); background: #ecfdf5; font-weight: bold; width: auto; padding: 0 12px; }
 
-        .item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .i-name { font-size: 0.9rem; font-weight: 600; color: var(--p); margin-bottom: 2px; }
-        .i-meta { font-size: 0.75rem; color: #64748b; font-family: monospace; }
-        .i-opts { display: flex; gap: 8px; }
+        .item { padding: 14px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .i-info h4 { font-size: 0.95rem; font-weight: 700; color: var(--p); margin-bottom: 4px; }
+        .i-det { font-size: 0.8rem; color: #64748b; display: flex; gap: 10px; font-family: monospace; font-weight: 600; align-items: center; }
+        .i-pill { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--p); font-family: 'Inter', sans-serif; font-weight: 700; }
+        
+        .c-actions { display: flex; gap: 8px; }
+        .act-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .act-btn:hover { border-color: var(--car); color: var(--car); }
+        .act-btn.del:hover { border-color: #ef4444; color: #ef4444; }
 
-        .fab { position: fixed; bottom: 25px; right: 20px; width: 60px; height: 60px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.3); font-size: 1.4rem; z-index: 100; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
 
         /* MODALES */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .sheet { background: white; width: 100%; max-width: 450px; border-radius: 24px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative; }
-        
-        /* ESTILO LISTA USUARIOS REPARADO */
-        .user-list { display: grid; gap: 10px; margin: 15px 0; }
-        .user-row { display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; gap: 15px; cursor: pointer; transition: 0.2s; }
-        .user-row:hover { border-color: var(--a); background: #eff6ff; }
-        .user-row.active { border-color: var(--a); background: #eff6ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-        .u-avatar { width: 40px; height: 40px; background: var(--a); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
-        .u-info { flex-grow: 1; text-align: left; }
-        .u-info h4 { font-size: 0.95rem; margin: 0; color: var(--p); }
-        .u-info p { font-size: 0.75rem; margin: 0; color: #64748b; }
-        .u-edit { padding: 8px; color: #94a3b8; }
-        .u-edit:hover { color: var(--a); }
-
-        /* PERFIL COMPACTO (FIT SCREEN) */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .inp-grp label { font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px; }
-        .inp { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; font-size: 0.95rem; }
-        
-        .stats-bar { display: flex; justify-content: space-between; background: #eff6ff; padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #dbeafe; }
-        .stat-item { text-align: center; }
-        .stat-val { font-weight: 800; color: var(--a); font-size: 0.9rem; }
-        .stat-lbl { font-size: 0.65rem; color: #64748b; text-transform: uppercase; }
-
-        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; margin-bottom: 10px; }
-        .btn.pri { background: var(--p); color: white; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+        .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
+        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 10px; }
+        .btn.pri { background: var(--a); color: white; }
         .btn.sec { background: #f1f5f9; color: var(--p); }
-        .btn.del { background: #fee2e2; color: var(--bad); font-size: 0.8rem; padding: 10px; }
+        .btn.del-user { background: var(--bad); color: white; margin-top: 20px; }
 
-        /* AI & ADD */
-        .ai-box { background: #f8fafc; border-radius: 16px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
-        .ai-row { display: flex; gap: 10px; margin-top: 10px; }
-        .mic { width: 45px; background: var(--bad); color: white; border: none; border-radius: 10px; cursor: pointer; }
-        .mic.on { animation: pulse 1s infinite; }
-        @keyframes pulse { 50% { transform: scale(0.95); opacity: 0.8; } }
+        .modal-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-x { font-size: 2rem; background: none; border: none; color: #94a3b8; cursor: pointer; line-height: 1; }
+
+        /* LISTA USUARIOS - DISEÑO LIMPIO */
+        .user-list-grid { display: grid; gap: 10px; }
+        .user-card-wrapper { display: flex; background: white; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; transition: all 0.2s; flex-wrap: nowrap; align-items: center; padding: 10px; }
+        .user-card-wrapper:hover { border-color: var(--a); background: #eff6ff; }
+        .user-card-wrapper.active { border-color: var(--a); background: #f0f9ff; }
         
-        .search-res { max-height: 150px; overflow-y: auto; margin-top: 10px; }
-        .s-item { padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.9rem; }
+        .u-av { width: 40px; height: 40px; background: var(--car); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-right: 15px; }
+        .u-inf { flex-grow: 1; }
+        .u-inf h4 { margin: 0; font-size: 1rem; }
+        .u-inf small { color: #64748b; }
+        .u-edt { padding: 10px; color: #cbd5e1; cursor: pointer; }
+        .u-edt:hover { color: var(--a); }
+
+        .live-box { background: #f0f9ff; padding: 15px; border-radius: 14px; border: 1px solid #bae6fd; margin-bottom: 20px; font-size: 0.9rem; }
+        .live-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .live-row.hl { font-weight: 800; color: var(--a); border-top: 1px dashed #bae6fd; padding-top: 5px; margin-top: 5px; }
         
-        .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .modal-title { font-size: 1.1rem; font-weight: 800; }
-        .conf-btn { background: #eff6ff; color: var(--a); border: none; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
-        .conf-btn.ok { background: #ecfdf5; color: var(--ok); }
+        .food-suggestion { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        .food-suggestion:hover { background: #f8fafc; }
+        .unit-selector { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; font-weight: 700; color: var(--text-dark); cursor: pointer; }
+
+        /* AI TOOLS */
+        .ai-header-btn { font-size: 0.8rem; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: 700; display:flex; align-items:center; gap:5px; margin-left:10px; transition: all 0.3s; }
+        .ai-header-btn.configured { background: #ecfdf5; color: var(--ok); border-color: var(--ok); }
+        
+        .ai-input-area { margin-bottom: 20px; }
+        .ai-textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 14px; font-family: inherit; font-size: 1rem; resize: none; background: #f8fafc; margin-bottom: 10px; }
+        .ai-textarea:focus { border-color: var(--a); background: white; }
+        .ai-actions { display: flex; gap: 10px; align-items: center; }
+        .mic-btn { width: 50px; height: 50px; background: #ef4444; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .mic-btn.listening { animation: pulse 1s infinite; background: #dc2626; }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
+        .password-wrapper { position: relative; }
+        .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
+        
+        .separator { text-align: center; margin: 20px 0; color: #94a3b8; font-size: 0.8rem; position: relative; }
+        .separator::before, .separator::after { content: ''; position: absolute; top: 50%; width: 45%; height: 1px; background: #e2e8f0; }
+        .separator::before { left: 0; } .separator::after { right: 0; }
+        
+        .link-btn { background: none; border: none; color: var(--a); cursor: pointer; text-decoration: underline; font-size: 0.85rem; display: block; margin: 10px auto; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
     </style>
 </head>
 <body>
 
     <div id="loading-screen"><div class="spinner"></div></div>
 
-    <header class="header-wrapper">
+    <header class="header-wrapper" id="pdf-header">
         <div class="top-nav-bar">
             <div class="user-pill" onclick="window.UI.openUsers()">
-                <div class="avatar-img" id="h-av">?</div>
+                <div class="avatar" id="h-av">?</div>
             </div>
             <div class="date-nav">
                 <button class="nav-btn" onclick="window.Logic.day(-1)"><i class="fas fa-arrow-left"></i></button>
-                <div class="date-info">
+                <div class="date-txt">
                     <h2 id="h-day">...</h2>
                     <p id="h-full">...</p>
                 </div>
@@ -139,8 +158,8 @@
         <div class="dash">
             <div class="ring" id="ring-bg">
                 <div class="ring-in">
-                    <span class="ring-lbl">RESTAN</span>
-                    <span class="ring-val" id="v-rem">0</span>
+                    <span class="lbl-small">RESTAN</span>
+                    <span class="val-big" id="v-rem">0</span>
                 </div>
             </div>
             <div class="macros">
@@ -167,96 +186,76 @@
 
     <div class="modal" id="m-users">
         <div class="sheet">
-            <div class="modal-head">
-                <div class="modal-title">Perfiles</div>
-                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
-            </div>
-            <div id="u-list" class="user-list"></div>
+            <div class="modal-h"><h3>Perfiles</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+            <div id="u-list" class="user-list-grid"></div>
             <button class="btn pri" onclick="window.UI.newProfile()">+ Crear Nuevo</button>
         </div>
     </div>
 
     <div class="modal" id="m-prof">
         <div class="sheet">
-            <div class="modal-head">
-                <div class="modal-title">Editar Perfil</div>
-                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+            <div class="modal-h"><h3>Perfil</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+            <div class="live-box">
+                <div class="live-row"><span>TMB:</span><span id="l-tmb">--</span></div>
+                <div class="live-row"><span>IMC:</span><span id="l-imc">--</span></div>
+                <div class="live-row"><span>Peso Ideal:</span><span id="l-ideal">--</span></div>
+                <div class="live-row hl"><span>META:</span><span id="l-goal">--</span></div>
             </div>
-            
-            <div class="stats-bar">
-                <div class="stat-item"><div class="stat-val" id="l-tmb">--</div><div class="stat-lbl">TMB</div></div>
-                <div class="stat-item"><div class="stat-val" id="l-imc">--</div><div class="stat-lbl">IMC</div></div>
-                <div class="stat-item"><div class="stat-val" id="l-ideal">--</div><div class="stat-lbl">PESO IDEAL</div></div>
-                <div class="stat-item"><div class="stat-val" id="l-goal" style="color:var(--bad)">--</div><div class="stat-lbl">META</div></div>
+            <label>Nombre</label><input id="e-name" class="inp">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Altura</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
+                <div><label>Peso</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()"></div>
             </div>
-
-            <div class="inp-grp"><label>Nombre</label><input id="e-name" class="inp"></div>
-            <div class="form-grid" style="margin-top:10px">
-                <div class="inp-grp"><label>Altura</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
-                <div class="inp-grp"><label>Peso</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Año</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
+                <div><label>Sexo</label><select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select></div>
             </div>
-            <div class="form-grid">
-                <div class="inp-grp"><label>Año</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
-                <div class="inp-grp"><label>Sexo</label>
-                    <select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select>
-                </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Actividad</label><select id="e-act" class="inp" onchange="window.Calc.live()"><option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option></select></div>
+                <div><label>Objetivo</label><select id="e-mod" class="inp" onchange="window.Calc.live()"><option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option></select></div>
             </div>
-            <div class="form-grid">
-                <div class="inp-grp"><label>Actividad</label>
-                    <select id="e-act" class="inp" onchange="window.Calc.live()">
-                        <option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option>
-                    </select>
-                </div>
-                <div class="inp-grp"><label>Objetivo</label>
-                    <select id="e-mod" class="inp" onchange="window.Calc.live()">
-                        <option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option>
-                    </select>
-                </div>
+            <label style="margin-top:10px; display:block; text-align:center; font-size:0.8rem; font-weight:bold">MACROS (%)</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
+                <input id="pp" type="number" class="inp" placeholder="P" oninput="window.Calc.live()">
+                <input id="pc" type="number" class="inp" placeholder="C" oninput="window.Calc.live()">
+                <input id="pf" type="number" class="inp" placeholder="G" oninput="window.Calc.live()">
             </div>
-            
-            <div class="inp-grp" style="text-align:center; margin: 10px 0;">
-                <label>DISTRIBUCIÓN MACROS (%)</label>
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
-                    <input id="pp" type="number" class="inp" placeholder="P" oninput="window.Calc.live()">
-                    <input id="pc" type="number" class="inp" placeholder="C" oninput="window.Calc.live()">
-                    <input id="pf" type="number" class="inp" placeholder="G" oninput="window.Calc.live()">
-                </div>
-                <div id="p-check" style="font-size:0.7rem; margin-top:5px"></div>
-            </div>
-
-            <button class="btn pri" onclick="window.Logic.saveUser()">Guardar</button>
-            <button class="btn del" id="btn-del-user" onclick="window.Logic.deleteUser()" style="display:none">Eliminar Usuario</button>
+            <div id="p-check" style="text-align:center; font-size:0.8rem; margin-bottom:15px; color:#94a3b8">Total: 0%</div>
+            <button class="btn pri" id="btn-save-user" onclick="window.Logic.saveUser()">Guardar</button>
+            <button class="btn del-user" id="btn-del-user" onclick="window.Logic.deleteUser()" style="display:none">🗑️ Eliminar</button>
         </div>
     </div>
 
     <div class="modal" id="m-add">
         <div class="sheet">
-            <div class="modal-head">
-                <div class="modal-title">Añadir</div>
-                <button class="conf-btn" id="ai-status" onclick="window.UI.view('v-conf')">⚙️ Config AI</button>
+            <div class="modal-h">
+                <h3>Añadir</h3>
+                <button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')"><i class="fas fa-cog"></i> Config</button>
                 <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
             </div>
-
+            
             <div id="v-home">
-                <div class="ai-box">
-                    <textarea id="ai-text" class="inp" style="height:80px; resize:none" placeholder="Ej: 2 huevos y un plátano..."></textarea>
-                    <div class="ai-row">
-                        <button class="mic" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
-                        <button class="btn pri" style="margin:0" onclick="window.AI.process()">Procesar con IA</button>
+                <div class="ai-input-area">
+                    <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos cocidos..."></textarea>
+                    <div class="ai-actions">
+                        <button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
+                        <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">✨ Procesar</button>
                     </div>
                 </div>
-                
-                <input class="inp" id="src-in" placeholder="🔍 Buscar en biblioteca..." onkeyup="window.Logic.search()">
-                <div id="res-list" class="search-res"></div>
-                <div style="text-align:center; margin-top:10px">
-                    <button class="conf-btn" onclick="window.UI.view('v-json')">Pegar JSON</button>
-                </div>
+                <div class="separator">O buscar</div>
+                <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.Logic.search()">
+                <div id="res-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
+                <button class="link-btn" onclick="window.UI.view('v-json')">Usar JSON</button>
             </div>
 
             <div id="v-conf" style="display:none">
-                <h4>Configurar IA</h4>
-                <div class="inp-grp"><label>API Key</label><input type="password" id="ai-key" class="inp"></div>
-                <div class="inp-grp" style="margin-bottom:15px"><label>Modelo</label><input id="ai-model" class="inp" value="gemini-1.5-flash"></div>
+                <h4>Configuración IA</h4>
+                <label>API Key</label>
+                <div class="password-wrapper">
+                    <input type="password" id="ai-key" class="inp">
+                    <i class="fas fa-eye eye-icon" onclick="window.AI.toggleEye()"></i>
+                </div>
+                <label>Modelo</label><input id="ai-model" class="inp" value="gemini-1.5-flash">
                 <button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button>
                 <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
@@ -265,13 +264,10 @@
                 <h4 id="qty-name"></h4>
                 <div style="display:flex; gap:10px; margin-bottom:15px">
                     <input type="number" id="qty-in" class="inp" placeholder="Cantidad">
-                    <select id="unit-in" class="inp" style="width:100px">
-                        <option value="g">g</option>
-                        <option value="ml">ml</option>
-                    </select>
+                    <select id="unit-in" class="unit-sel"><option value="g">g</option><option value="ml">ml</option></select>
                 </div>
                 <button class="btn pri" onclick="window.Logic.saveItem()">Añadir</button>
-                <button class="btn sec" onclick="window.UI.view('v-home')">Cancelar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
 
             <div id="v-json" style="display:none">
@@ -284,20 +280,13 @@
 
     <div class="modal" id="m-copy">
         <div class="sheet">
-            <div class="modal-head">
-                <div class="modal-title">Gestionar Comida</div>
-                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
-            </div>
-            <div class="inp-grp"><label>Fecha Destino</label><input type="date" id="copy-date" class="inp"></div>
-            <div class="inp-grp" style="margin-bottom:15px"><label>Comida Destino</label>
-                <select id="copy-meal" class="inp">
-                    <option value="01_desayuno">Desayuno</option>
-                    <option value="02_almuerzo">Almuerzo</option>
-                    <option value="03_comida">Comida</option>
-                    <option value="04_merienda">Merienda</option>
-                    <option value="05_cena">Cena</option>
-                </select>
-            </div>
+            <div class="modal-h"><h3>Gestionar</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+            <label>Fecha Destino:</label><input type="date" id="copy-date" class="inp">
+            <label>Comida Destino:</label>
+            <select id="copy-meal" class="inp">
+                <option value="01_desayuno">Desayuno</option><option value="02_almuerzo">Almuerzo</option>
+                <option value="03_comida">Comida</option><option value="04_merienda">Merienda</option><option value="05_cena">Cena</option>
+            </select>
             <button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button>
         </div>
     </div>
@@ -305,11 +294,11 @@
     <div class="modal" id="m-glob">
         <div class="sheet">
             <h3>Opciones</h3>
-            <button class="btn sec" onclick="window.Logic.pdf()">📄 PDF Diario</button>
-            <button class="btn sec" onclick="window.Logic.exportJSON()">💾 Backup Completo</button>
+            <button class="btn sec" onclick="window.Logic.pdf()">PDF Diario</button>
+            <button class="btn sec" onclick="window.Logic.exportJSON()">Backup Completo</button>
             <input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)">
             <button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar Backup</button>
-            <button class="btn del" onclick="window.Logic.wipe()">🔥 Borrar Día Actual</button>
+            <button class="btn del" style="background:#ef4444; color:white" onclick="window.Logic.wipe()">Borrar Día</button>
             <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
         </div>
     </div>
@@ -347,7 +336,7 @@
             srcMeal: null, copyMode: 'copy' 
         };
 
-        /* --- LOGIC & DB --- */
+        /* --- LOGIC --- */
         const DB = {
             col: (n) => fire.collection(db, n),
             doc: (p,i) => fire.doc(db, p, i),
@@ -364,6 +353,7 @@
                 const k=d.toISOString().split('T')[0]; const s=await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
                 let data=s.exists()?s.data():{}; MEALS.forEach(m=>{ if(!data[m.k]) data[m.k]=[] }); return data;
             },
+            getDayLog: async (uid, dStr) => { const s=await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dStr)); return s.exists()?s.data():{}; },
             setDay: async() => { const k=S.d.toISOString().split('T')[0]; await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day); },
             lib: async() => { const s=await fire.getDoc(DB.doc('sistema','biblioteca')); S.lib=s.exists()?s.data().items:[]; },
             addLib: async(arr) => {
@@ -378,31 +368,31 @@
                 const n = document.getElementById('e-name').value;
                 if(!n) return alert("Nombre obligatorio");
                 try {
-                    const vals = (ids) => ids.map(i=>document.getElementById(i).value);
-                    const [h, w, y, g, act, mod] = vals(['e-h','e-w','e-y','e-g','e-act','e-mod']);
-                    const [pp, pc, pf] = vals(['pp','pc','pf']);
+                    const h=parseFloat(document.getElementById('e-h').value), w=parseFloat(document.getElementById('e-w').value);
+                    const y=parseInt(document.getElementById('e-y').value), g=document.getElementById('e-g').value;
+                    const act=parseFloat(document.getElementById('e-act').value), mod=parseInt(document.getElementById('e-mod').value);
+                    const pp=parseInt(document.getElementById('pp').value)||30, pc=parseInt(document.getElementById('pc').value)||50, pf=parseInt(document.getElementById('pf').value)||20;
                     
                     const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
-                    const goal = Math.round(bmr*act + parseInt(mod));
+                    const goal = Math.round(bmr*act + mod);
 
                     const u = {
                         id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
-                        customMacros: { p:Math.round(goal*(pp/100)/4), c:Math.round(goal*(pc/100)/4), f:Math.round(goal*(pf/100)/9) }
+                        customMacros: { p:Math.round((goal*(pp/100))/4), c:Math.round((goal*(pc/100))/4), f:Math.round((goal*(pf/100))/9) }
                     };
-                    await DB.setU(u); S.allUsers=await DB.getUsers(); await Sys.load(u.id); window.UI.closeAll();
+                    await DB.setU(u); alert("✅ Guardado"); S.allUsers=await DB.getUsers(); await Sys.load(u.id); window.UI.closeAll();
                 } catch(e) { alert("Error: "+e.message); }
             },
             deleteUser: async () => {
-                if(confirm("¿Eliminar usuario y todos sus datos?")) {
-                    await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload();
-                }
+                if(confirm("¿Eliminar usuario y datos?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
             },
+            openAdd: (mk) => { S.tm=mk; S.edit=false; UI.view('v-home'); UI.open('m-add'); if(S.lib.length>0) Logic.search(); UI.checkAI(); },
             search: () => {
                 const q = document.getElementById('src-in').value.toLowerCase();
                 const b = document.getElementById('res-list'); b.innerHTML='';
                 S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
                     const d = document.createElement('div'); d.className='s-item';
-                    d.innerHTML = `<b>${f.n}</b> <span style="font-size:0.8em;color:#64748b">${Math.round(f.k)} kcal/100${f.u}</span>`;
+                    d.innerHTML = `<b>${f.n}</b> <small style="color:#64748b">${Math.round(f.k)} kcal</small>`;
                     d.onclick = () => { S.item=f; UI.setQty(f); UI.view('v-qty'); };
                     b.appendChild(d);
                 });
@@ -424,27 +414,24 @@
             },
             delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
             wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
-            wipe: async () => { if(confirm("¿Borrar día entero?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); UI.closeAll(); } },
+            wipe: async () => { if(confirm("¿Borrar día?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); UI.closeAll(); } },
             openCopy: (mk, type) => {
-                S.srcMeal=mk; S.copyMode=type; 
-                document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; UI.open('m-copy');
+                S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; UI.open('m-copy');
             },
             execCopy: async () => {
                 const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
-                const ref = fire.doc(db, `usuarios/${S.uid}/diario`, d);
-                const snap = await fire.getDoc(ref);
-                let data = snap.exists() ? snap.data() : {};
-                if(!data[tm]) data[tm] = [];
-                data[tm] = data[tm].concat(S.day[S.srcMeal]);
-                await fire.setDoc(ref, data);
+                const tData = (await DB.getDayLog(S.uid, d)) || {};
+                if(!tData[tm]) tData[tm]=[];
+                tData[tm] = tData[tm].concat(JSON.parse(JSON.stringify(S.day[S.srcMeal])));
+                await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), tData);
                 if(S.copyMode=='move') { S.day[S.srcMeal]=[]; await DB.setDay(); }
                 UI.closeAll(); if(d===S.d.toISOString().split('T')[0]) Sys.sync(); alert("Hecho");
             },
             parse: async () => {
                 try {
                     const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
-                    const json = JSON.parse(txt);
-                    const arr = Array.isArray(json) ? json : (json.detalles || [json]);
+                    const items = JSON.parse(txt);
+                    const arr = Array.isArray(items)?items:(items.detalles||[items]);
                     const newItems = [];
                     arr.forEach(it => {
                         let q=100, u="g"; if(it.cantidad) { q=parseFloat(it.cantidad)||100; if(it.cantidad.includes("ml")) u="ml"; }
@@ -454,32 +441,29 @@
                         newItems.push(base);
                     });
                     await DB.setDay(); await DB.addLib(newItems); UI.closeAll(); Sys.sync();
-                } catch(e) { alert("JSON inválido"); }
+                } catch(e) { alert("JSON Mal"); }
             },
             pdf: () => { UI.closeAll(); html2pdf().from(document.body).save(); },
             exportJSON: async () => {
                 const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
                 const data = { perfil: S.u, historial: {} };
                 snap.forEach(d => data.historial[d.id] = d.data());
-                const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
-                const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${S.u.name}_backup.json`;
-                a.click();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
+                a.download = `Backup_${S.u.name}.json`; a.click();
             },
             importJSON: async (input) => {
-                const file = input.files[0];
-                if(!file) return;
+                const file = input.files[0]; if(!file) return;
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if(!confirm(`¿Importar historial de ${data.perfil.name} a ${S.u.name}?`)) return;
+                        if(!confirm(`¿Importar datos de ${data.perfil.name} a ${S.u.name}?`)) return;
                         const batch = fire.writeBatch(db);
                         Object.entries(data.historial).forEach(([date, dayData]) => {
                             batch.set(fire.doc(db, `usuarios/${S.uid}/diario`, date), dayData);
                         });
-                        await batch.commit();
-                        alert("Importación completada");
-                        location.reload();
+                        await batch.commit(); alert("Importado"); location.reload();
                     } catch(err) { alert("Error: "+err.message); }
                 };
                 reader.readAsText(file);
@@ -500,14 +484,14 @@
                 if(!('webkitSpeechRecognition' in window)) return alert("Usa Chrome");
                 const rec = new window.webkitSpeechRecognition();
                 rec.lang = 'es-ES';
-                const btn = document.querySelector('.mic');
-                btn.classList.add('on');
+                const btn = document.querySelector('.mic-btn');
+                btn.classList.add('listening');
                 rec.onresult = (e) => { 
                     const txt = document.getElementById('ai-text');
                     txt.value = (txt.value + " " + e.results[0][0].transcript).trim();
-                    btn.classList.remove('on');
+                    btn.classList.remove('listening');
                 };
-                rec.onerror = () => btn.classList.remove('on');
+                rec.onerror = () => btn.classList.remove('listening');
                 rec.start();
             },
             process: async () => {
@@ -521,21 +505,21 @@
                 const old = btn.innerText; btn.innerText="Pensando...";
                 
                 try {
-                    const prompt = `Analiza nutricionalmente: "${txt}". Devuelve solo un JSON ARRAY: [{"n":"Nombre","q":cantidad_num,"u":"g"|"ml","k":kcal,"p":prot,"c":carb,"f":grasa}]. Si no se dice cantidad, usa 100g.`;
+                    const prompt = `Analiza nutricionalmente: "${txt}". Devuelve SOLO UN JSON ARRAY: [{"n":"Nombre","q":cantidad_num,"u":"g"|"ml","k":kcal,"p":prot,"c":carb,"f":grasa}]. Si no se dice cantidad, usa 100g.`;
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${key}`, {
                         method:'POST', headers:{'Content-Type':'application/json'},
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                     });
                     const d = await res.json();
-                    if(!d.candidates) throw new Error("Error API");
+                    if(!d.candidates) throw new Error(d.error?d.error.message:"Error API");
                     const raw = d.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
                     const items = JSON.parse(raw);
                     
-                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f }));
+                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat }));
                     S.day[S.tm] = S.day[S.tm].concat(mapped);
                     await DB.setDay();
                     
-                    // Add base 100g to lib
+                    // Add to lib
                     const libItems = mapped.map(i => {
                         const f = i.q/100;
                         return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f };
@@ -547,7 +531,6 @@
             }
         };
 
-        /* --- UI & CALC --- */
         const UI = {
             open: (id) => document.getElementById(id).style.display='flex',
             closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
@@ -557,8 +540,8 @@
             },
             checkAI: () => {
                 const k = localStorage.getItem('t_ai_key');
-                const b = document.getElementById('ai-status');
-                if(k) { b.classList.add('ok'); b.innerHTML='✅ Config'; }
+                const b = document.getElementById('btn-config-ai');
+                if(k) { b.classList.add('configured'); b.innerHTML='✅ Config'; }
                 document.getElementById('ai-key').value = k||'';
                 document.getElementById('ai-model').value = localStorage.getItem('t_ai_mod')||'gemini-1.5-flash';
             },
@@ -572,17 +555,17 @@
                 const us = await DB.getUsers(); l.innerHTML='';
                 us.forEach(u => {
                     const d = document.createElement('div'); 
-                    d.className = `user-row ${S.u && S.u.id===u.id ? 'active':''}`;
+                    d.className = `user-card-wrapper ${S.u && S.u.id===u.id ? 'active':''}`;
                     // CALC GOAL
                     const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
                     const goal = Math.round(bmr*u.act + parseInt(u.mod));
                     
                     d.innerHTML = `
-                        <div class="u-avatar" onclick="window.Sys.load('${u.id}')">${u.name[0]}</div>
-                        <div class="u-info" onclick="window.Sys.load('${u.id}')">
-                            <h4>${u.name}</h4><p>Meta: ${goal} kcal</p>
+                        <div class="u-av">${u.name[0]}</div>
+                        <div class="u-inf" onclick="window.Sys.load('${u.id}')">
+                            <h4>${u.name}</h4><small>Meta: ${goal} kcal</small>
                         </div>
-                        <div class="u-edit" onclick="window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>
+                        <div class="u-edt" onclick="window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>
                     `;
                     l.appendChild(d);
                 });
@@ -635,7 +618,6 @@
                 const val = (id) => parseFloat(document.getElementById(id).value)||0;
                 const h=val('e-h'), w=val('e-w'), y=val('e-y'), act=val('e-act'), mod=val('e-mod');
                 const g = document.getElementById('e-g').value;
-                
                 const pp=val('pp'), pc=val('pc'), pf=val('pf');
                 document.getElementById('p-check').innerText = `Total: ${pp+pc+pf}% ` + (pp+pc+pf===100?'✅':'⚠️');
 
@@ -657,7 +639,6 @@
             all: () => {
                 document.getElementById('h-day').innerText = S.d.toLocaleDateString('es-ES',{weekday:'long'});
                 document.getElementById('h-full').innerText = S.d.toLocaleDateString('es-ES');
-                
                 let t = {k:0, p:0, c:0, f:0};
                 Object.values(S.day).forEach(arr => arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }));
                 
@@ -682,16 +663,11 @@
                         rows += `
                         <div class="item">
                             <div class="i-info">
-                                <div class="i-name">${i.n}</div>
-                                <div class="i-meta">
-                                    <span class="k-tag">${i.q}${i.u.replace('100','')}</span> 
-                                    🔥 ${Math.round(i.k)} 
-                                    <span style="color:var(--pro)">P${Math.round(i.p)}</span> 
-                                    <span style="color:var(--car)">C${Math.round(i.c)}</span> 
-                                    <span style="color:var(--fat)">G${Math.round(i.f)}</span>
-                                </div>
+                                <h4>${i.n}</h4>
+                                <div class="i-det"><span class="i-pill">${i.q}${i.u.replace('100','')}</span> <span>🔥 ${Math.round(i.k)}</span>
+                                <span style="color:var(--pro)">P${Math.round(i.p)}</span><span style="color:var(--car)">C${Math.round(i.c)}</span><span style="color:var(--fat)">F${Math.round(i.f)}</span></div>
                             </div>
-                            <div class="i-opts">
+                            <div class="c-actions">
                                 <button class="act-btn" onclick="window.Logic.editItem('${m.k}', ${idx})"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="act-btn del" onclick="window.Logic.delItem('${m.k}', ${idx})"><i class="fas fa-trash"></i></button>
                             </div>
@@ -701,18 +677,18 @@
                     feed.innerHTML += `
                     <div class="card">
                         <div class="c-head">
-                            <div class="c-title"><i class="fas ${m.i}"></i> ${m.n}</div>
-                            <div class="c-tools">
+                            <div class="c-left"><i class="fas ${m.i}"></i> ${m.n}</div>
+                            <div class="c-right">
                                 <div class="meal-macros">
-                                    <span style="color:var(--pro)">${Math.round(mp)}p</span>
-                                    <span style="color:var(--car)">${Math.round(mc)}c</span>
-                                    <span style="color:var(--fat)">${Math.round(mf)}g</span>
+                                    <span class="mm-item" style="color:var(--pro)"><span class="mm-dot" style="background:var(--pro)"></span>${Math.round(mp)}p</span>
+                                    <span class="mm-item" style="color:var(--car)"><span class="mm-dot" style="background:var(--car)"></span>${Math.round(mc)}c</span>
+                                    <span class="mm-item" style="color:var(--fat)"><span class="mm-dot" style="background:var(--fat)"></span>${Math.round(mf)}g</span>
                                 </div>
-                                <span class="k-tag">${Math.round(mk)} kcal</span>
-                                <button class="act-btn" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
-                                <button class="act-btn" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar"></i></button>
-                                <button class="act-btn del" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-ban"></i></button>
-                                <button class="act-btn add" onclick="window.Logic.openAdd('${m.k}')"><i class="fas fa-plus"></i></button>
+                                <span class="k-badge">${Math.round(mk)} kcal</span>
+                                <button class="tool-btn copy" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
+                                <button class="tool-btn move" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar-day"></i></button>
+                                <button class="tool-btn del" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-trash-alt"></i></button>
+                                <button class="tool-btn add" onclick="window.Logic.openAdd('${m.k}')">+</button>
                             </div>
                         </div>
                         <div>${rows}</div>
@@ -721,7 +697,7 @@
             }
         };
 
-        // EXPORTAR GLOBALMENTE
+        // EXPORTAR A WINDOW
         window.Logic = Logic; window.UI = UI; window.AI = AI; window.Calc = Calc; window.Sys = {
             init: async () => { await DB.lib(); S.uid?Sys.load(S.uid):UI.openUsers(); },
             load: async (id) => { 
@@ -734,13 +710,13 @@
             sync: async () => { S.day = await DB.getDay(S.d); Render.all(); }
         };
 
-        // GESTURES (SWIPE)
+        // SWIPE GESTURES (AÑADIDO PARA V25.0)
         let ts = 0;
         document.addEventListener('touchstart', e => ts = e.changedTouches[0].screenX);
         document.addEventListener('touchend', e => {
             const te = e.changedTouches[0].screenX;
-            if(te < ts - 50) Logic.day(1);
-            if(te > ts + 50) Logic.day(-1);
+            if(te < ts - 50) Logic.day(1); // Swipe Left -> Next Day
+            if(te > ts + 50) Logic.day(-1); // Swipe Right -> Prev Day
         });
 
         if(document.readyState==='complete') window.Sys.init(); else window.addEventListener('load', window.Sys.init);
