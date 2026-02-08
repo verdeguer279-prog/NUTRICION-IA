@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v31.0 | RINGS & COLORS</title>
+    <title>Titanium v32.0 | PRO REPORTS</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -81,6 +81,7 @@
 
         .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
 
+        /* MODALES */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
@@ -410,11 +411,12 @@
     <div class="modal" id="m-glob">
         <div class="sheet">
             <h3>Opciones</h3>
-            <button class="btn sec" onclick="window.Logic.pdf()">PDF Diario</button>
-            <button class="btn sec" onclick="window.Logic.exportJSON()">Backup Completo (JSON)</button>
+            <button class="btn sec" onclick="window.Logic.pdf()">📄 PDF Diario</button>
+            <button class="btn sec" onclick="window.Logic.pdfHistory()">📚 PDF Historial Completo</button>
+            <button class="btn sec" onclick="window.Logic.exportJSON()">💾 Backup Completo</button>
             <input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)">
             <button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar Backup</button>
-            <button class="btn sec" onclick="window.Logic.syncHistory()">📚 Sincronizar Historial</button>
+            <button class="btn sec" onclick="window.Logic.syncHistory()">🔄 Sincronizar Historial</button>
             <button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button>
             <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
         </div>
@@ -453,7 +455,7 @@
             srcMeal: null, copyMode: 'copy' 
         };
 
-        // --- DEFINICIONES LOCALES ---
+        // --- DEFINICIONES ---
         
         const DB = {
             col: (n) => fire.collection(db, n),
@@ -499,6 +501,33 @@
                     };
                     await DB.setU(u); alert("✅ Guardado"); S.allUsers=await DB.getUsers(); await Sys.load(u.id); window.UI.closeAll();
                 } catch(e) { alert("Error: "+e.message); }
+            },
+            saveWeight: async () => {
+                const w = parseFloat(document.getElementById('w-today').value);
+                const d = document.getElementById('w-date').value;
+                if(!w || !d) return alert("Faltan datos");
+                
+                let targetData = S.day;
+                let isToday = (d === S.d.toISOString().split('T')[0]);
+                
+                if(!isToday) {
+                    const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
+                    targetData = snap.exists() ? snap.data() : {};
+                }
+                
+                targetData.weight = w;
+                await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), targetData);
+                
+                if(isToday) S.day = targetData;
+                alert("Peso guardado");
+                window.Stats.load(30); 
+            },
+            checkWeight: () => {
+                if(!S.day.weight) {
+                    setTimeout(() => {
+                        if(confirm("¿Quieres registrar tu peso hoy?")) window.Stats.open();
+                    }, 1000);
+                }
             },
             deleteUser: async () => {
                 if(confirm("¿Eliminar usuario y todos sus datos?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
@@ -574,11 +603,8 @@
             },
             parse: async () => {
                 try {
-                    const txt = document.getElementById('json-in').value;
-                    const match = txt.match(/\[.*\]/s) || txt.match(/\{.*\}/s);
-                    if(!match) throw new Error("No JSON found");
-                    const json = JSON.parse(match[0]);
-                    
+                    const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const json = JSON.parse(txt);
                     let items = Array.isArray(json)?json:(json.comida_combinada?json.comida_combinada.items:(json.items||json.detalles||[json]));
                     const newItems = [];
                     items.forEach(it => {
@@ -600,14 +626,92 @@
                     document.getElementById('json-in').value=''; window.UI.closeAll(); Sys.sync();
                 } catch(e) { alert("JSON Mal: " + e.message); }
             },
-            pdf: () => { window.UI.closeAll(); html2pdf().from(document.body).save(); },
+            createPDF: (content, filename) => {
+                const opt = { margin:10, filename:filename, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} };
+                html2pdf().from(content).set(opt).save();
+            },
+            pdf: () => { 
+                window.UI.closeAll();
+                const dStr = S.d.toLocaleDateString('es-ES');
+                let html = `<div style="padding:20px; font-family:sans-serif">
+                    <h1 style="color:#0f172a">Reporte Diario - ${dStr}</h1>
+                    <p>Usuario: <b>${S.u.name}</b></p>
+                    <hr>
+                    <h3>Resumen</h3>
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:20px">
+                        <tr style="background:#f1f5f9; text-align:left"><th style="padding:8px">Macro</th><th style="padding:8px">Total</th><th style="padding:8px">Meta</th></tr>`;
+                
+                let t = {k:0, p:0, c:0, f:0};
+                Object.values(S.day).forEach(arr => { if(Array.isArray(arr)) arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }); });
+                
+                html += `<tr><td style="padding:8px">Calorías</td><td style="padding:8px">${Math.round(t.k)}</td><td style="padding:8px">${S.u.calc.goal}</td></tr>`;
+                html += `<tr><td style="padding:8px">Proteínas</td><td style="padding:8px">${Math.round(t.p)}g</td><td style="padding:8px">${S.u.calc.p}g</td></tr>`;
+                html += `<tr><td style="padding:8px">Carbohidratos</td><td style="padding:8px">${Math.round(t.c)}g</td><td style="padding:8px">${S.u.calc.c}g</td></tr>`;
+                html += `<tr><td style="padding:8px">Grasas</td><td style="padding:8px">${Math.round(t.f)}g</td><td style="padding:8px">${S.u.calc.f}g</td></tr>`;
+                html += `</table><h3>Detalle Comidas</h3>`;
+                
+                MEALS.forEach(m => {
+                    const arr = S.day[m.k] || [];
+                    if(arr.length > 0) {
+                        html += `<h4 style="background:#e2e8f0; padding:5px">${m.n}</h4><ul>`;
+                        arr.forEach(i => html += `<li>${i.n} (${i.q}${i.u}) - ${Math.round(i.k)} kcal</li>`);
+                        html += `</ul>`;
+                    }
+                });
+                html += `</div>`;
+                
+                const el = document.createElement('div'); el.innerHTML = html;
+                document.body.appendChild(el);
+                Logic.createPDF(el, `Reporte_${dStr}.pdf`);
+                setTimeout(() => el.remove(), 1000);
+            },
+            pdfHistory: async () => {
+                const btn = document.querySelector('#m-glob button:nth-child(2)');
+                btn.innerText = "⏳ Generando...";
+                try {
+                    const snap = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
+                    let html = `<div style="padding:20px; font-family:sans-serif"><h1 style="text-align:center">Historial Completo - ${S.u.name}</h1>`;
+                    
+                    snap.forEach(doc => {
+                        const date = doc.id;
+                        const data = doc.data();
+                        let totalK = 0;
+                        let mealsHtml = '';
+                        
+                        MEALS.forEach(m => {
+                            if(data[m.k] && data[m.k].length > 0) {
+                                mealsHtml += `<b>${m.n}:</b> `;
+                                data[m.k].forEach(i => { totalK += i.k; mealsHtml += `${i.n} (${Math.round(i.k)}), `; });
+                                mealsHtml = mealsHtml.slice(0, -2) + '<br>';
+                            }
+                        });
+                        
+                        if(totalK > 0) {
+                            html += `<div style="border-bottom:1px solid #ccc; padding:10px 0">
+                                <div style="display:flex; justify-content:space-between">
+                                    <strong>${date}</strong> <span>Total: ${Math.round(totalK)} kcal</span>
+                                </div>
+                                <div style="font-size:0.8rem; color:#555; margin-top:5px">${mealsHtml}</div>
+                            </div>`;
+                        }
+                    });
+                    html += `</div>`;
+                    
+                    const el = document.createElement('div'); el.innerHTML = html;
+                    document.body.appendChild(el);
+                    Logic.createPDF(el, `Historial_Completo_${S.u.name}.pdf`);
+                    setTimeout(() => el.remove(), 2000);
+                } catch(e) { alert("Error PDF: "+e.message); }
+                finally { btn.innerText = "📚 PDF Historial Completo"; window.UI.closeAll(); }
+            },
             exportJSON: async () => {
                 const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
                 const data = { perfil: S.u, historial: {} };
                 snap.forEach(d => data.historial[d.id] = d.data());
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
-                a.download = `Backup_${S.u.name}.json`; a.click();
+                const dateStr = new Date().toISOString().split('T')[0];
+                a.download = `Backup_${S.u.name}_${dateStr}.json`; a.click();
             },
             importJSON: async (input) => {
                 const file = input.files[0]; if(!file) return;
@@ -658,12 +762,12 @@
             }
         };
 
-        /* --- STATS MODULE (RE-WRITTEN) --- */
+        /* --- STATS MODULE --- */
         const Stats = {
-            chartDaily: null,
-            chartWeekly: null,
-            chartWeight: null,
-            currentDate: new Date(), // Local state for stats navigation
+            chartInstance: null,
+            weightInstance: null,
+            weeklyInstance: null,
+            currentDate: new Date(),
 
             open: () => { 
                 Stats.currentDate = new Date();
@@ -675,8 +779,7 @@
                 Stats.updateView();
             },
             load: (dateStr) => {
-                // Compatible with direct date input
-                if(dateStr && typeof dateStr === 'string') Stats.currentDate = new Date(dateStr);
+                if(dateStr) Stats.currentDate = new Date(dateStr);
                 Stats.updateView();
             },
             saveWeight: async () => {
@@ -687,7 +790,6 @@
                 
                 if(!w) return alert("Introduce un peso");
                 
-                // Fetch target day doc
                 const ref = fire.doc(db, `usuarios/${S.uid}/diario`, dStr);
                 const snap = await fire.getDoc(ref);
                 let data = snap.exists() ? snap.data() : {};
@@ -695,9 +797,7 @@
                 data.weight = w;
                 await fire.setDoc(ref, data);
                 
-                // Sync global state if today
                 if(dStr === S.d.toISOString().split('T')[0]) S.day.weight = w;
-                
                 alert("Peso guardado");
                 Stats.updateView();
             },
@@ -706,7 +806,7 @@
                 const dateStr = Stats.currentDate.toISOString().split('T')[0];
                 document.getElementById('st-date').value = dateStr;
                 
-                // --- 1. FETCH WEIGHT HISTORY & CALC DELTAS ---
+                // 1. FETCH HISTORY
                 const allDocs = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
                 const history = [];
                 allDocs.forEach(d => history.push({id: d.id, ...d.data()}));
@@ -718,19 +818,21 @@
                 // Find global first weight
                 for(let h of history) { if(h.weight) { firstWeight = h.weight; break; } }
 
-                // Find current day's weight and previous recorded weight
+                // Find current and PREVIOUS (strictly before dateStr)
                 for(let h of history) {
                     if(h.id === dateStr) currentWeight = h.weight;
                     if(h.id < dateStr && h.weight) prevWeight = h.weight;
                 }
 
                 document.getElementById('w-today').value = currentWeight || '';
-                
                 const fb = document.getElementById('w-feedback');
                 let html = '';
                 
+                // Green if LOST weight (negative diff), Red if GAINED (positive diff)
                 const formatDiff = (curr, base) => {
                     const diff = curr - base;
+                    // Goal is to lose weight usually? Let's assume standard logic: Lost=Green, Gained=Red
+                    // You requested: Gained=Red, Lost=Green (Objective)
                     const color = diff > 0 ? 'text-bad' : (diff < 0 ? 'text-ok' : '');
                     const sign = diff > 0 ? '+' : '';
                     return `<b class="${color}">${sign}${diff.toFixed(1)}kg</b>`;
@@ -742,15 +844,13 @@
                 }
                 fb.innerHTML = html;
 
-                // --- 2. DAILY RING ---
+                // 2. DAILY RING
                 let dayCals = 0;
                 let dayGoal = S.u.calc.goal;
-                // Fetch specific day data if not already in history array (for robustness)
                 let dayData = history.find(h => h.id === dateStr);
                 if(dayData) MEALS.forEach(m => { if(dayData[m.k]) dayData[m.k].forEach(i => dayCals += i.k) });
                 
                 const diffDay = dayCals - dayGoal;
-                const dColor = diffDay > 0 ? '#ef4444' : (dayCals > 0 ? '#3b82f6' : '#e2e8f0');
                 
                 if(Stats.chartDaily) Stats.chartDaily.destroy();
                 Stats.chartDaily = new Chart(document.getElementById('chart-daily'), {
@@ -765,18 +865,22 @@
                     },
                     options: { cutout: '75%', responsive: true, plugins: { legend: { display: false } } }
                 });
-                document.getElementById('daily-txt').innerHTML = `<span class="srt-val">${Math.round(dayCals)}</span><span class="srt-lbl">de ${dayGoal}</span>`;
+                
+                const dSign = diffDay > 0 ? '+' : '';
+                const dClass = diffDay > 0 ? 'text-bad' : 'text-ok';
+                document.getElementById('daily-txt').innerHTML = 
+                    `<span class="srt-val">${Math.round(dayCals)}</span>
+                     <span class="srt-lbl">de ${dayGoal}</span>
+                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${dClass}">${dSign}${Math.round(diffDay)}</span>`;
 
-                // --- 3. WEEKLY RING ---
-                // Calculate week range (Monday to Sunday) for selected date
+                // 3. WEEKLY RING
                 const dObj = new Date(Stats.currentDate);
                 const dayNum = dObj.getDay() || 7; 
-                dObj.setDate(dObj.getDate() - dayNum + 1); // Go to Monday
+                dObj.setDate(dObj.getDate() - dayNum + 1); // Monday
                 
                 let weekCals = 0;
                 let weekGoal = dayGoal * 7;
                 
-                // Sum week
                 for(let i=0; i<7; i++) {
                     const tempD = new Date(dObj);
                     tempD.setDate(dObj.getDate() + i);
@@ -807,10 +911,9 @@
                      <span class="srt-lbl">de ${weekGoal}</span>
                      <span style="display:block;font-size:0.8rem;margin-top:2px" class="${wClass}">${wSign}${Math.round(diffWeek)}</span>`;
 
-                // --- 4. WEIGHT EVOLUTION CHART ---
+                // 4. WEIGHT CHART
                 const chartDates = [];
                 const chartWeights = [];
-                // Last 30 days relative to selected date
                 for(let i=29; i>=0; i--) {
                     const tempD = new Date(Stats.currentDate);
                     tempD.setDate(tempD.getDate() - i);
@@ -825,13 +928,7 @@
                     type: 'line',
                     data: {
                         labels: chartDates,
-                        datasets: [{ 
-                            label: 'Peso (kg)', 
-                            data: chartWeights, 
-                            borderColor: '#10b981', 
-                            tension: 0.3,
-                            spanGaps: true
-                        }]
+                        datasets: [{ label: 'Peso (kg)', data: chartWeights, borderColor: '#10b981', tension: 0.3, spanGaps: true }]
                     },
                     options: { responsive: true, maintainAspectRatio: false }
                 });
@@ -881,7 +978,7 @@
                     const d = await res.json();
                     if(!d.candidates) throw new Error(d.error?d.error.message:"Error API");
                     const raw = d.candidates[0].content.parts[0].text;
-                    const match = raw.match(/\[.*\]/s);
+                    const match = raw.match(/\[.*\]/s); // REGEX FIX
                     if(!match) throw new Error("No JSON");
                     const items = JSON.parse(match[0]);
                     
@@ -1089,16 +1186,12 @@
                 if(!S.u) { window.UI.openUsers(); return; }
                 S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
                 document.getElementById('loading-screen').style.display='none';
-                
-                // Prompt weight if not set
-                if(!S.day.weight) setTimeout(() => {
-                    if(confirm("¿Registrar peso hoy?")) window.Stats.open();
-                }, 1000);
+                window.Logic.checkWeight();
             },
             sync: async () => { S.day = await DB.getDay(S.d); window.Render.all(); }
         };
 
-        // --- GLOBAL ASSIGNMENT (CRITICAL) ---
+        // --- ASIGNACIÓN GLOBAL ---
         window.DB = DB;
         window.Logic = Logic;
         window.UI = UI;
@@ -1106,7 +1199,7 @@
         window.Calc = Calc;
         window.Render = Render;
         window.Sys = Sys;
-        window.Stats = Stats; // ADDED
+        window.Stats = Stats;
 
         // GESTURES
         let ts = 0;
@@ -1117,7 +1210,7 @@
             if(te > ts + 50) Logic.day(-1);
         });
 
-        // BOOT
+        // ARRANQUE SEGURO
         if(document.readyState === 'complete') Sys.init();
         else window.addEventListener('load', Sys.init);
 
