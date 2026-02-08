@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v30.0 | FINAL LOGIC FIX</title>
+    <title>Titanium v31.0 | RINGS & COLORS</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; --warn: #f59e0b; }
+        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; overflow-x: hidden; user-select: none; }
         
@@ -22,7 +22,6 @@
         /* HEADER */
         .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 15px 15px 50px 15px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
         .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        
         .user-group { display: flex; gap: 10px; }
         .user-pill { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--car); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid rgba(255,255,255,0.2); font-size: 1.1rem; }
@@ -82,7 +81,6 @@
 
         .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
 
-        /* MODALES */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
@@ -148,12 +146,16 @@
         .weight-input-box button { width: auto; margin: 0; padding: 0 20px; }
         .weight-date { width: 100%; border-bottom: 1px solid #dbeafe; padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; color: #64748b; font-size: 0.9rem; }
         .w-delta { font-size: 0.8rem; width: 100%; display: flex; justify-content: space-between; color: #64748b; margin-top: 5px; }
-        .w-delta span b { color: var(--p); }
-        .day-stepper { display:flex; gap:5px; }
+        .text-ok { color: var(--ok); font-weight: bold; }
+        .text-bad { color: var(--bad); font-weight: bold; }
+        .day-stepper { display:flex; gap:5px; align-items:center; }
         .day-btn { background:#e2e8f0; border:none; border-radius:5px; width:30px; height:30px; cursor:pointer; }
 
-        .weekly-ring-wrap { display: flex; justify-content: center; margin: 20px 0; position: relative; height: 180px; }
-        .weekly-ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-size: 0.9rem; font-weight: bold; color: var(--s); pointer-events: none; }
+        .rings-container { display: flex; justify-content: space-around; gap: 10px; margin-bottom: 20px; }
+        .stat-ring-wrap { position: relative; width: 140px; height: 140px; display: flex; justify-content: center; align-items: center; }
+        .stat-ring-text { position: absolute; text-align: center; font-size: 0.8rem; pointer-events: none; }
+        .srt-val { font-size: 1.1rem; font-weight: 800; color: var(--p); display: block; }
+        .srt-lbl { color: #64748b; font-size: 0.7rem; }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -171,7 +173,7 @@
                     <div class="avatar" id="h-av">?</div>
                 </div>
                 <div class="user-pill" onclick="window.Stats.open()" style="background:white; color:var(--p)" title="Estadísticas">
-                    <i class="fas fa-chart-bar"></i>
+                    <i class="fas fa-chart-pie"></i>
                 </div>
             </div>
             <div class="date-nav">
@@ -215,38 +217,40 @@
 
     <div class="modal" id="m-stats">
         <div class="sheet" style="max-width:600px">
-            <div class="modal-h"><h3>Estadísticas</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+            <div class="modal-h">
+                <h3>Balance & Peso</h3>
+                <div class="day-stepper">
+                    <button class="day-btn" onclick="window.Stats.changeDate(-1)"><</button>
+                    <input type="date" id="st-date" style="border:none;background:transparent;font-weight:bold" onchange="window.Stats.load(this.value)">
+                    <button class="day-btn" onclick="window.Stats.changeDate(1)">></button>
+                </div>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+            </div>
             
             <div class="weight-input-box">
-                <div class="weight-date">
-                    <span>Fecha pesaje:</span>
-                    <div class="day-stepper">
-                        <button class="day-btn" onclick="window.Logic.changeWDate(-1)"><</button>
-                        <input type="date" id="w-date" style="border:none; background:transparent; font-family:inherit; text-align:center">
-                        <button class="day-btn" onclick="window.Logic.changeWDate(1)">></button>
-                    </div>
-                </div>
-                <input type="text" id="w-today" class="inp" placeholder="Ej: 84.5" inputmode="decimal">
-                <button class="btn pri" onclick="window.Logic.saveWeight()">Guardar</button>
+                <input type="text" id="w-today" class="inp" placeholder="Peso (kg)" inputmode="decimal">
+                <button class="btn pri" onclick="window.Stats.saveWeight()">Guardar</button>
                 <div class="w-delta" id="w-feedback"></div>
             </div>
 
-            <div class="chart-filters">
-                <button class="filter-btn active" onclick="window.Stats.load(7)">Semana</button>
-                <button class="filter-btn" onclick="window.Stats.load(30)">Mes</button>
-                <button class="filter-btn" onclick="window.Stats.load(365)">Año</button>
+            <div class="rings-container">
+                <div>
+                    <h4 style="text-align:center;font-size:0.8rem;margin-bottom:5px">DIARIO</h4>
+                    <div class="stat-ring-wrap">
+                        <canvas id="chart-daily"></canvas>
+                        <div class="stat-ring-text" id="daily-txt"></div>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="text-align:center;font-size:0.8rem;margin-bottom:5px">SEMANAL</h4>
+                    <div class="stat-ring-wrap">
+                        <canvas id="chart-weekly"></canvas>
+                        <div class="stat-ring-text" id="weekly-txt"></div>
+                    </div>
+                </div>
             </div>
 
-            <h4 style="margin-bottom:10px; text-align:center">Balance Semanal</h4>
-            <div class="weekly-ring-wrap">
-                <canvas id="chart-weekly"></canvas>
-                <div id="weekly-text" class="weekly-ring-text"></div>
-            </div>
-
-            <h4 style="margin-bottom:10px">Calorías (Azul: OK, Rojo: Exceso)</h4>
-            <canvas id="chart-cal" style="width:100%; height:220px; margin-bottom:20px"></canvas>
-            
-            <h4 style="margin-bottom:10px">Evolución de Peso</h4>
+            <h4 style="margin:20px 0 10px">Evolución Peso</h4>
             <canvas id="chart-weight" style="width:100%; height:200px"></canvas>
         </div>
     </div>
@@ -496,42 +500,6 @@
                     await DB.setU(u); alert("✅ Guardado"); S.allUsers=await DB.getUsers(); await Sys.load(u.id); window.UI.closeAll();
                 } catch(e) { alert("Error: "+e.message); }
             },
-            changeWDate: (delta) => {
-                const el = document.getElementById('w-date');
-                const d = new Date(el.value);
-                d.setDate(d.getDate() + delta);
-                el.valueAsDate = d;
-                window.Stats.load(30); // Refresh visual context but not chart
-            },
-            saveWeight: async () => {
-                let val = document.getElementById('w-today').value;
-                val = val.replace(',', '.');
-                const w = parseFloat(val);
-                const d = document.getElementById('w-date').value;
-                if(!w || !d) return alert("Faltan datos");
-                
-                let targetData = S.day;
-                let isToday = (d === S.d.toISOString().split('T')[0]);
-                
-                if(!isToday) {
-                    const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
-                    targetData = snap.exists() ? snap.data() : {};
-                }
-                
-                targetData.weight = w;
-                await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), targetData);
-                
-                if(isToday) S.day = targetData;
-                alert("Peso guardado");
-                window.Stats.load(30); 
-            },
-            checkWeight: () => {
-                if(!S.day.weight) {
-                    setTimeout(() => {
-                        if(confirm("¿Quieres registrar tu peso hoy?")) window.Stats.open();
-                    }, 1000);
-                }
-            },
             deleteUser: async () => {
                 if(confirm("¿Eliminar usuario y todos sus datos?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
             },
@@ -607,7 +575,6 @@
             parse: async () => {
                 try {
                     const txt = document.getElementById('json-in').value;
-                    // FIX: EXTRACT JSON FROM TEXT (IGNORING MD)
                     const match = txt.match(/\[.*\]/s) || txt.match(/\{.*\}/s);
                     if(!match) throw new Error("No JSON found");
                     const json = JSON.parse(match[0]);
@@ -691,116 +658,182 @@
             }
         };
 
-        /* --- STATS MODULE --- */
+        /* --- STATS MODULE (RE-WRITTEN) --- */
         const Stats = {
-            chartInstance: null,
-            weightInstance: null,
-            weeklyInstance: null,
+            chartDaily: null,
+            chartWeekly: null,
+            chartWeight: null,
+            currentDate: new Date(), // Local state for stats navigation
+
             open: () => { 
-                document.getElementById('w-date').valueAsDate = new Date();
+                Stats.currentDate = new Date();
                 window.UI.open('m-stats'); 
-                window.Stats.load(7); 
+                Stats.updateView();
             },
-            load: async (days) => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                if(event) event.target.classList.add('active');
-
-                const dates=[], calsSafe=[], calsExcess=[], weights=[];
-                let firstWeight=null, lastWeight=null;
+            changeDate: (delta) => {
+                Stats.currentDate.setDate(Stats.currentDate.getDate() + delta);
+                Stats.updateView();
+            },
+            load: (dateStr) => {
+                // Compatible with direct date input
+                if(dateStr && typeof dateStr === 'string') Stats.currentDate = new Date(dateStr);
+                Stats.updateView();
+            },
+            saveWeight: async () => {
+                let val = document.getElementById('w-today').value;
+                val = val.replace(',', '.');
+                const w = parseFloat(val);
+                const dStr = Stats.currentDate.toISOString().split('T')[0];
                 
-                const now = new Date();
-                const selDate = document.getElementById('w-date').value;
+                if(!w) return alert("Introduce un peso");
                 
+                // Fetch target day doc
+                const ref = fire.doc(db, `usuarios/${S.uid}/diario`, dStr);
+                const snap = await fire.getDoc(ref);
+                let data = snap.exists() ? snap.data() : {};
+                
+                data.weight = w;
+                await fire.setDoc(ref, data);
+                
+                // Sync global state if today
+                if(dStr === S.d.toISOString().split('T')[0]) S.day.weight = w;
+                
+                alert("Peso guardado");
+                Stats.updateView();
+            },
+            
+            updateView: async () => {
+                const dateStr = Stats.currentDate.toISOString().split('T')[0];
+                document.getElementById('st-date').value = dateStr;
+                
+                // --- 1. FETCH WEIGHT HISTORY & CALC DELTAS ---
                 const allDocs = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
-                const sorted = [];
-                allDocs.forEach(d => sorted.push({id:d.id, ...d.data()}));
+                const history = [];
+                allDocs.forEach(d => history.push({id: d.id, ...d.data()}));
                 
-                if(sorted.length > 0) {
-                    // FIRST WEIGHT
-                    for(let d of sorted) if(d.weight) { firstWeight=d.weight; break; }
-                    // LAST WEIGHT (BEFORE SELECTED DATE)
-                    for(let i=sorted.length-1; i>=0; i--) {
-                        if(sorted[i].weight && sorted[i].id < selDate) { lastWeight=sorted[i].weight; break; }
-                    }
+                let firstWeight = null;
+                let prevWeight = null;
+                let currentWeight = null;
+
+                // Find global first weight
+                for(let h of history) { if(h.weight) { firstWeight = h.weight; break; } }
+
+                // Find current day's weight and previous recorded weight
+                for(let h of history) {
+                    if(h.id === dateStr) currentWeight = h.weight;
+                    if(h.id < dateStr && h.weight) prevWeight = h.weight;
                 }
 
-                // DATA FOR WEEKLY RING
-                let totalCals7 = 0;
-                let totalGoal7 = S.u.calc.goal * 7;
-
-                for(let i=days-1; i>=0; i--) {
-                    const d = new Date(); d.setDate(now.getDate() - i);
-                    const k = d.toISOString().split('T')[0];
-                    dates.push(k.slice(5)); 
-                    
-                    const dayData = sorted.find(x => x.id === k);
-                    let dayCal = 0;
-                    let w = null;
-
-                    if(dayData) {
-                        MEALS.forEach(m => { if(dayData[m.k]) dayData[m.k].forEach(x => dayCal += x.k) });
-                        w = dayData.weight || null;
-                    }
-                    
-                    if(i < 7) totalCals7 += dayCal; // Sum last 7 days
-
-                    const goal = S.u.calc.goal;
-                    if(dayCal > goal) { calsSafe.push(goal); calsExcess.push(dayCal - goal); } 
-                    else { calsSafe.push(dayCal); calsExcess.push(0); }
-                    weights.push(w);
-                }
-
-                // WEIGHT FEEDBACK
-                const wInput = document.getElementById('w-today');
-                const feedback = document.getElementById('w-feedback');
-                let curW = parseFloat(wInput.value.replace(',','.')) || (S.day.weight || lastWeight);
+                document.getElementById('w-today').value = currentWeight || '';
                 
-                if(lastWeight > 0) {
-                    const diffLast = (curW - lastWeight).toFixed(1);
-                    const diffFirst = (curW - firstWeight).toFixed(1);
-                    feedback.innerHTML = `<span>vs Ant (${lastWeight}kg): <b>${diffLast>0?'+':''}${diffLast}kg</b></span><span>vs Inicio (${firstWeight}kg): <b>${diffFirst>0?'+':''}${diffFirst}kg</b></span>`;
-                }
-
-                // WEEKLY RING TEXT
-                const diff7 = totalCals7 - totalGoal7;
-                const txtColor = diff7 > 0 ? '#ef4444' : '#10b981';
-                const sign = diff7 > 0 ? '+' : '';
-                document.getElementById('weekly-text').innerHTML = `
-                    <div style="font-size:1.2rem;color:#0f172a">${Math.round(totalCals7)}</div>
-                    <div style="font-size:0.8rem;color:#64748b">de ${totalGoal7}</div>
-                    <div style="font-size:0.9rem;color:${txtColor};margin-top:5px;font-weight:800">${sign}${Math.round(diff7)}</div>
-                `;
-
-                // CHARTS
-                if(Stats.chartInstance) Stats.chartInstance.destroy();
-                Stats.chartInstance = new Chart(document.getElementById('chart-cal').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: dates,
-                        datasets: [
-                            { label: 'Exceso', data: calsExcess, backgroundColor: '#ef4444', stack: '0' },
-                            { label: 'Base', data: calsSafe, backgroundColor: '#3b82f6', stack: '0' }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { x:{stacked:true}, y:{stacked:true} } }
-                });
-
-                if(Stats.weightInstance) Stats.weightInstance.destroy();
-                Stats.weightInstance = new Chart(document.getElementById('chart-weight').getContext('2d'), {
-                    type: 'line',
-                    data: { labels: dates, datasets: [{ label: 'Peso (kg)', data: weights, borderColor: '#10b981', tension: 0.3, spanGaps: true }] },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-
-                if(Stats.weeklyInstance) Stats.weeklyInstance.destroy();
-                let wData = [], wCols = [];
-                if(totalCals7 > totalGoal7) { wData = [totalGoal7, totalCals7 - totalGoal7]; wCols = ['#3b82f6', '#ef4444']; } 
-                else { wData = [totalCals7, totalGoal7 - totalCals7]; wCols = ['#3b82f6', '#e2e8f0']; }
+                const fb = document.getElementById('w-feedback');
+                let html = '';
                 
-                Stats.weeklyInstance = new Chart(document.getElementById('chart-weekly').getContext('2d'), {
+                const formatDiff = (curr, base) => {
+                    const diff = curr - base;
+                    const color = diff > 0 ? 'text-bad' : (diff < 0 ? 'text-ok' : '');
+                    const sign = diff > 0 ? '+' : '';
+                    return `<b class="${color}">${sign}${diff.toFixed(1)}kg</b>`;
+                };
+
+                if(currentWeight) {
+                    if(prevWeight) html += `<span>vs Ant (${prevWeight}): ${formatDiff(currentWeight, prevWeight)}</span>`;
+                    if(firstWeight) html += `<span>vs Inicio (${firstWeight}): ${formatDiff(currentWeight, firstWeight)}</span>`;
+                }
+                fb.innerHTML = html;
+
+                // --- 2. DAILY RING ---
+                let dayCals = 0;
+                let dayGoal = S.u.calc.goal;
+                // Fetch specific day data if not already in history array (for robustness)
+                let dayData = history.find(h => h.id === dateStr);
+                if(dayData) MEALS.forEach(m => { if(dayData[m.k]) dayData[m.k].forEach(i => dayCals += i.k) });
+                
+                const diffDay = dayCals - dayGoal;
+                const dColor = diffDay > 0 ? '#ef4444' : (dayCals > 0 ? '#3b82f6' : '#e2e8f0');
+                
+                if(Stats.chartDaily) Stats.chartDaily.destroy();
+                Stats.chartDaily = new Chart(document.getElementById('chart-daily'), {
                     type: 'doughnut',
-                    data: { labels: ['Consumido', 'Restante/Exceso'], datasets: [{ data: wData, backgroundColor: wCols }] },
-                    options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
+                    data: {
+                        labels: ['Comido', 'Restante/Exceso'],
+                        datasets: [{
+                            data: diffDay > 0 ? [dayGoal, diffDay] : [dayCals, dayGoal - dayCals],
+                            backgroundColor: diffDay > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#e2e8f0'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { cutout: '75%', responsive: true, plugins: { legend: { display: false } } }
+                });
+                document.getElementById('daily-txt').innerHTML = `<span class="srt-val">${Math.round(dayCals)}</span><span class="srt-lbl">de ${dayGoal}</span>`;
+
+                // --- 3. WEEKLY RING ---
+                // Calculate week range (Monday to Sunday) for selected date
+                const dObj = new Date(Stats.currentDate);
+                const dayNum = dObj.getDay() || 7; 
+                dObj.setDate(dObj.getDate() - dayNum + 1); // Go to Monday
+                
+                let weekCals = 0;
+                let weekGoal = dayGoal * 7;
+                
+                // Sum week
+                for(let i=0; i<7; i++) {
+                    const tempD = new Date(dObj);
+                    tempD.setDate(dObj.getDate() + i);
+                    const k = tempD.toISOString().split('T')[0];
+                    const h = history.find(x => x.id === k);
+                    if(h) MEALS.forEach(m => { if(h[m.k]) h[m.k].forEach(x => weekCals += x.k) });
+                }
+
+                const diffWeek = weekCals - weekGoal;
+                if(Stats.chartWeekly) Stats.chartWeekly.destroy();
+                Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Comido', 'Restante/Exceso'],
+                        datasets: [{
+                            data: diffWeek > 0 ? [weekGoal, diffWeek] : [weekCals, weekGoal - weekCals],
+                            backgroundColor: diffWeek > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { cutout: '75%', responsive: true, plugins: { legend: { display: false } } }
+                });
+                
+                const wSign = diffWeek > 0 ? '+' : '';
+                const wClass = diffWeek > 0 ? 'text-bad' : 'text-ok';
+                document.getElementById('weekly-txt').innerHTML = 
+                    `<span class="srt-val">${Math.round(weekCals)}</span>
+                     <span class="srt-lbl">de ${weekGoal}</span>
+                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${wClass}">${wSign}${Math.round(diffWeek)}</span>`;
+
+                // --- 4. WEIGHT EVOLUTION CHART ---
+                const chartDates = [];
+                const chartWeights = [];
+                // Last 30 days relative to selected date
+                for(let i=29; i>=0; i--) {
+                    const tempD = new Date(Stats.currentDate);
+                    tempD.setDate(tempD.getDate() - i);
+                    const k = tempD.toISOString().split('T')[0];
+                    chartDates.push(k.slice(5));
+                    const h = history.find(x => x.id === k);
+                    chartWeights.push(h ? h.weight : null);
+                }
+
+                if(Stats.chartWeight) Stats.chartWeight.destroy();
+                Stats.chartWeight = new Chart(document.getElementById('chart-weight'), {
+                    type: 'line',
+                    data: {
+                        labels: chartDates,
+                        datasets: [{ 
+                            label: 'Peso (kg)', 
+                            data: chartWeights, 
+                            borderColor: '#10b981', 
+                            tension: 0.3,
+                            spanGaps: true
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
                 });
             }
         };
@@ -847,11 +880,9 @@
                     });
                     const d = await res.json();
                     if(!d.candidates) throw new Error(d.error?d.error.message:"Error API");
-                    
-                    // NEW: EXTRACT JSON WITH REGEX TO AVOID "Analizando..." TEXT ERROR
                     const raw = d.candidates[0].content.parts[0].text;
                     const match = raw.match(/\[.*\]/s);
-                    if(!match) throw new Error("No JSON found");
+                    if(!match) throw new Error("No JSON");
                     const items = JSON.parse(match[0]);
                     
                     const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat }));
@@ -894,8 +925,7 @@
                 const users = await DB.getUsers();
                 S.allUsers = users; list.innerHTML='';
                 users.forEach(u => {
-                    const d = document.createElement('div'); 
-                    d.className = `user-card-wrapper ${S.u && S.u.id===u.id ? 'active':''}`;
+                    const d = document.createElement('div'); d.className = `user-card-wrapper ${S.u && S.u.id===u.id ? 'active':''}`;
                     const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
                     const goal = Math.round(bmr*u.act + parseInt(u.mod));
                     
@@ -910,31 +940,22 @@
                 UI.open('m-users');
             },
             editUser: (id) => {
-                const u = S.allUsers.find(x => x.id === id);
+                const u = S.allUsers.find(x => x.id === id); if(!u) return;
                 document.getElementById('e-name').value = u.name;
                 document.getElementById('e-h').value = u.h; document.getElementById('e-w').value = u.w;
                 document.getElementById('e-y').value = u.y; document.getElementById('e-g').value = u.g;
                 document.getElementById('e-act').value = u.act; document.getElementById('e-mod').value = u.mod;
-                
                 let pp=30, pc=50, pf=20;
                 if(u.mac.p) {
-                     const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
-                     const goal = Math.round(bmr*u.act + parseInt(u.mod));
-                     if(goal>0) {
-                         pp = Math.round((u.mac.p*4/goal)*100); 
-                         pc = Math.round((u.mac.c*4/goal)*100); 
-                         pf = Math.round((u.mac.f*9/goal)*100);
-                     }
+                    const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
+                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
+                    pp = Math.round((u.mac.p*4/goal)*100); pc = Math.round((u.mac.c*4/goal)*100); pf = Math.round((u.mac.f*9/goal)*100);
                 }
-                document.getElementById('pp').value=pp; document.getElementById('pc').value=pc; document.getElementById('pf').value=pf;
-                document.getElementById('btn-del-user').style.display = 'block';
+                document.getElementById('pp').value = pp; document.getElementById('pc').value = pc; document.getElementById('pf').value = pf;
+                document.getElementById('btn-del-user').style.display='block';
                 Calc.live(); UI.open('m-prof');
             },
-            newProfile: () => { 
-                S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); 
-                document.getElementById('btn-del-user').style.display='none';
-                UI.open('m-prof'); Calc.live(); 
-            }
+            newProfile: () => { S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); UI.open('m-prof'); Calc.live(); }
         };
 
         const Calc = {
@@ -983,7 +1004,6 @@
                 const tg = S.u.calc;
                 const diff = tg.goal - t.k;
                 
-                // EXCESO LOGIC
                 const ring = document.getElementById('ring-bg');
                 const lbl = document.getElementById('l-restan');
                 const val = document.getElementById('v-rem');
@@ -1057,9 +1077,11 @@
 
         const Sys = {
             init: async () => {
-                await DB.lib();
-                if(S.uid) await Sys.load(S.uid);
-                else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
+                try {
+                    await DB.lib();
+                    if(S.uid) await Sys.load(S.uid);
+                    else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
+                } catch(e) { alert("Error inicio: " + e.message); }
             },
             load: async (id) => {
                 S.day = {}; S.uid = id; localStorage.setItem('tid', id);
@@ -1067,12 +1089,16 @@
                 if(!S.u) { window.UI.openUsers(); return; }
                 S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
                 document.getElementById('loading-screen').style.display='none';
-                window.Logic.checkWeight();
+                
+                // Prompt weight if not set
+                if(!S.day.weight) setTimeout(() => {
+                    if(confirm("¿Registrar peso hoy?")) window.Stats.open();
+                }, 1000);
             },
             sync: async () => { S.day = await DB.getDay(S.d); window.Render.all(); }
         };
 
-        // --- ASIGNACIÓN GLOBAL ---
+        // --- GLOBAL ASSIGNMENT (CRITICAL) ---
         window.DB = DB;
         window.Logic = Logic;
         window.UI = UI;
@@ -1080,7 +1106,7 @@
         window.Calc = Calc;
         window.Render = Render;
         window.Sys = Sys;
-        window.Stats = Stats;
+        window.Stats = Stats; // ADDED
 
         // GESTURES
         let ts = 0;
@@ -1091,7 +1117,7 @@
             if(te > ts + 50) Logic.day(-1);
         });
 
-        // ARRANQUE SEGURO
+        // BOOT
         if(document.readyState === 'complete') Sys.init();
         else window.addEventListener('load', Sys.init);
 
