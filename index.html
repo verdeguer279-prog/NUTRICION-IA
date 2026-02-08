@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v25.1 | STABLE</title>
+    <title>Titanium v26.0 | ARCHITECTURE FIX</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -21,12 +21,9 @@
         /* HEADER */
         .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 15px 15px 50px 15px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
         .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        
-        /* AVATAR SOLO (MÓVIL) */
         .user-pill { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--car); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid rgba(255,255,255,0.2); font-size: 1.1rem; }
-        #h-name { display: none; }
-
+        
         .date-nav { display: flex; align-items: center; gap: 10px; flex-grow: 1; justify-content: flex-end; }
         .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 12px; color: white; cursor: pointer; }
         .date-txt { text-align: right; }
@@ -78,7 +75,6 @@
 
         .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
 
-        /* MODALES */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
         .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
@@ -90,12 +86,10 @@
         .modal-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .close-x { font-size: 2rem; background: none; border: none; color: #94a3b8; cursor: pointer; line-height: 1; }
 
-        /* LISTA USUARIOS - DISEÑO LIMPIO Y RECTANGULAR */
         .user-list-grid { display: grid; gap: 12px; }
         .user-card-wrapper { display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; transition: all 0.2s; cursor: pointer; }
         .user-card-wrapper:hover { border-color: var(--a); background: #eff6ff; }
         .user-card-wrapper.active { border-color: var(--a); background: #f0f9ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-        
         .u-av { width: 45px; height: 45px; background: var(--car); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-right: 15px; flex-shrink: 0; font-size: 1.1rem; }
         .u-inf { flex-grow: 1; }
         .u-inf h4 { margin: 0; font-size: 1rem; color: var(--p); }
@@ -103,7 +97,6 @@
         .u-edt { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #94a3b8; border-radius: 8px; }
         .u-edt:hover { background: #e2e8f0; color: var(--a); }
 
-        /* PERFIL COMPACTO */
         .live-box { background: #f0f9ff; padding: 12px; border-radius: 14px; border: 1px solid #bae6fd; margin-bottom: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; gap: 5px; flex-wrap: wrap; }
         .stat-item { text-align: center; flex: 1; }
         .stat-val { font-weight: 800; color: var(--a); display: block; }
@@ -111,9 +104,12 @@
 
         .food-suggestion { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .food-suggestion:hover { background: #f8fafc; }
+        .s-info { flex-grow: 1; }
+        .s-del { color: #cbd5e1; padding: 5px 10px; cursor: pointer; transition: 0.2s; }
+        .s-del:hover { color: var(--bad); }
+
         .unit-selector { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; font-weight: 700; color: var(--text-dark); cursor: pointer; }
 
-        /* AI TOOLS */
         .ai-header-btn { font-size: 0.8rem; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: 700; display:flex; align-items:center; gap:5px; margin-left:10px; transition: all 0.3s; }
         .ai-header-btn.configured { background: #ecfdf5; color: var(--ok); border-color: var(--ok); }
         
@@ -132,6 +128,7 @@
         .separator::before { left: 0; } .separator::after { right: 0; }
         
         .link-btn { background: none; border: none; color: var(--a); cursor: pointer; text-decoration: underline; font-size: 0.85rem; display: block; margin: 10px auto; }
+        .api-link { display: block; text-align: center; font-size: 0.8rem; color: var(--a); margin-top: 10px; text-decoration: none; border: 1px dashed var(--a); padding: 8px; border-radius: 8px; }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -203,7 +200,6 @@
                 <div class="stat-item"><span class="stat-val" id="l-ideal">--</span><span class="stat-lbl">Ideal</span></div>
                 <div class="stat-item"><span class="stat-val" id="l-goal" style="color:var(--bad)">--</span><span class="stat-lbl">Meta</span></div>
             </div>
-            
             <label>Nombre</label><input id="e-name" class="inp">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px">
                 <div><label>Altura</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
@@ -211,13 +207,12 @@
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
                 <div><label>Año</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
-                <div><label>Sexo</label><select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select></div>
+                <div><label>Género</label><select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select></div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
                 <div><label>Actividad</label><select id="e-act" class="inp" onchange="window.Calc.live()"><option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option></select></div>
                 <div><label>Objetivo</label><select id="e-mod" class="inp" onchange="window.Calc.live()"><option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option></select></div>
             </div>
-            
             <label style="margin-top:10px; display:block; text-align:center; font-size:0.8rem; font-weight:bold">MACROS (%)</label>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
                 <input id="pp" type="number" class="inp" placeholder="P" oninput="window.Calc.live()">
@@ -225,7 +220,6 @@
                 <input id="pf" type="number" class="inp" placeholder="G" oninput="window.Calc.live()">
             </div>
             <div id="p-check" style="text-align:center; font-size:0.8rem; margin-bottom:15px; color:#94a3b8">Total: 0%</div>
-
             <button class="btn pri" id="btn-save-user" onclick="window.Logic.saveUser()">Guardar</button>
             <button class="btn del-user" id="btn-del-user" onclick="window.Logic.deleteUser()" style="display:none">🗑️ Eliminar</button>
         </div>
@@ -247,12 +241,9 @@
                         <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">✨ Procesar con IA</button>
                     </div>
                 </div>
-                
                 <div class="separator">O busca en tu biblioteca</div>
-                
                 <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.Logic.search()">
                 <div id="res-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
-                
                 <button class="link-btn" onclick="window.UI.view('v-json')">Tengo un código JSON</button>
             </div>
 
@@ -265,7 +256,8 @@
                 </div>
                 <label style="font-size:0.8rem; color:#64748b">Modelo</label>
                 <input type="text" id="ai-model" class="inp" value="gemini-1.5-flash">
-                <button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button>
+                <a href="CLAVES API.html" target="_blank" class="api-link">🔑 Gestor de Claves API</a>
+                <button class="btn pri" onclick="window.AI.saveConfig()" style="margin-top:15px">Guardar</button>
                 <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
 
@@ -273,10 +265,7 @@
                 <h4 id="qty-name" style="margin-bottom:10px"></h4>
                 <div style="display:flex; gap:10px">
                     <input type="number" id="qty-in" class="inp" placeholder="Cantidad">
-                    <select id="unit-in" class="unit-sel">
-                        <option value="g">Gramos (g)</option>
-                        <option value="ml">Mililitros (ml)</option>
-                    </select>
+                    <select id="unit-in" class="unit-sel"><option value="g">Gramos (g)</option><option value="ml">Mililitros (ml)</option></select>
                 </div>
                 <button class="btn pri" onclick="window.Logic.saveItem()">Guardar</button>
                 <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
@@ -292,19 +281,12 @@
 
     <div class="modal" id="m-copy">
         <div class="sheet">
-            <div class="modal-h">
-                <h3 id="copy-ti">Gestionar</h3>
-                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
-            </div>
-            <label>Fecha Destino:</label>
-            <input type="date" id="copy-date" class="inp">
+            <div class="modal-h"><h3>Gestionar</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+            <label>Fecha Destino:</label><input type="date" id="copy-date" class="inp">
             <label>Comida Destino:</label>
             <select id="copy-meal" class="inp">
-                <option value="01_desayuno">Desayuno</option>
-                <option value="02_almuerzo">Almuerzo</option>
-                <option value="03_comida">Comida</option>
-                <option value="04_merienda">Merienda</option>
-                <option value="05_cena">Cena</option>
+                <option value="01_desayuno">Desayuno</option><option value="02_almuerzo">Almuerzo</option>
+                <option value="03_comida">Comida</option><option value="04_merienda">Merienda</option><option value="05_cena">Cena</option>
             </select>
             <button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button>
         </div>
@@ -317,6 +299,7 @@
             <button class="btn sec" onclick="window.Logic.exportJSON()">Backup Completo (JSON)</button>
             <input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)">
             <button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar Backup</button>
+            <button class="btn sec" onclick="window.Logic.syncHistory()">📚 Sincronizar Historial</button>
             <button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button>
             <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
         </div>
@@ -355,266 +338,70 @@
             srcMeal: null, copyMode: 'copy' 
         };
 
-        /* --- DATABASE --- */
+        // --- DEFINICIONES LOCALES (CONSTANTES) ---
+        
         const DB = {
             col: (n) => fire.collection(db, n),
             doc: (p,i) => fire.doc(db, p, i),
             norm: (u) => ({
-                id: u.id,
-                name: u.name || u.nom || 'Usuario',
-                h: parseFloat(u.height||u.altura||170), w: parseFloat(u.weight||u.peso||70),
-                y: parseInt(u.birthYear||u.nac||1990), g: u.gender||u.gen||'male',
-                act: u.activity||"1.2", mod: u.goalMod||"0",
+                id: u.id, name: u.name||'Usuario', h: parseFloat(u.height||170), w: parseFloat(u.weight||70),
+                y: parseInt(u.birthYear||1990), g: u.gender||'male', act: u.activity||"1.2", mod: u.goalMod||"0",
                 mac: u.customMacros || {p:null, c:null, f:null}
             }),
-            getUsers: async () => {
-                const snap = await fire.getDocs(DB.col('usuarios'));
-                S.allUsers = snap.docs.map(d => DB.norm(d.data()));
-                return S.allUsers;
-            },
-            getU: async(id) => { const s = await fire.getDoc(DB.doc('usuarios', id)); return s.exists()?s.data():null; },
+            getUsers: async () => { const s=await fire.getDocs(DB.col('usuarios')); return S.allUsers=s.docs.map(d=>DB.norm(d.data())); },
+            getU: async(id) => { const s=await fire.getDoc(DB.doc('usuarios', id)); return s.exists()?s.data():null; },
             setU: async(u) => await fire.setDoc(DB.doc('usuarios', u.id), u),
             delU: async(id) => await fire.deleteDoc(DB.doc('usuarios', id)),
             getDay: async(d) => {
-                const k = d.toISOString().split('T')[0];
-                const s = await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
-                let data = s.exists() ? s.data() : {};
-                MEALS.forEach(m => { if(!data[m.k]) data[m.k] = []; });
-                return data;
+                const k=d.toISOString().split('T')[0]; const s=await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
+                let data=s.exists()?s.data():{}; MEALS.forEach(m=>{ if(!data[m.k]) data[m.k]=[] }); return data;
             },
-            getDayLog: async (uid, dateStr) => {
-                const snap = await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dateStr));
-                return snap.exists() ? snap.data() : {};
-            },
-            setDay: async() => {
-                const k = S.d.toISOString().split('T')[0];
-                await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day);
-            },
-            lib: async() => {
-                const s = await fire.getDoc(DB.doc('sistema','biblioteca'));
-                S.lib = s.exists() ? s.data().items : [];
-            },
+            getDayLog: async (uid, dStr) => { const s=await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dStr)); return s.exists()?s.data():{}; },
+            setDay: async() => { const k=S.d.toISOString().split('T')[0]; await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day); },
+            lib: async() => { const s=await fire.getDoc(DB.doc('sistema','biblioteca')); S.lib=s.exists()?s.data().items:[]; },
             addLib: async(arr) => {
-                arr.forEach(n => {
-                    const ex = S.lib.find(x => x.n === n.n);
-                    if(!ex) S.lib.push(n);
-                });
+                arr.forEach(n=>{ if(!S.lib.find(x=>x.n===n.n)) S.lib.push(n); });
                 await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
             }
         };
 
-        /* --- LOGIC --- */
-        const Logic = {
-            day: (n) => { S.d.setDate(S.d.getDate()+n); Sys.sync(); },
-            saveUser: async () => {
-                const n = document.getElementById('e-name').value;
-                if(!n) return alert("Nombre obligatorio");
-                try {
-                    const h=parseFloat(document.getElementById('e-h').value), w=parseFloat(document.getElementById('e-w').value);
-                    const y=parseInt(document.getElementById('e-y').value), g=document.getElementById('e-g').value;
-                    const act=parseFloat(document.getElementById('e-act').value), mod=parseInt(document.getElementById('e-mod').value);
-                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
-                    const goal = Math.round(bmr*act + mod);
-                    
-                    const pp=parseInt(document.getElementById('pp').value)||30;
-                    const pc=parseInt(document.getElementById('pc').value)||50;
-                    const pf=parseInt(document.getElementById('pf').value)||20;
-                    const u = {
-                        id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
-                        customMacros: { p:Math.round((goal*(pp/100))/4), c:Math.round((goal*(pc/100))/4), f:Math.round((goal*(pf/100))/9) }
-                    };
-                    await DB.setU(u); 
-                    alert("✅ Guardado");
-                    S.allUsers = await DB.getUsers(); 
-                    await Sys.load(u.id); 
-                    window.UI.closeAll();
-                } catch(e) { alert("Error: "+e.message); }
-            },
-            deleteUser: async () => {
+        const Calc = {
+            bio: () => {
                 if(!S.u) return;
-                if(confirm("¿ESTÁS SEGURO? Se borrará el usuario y NO se puede deshacer.")) {
-                    try {
-                        await DB.delU(S.u.id);
-                        alert("Usuario eliminado.");
-                        localStorage.removeItem('tid');
-                        location.reload();
-                    } catch(e) { alert("Error al borrar: " + e.message); }
+                const h=S.u.h, w=S.u.w, age=new Date().getFullYear()-S.u.y;
+                let bmr = (10*w)+(6.25*h)-(5*age)+(S.u.g=='male'?5:-161);
+                let tdee = bmr * parseFloat(S.u.act);
+                let goal = Math.round(tdee + parseInt(S.u.mod));
+                S.u.calc = { goal:goal, tdee:tdee };
+                
+                if(S.u.mac.p) { S.u.calc.p=S.u.mac.p; S.u.calc.c=S.u.mac.c; S.u.calc.f=S.u.mac.f; }
+                else { S.u.calc.p=Math.round(w*2); S.u.calc.f=Math.round(w*0.9); S.u.calc.c=Math.round((goal-(S.u.calc.p*4)-(S.u.calc.f*9))/4); }
+                
+                const el = document.getElementById('h-av'); if(el) el.innerText = S.u.name[0];
+                const bio = document.getElementById('bio-txt'); if(bio) bio.innerHTML = `<span>🔥 Gasto: ${Math.round(tdee)}</span> <span>🎯 Meta: <b>${goal}</b></span>`;
+            },
+            live: () => {
+                const elH = document.getElementById('e-h'); if(!elH) return;
+                const h = parseFloat(elH.value)||0, w = parseFloat(document.getElementById('e-w').value)||0;
+                const y = parseInt(document.getElementById('e-y').value)||2000, g = document.getElementById('e-g').value;
+                const act = parseFloat(document.getElementById('e-act').value), mod = parseInt(document.getElementById('e-mod').value);
+                
+                const pp=parseInt(document.getElementById('pp').value)||0, pc=parseInt(document.getElementById('pc').value)||0, pf=parseInt(document.getElementById('pf').value)||0;
+                const tot=pp+pc+pf;
+                const check = document.getElementById('p-check');
+                if(check) { check.innerText=`Total: ${tot}% `+(tot===100?'✅':'⚠️'); check.style.color=tot===100?'var(--ok)':'var(--bad)'; }
+                
+                if(h && w) {
+                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
+                    const goal = Math.round(bmr*act+mod);
+                    const imc = w/((h/100)**2);
+                    const ideal = 22*((h/100)**2);
+                    
+                    document.getElementById('l-tmb').innerText = Math.round(bmr);
+                    document.getElementById('l-imc').innerText = imc.toFixed(1);
+                    document.getElementById('l-ideal').innerText = Math.round(ideal)+'kg';
+                    document.getElementById('l-goal').innerText = goal;
                 }
-            },
-            openAdd: (mk) => { 
-                S.tm=mk; S.edit=false; 
-                window.UI.view('v-home'); 
-                window.UI.open('m-add'); 
-                if(S.lib.length>0) Logic.search(); 
-                window.UI.checkAI();
-            },
-            search: () => {
-                const q = document.getElementById('src-in').value.toLowerCase();
-                const b = document.getElementById('res-list'); b.innerHTML='';
-                S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
-                    const d = document.createElement('div'); d.className='food-suggestion';
-                    d.innerHTML = `<b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small>`;
-                    d.onclick = () => {
-                        S.item = f; window.UI.setQty(f); window.UI.view('v-qty');
-                    };
-                    b.appendChild(d);
-                });
-            },
-            saveItem: async () => {
-                const q = parseFloat(document.getElementById('qty-in').value);
-                const u = document.getElementById('unit-in').value;
-                const base = S.item; 
-                let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
-                if(S.edit) { const f = base.q/100; bk/=f; bp/=f; bc/=f; bf/=f; }
-                const f = q/100;
-                const entry = { n:base.n, q:q, u:u, k:bk*f, p:bp*f, c:bc*f, f:bf*f };
-                if(S.edit) S.day[S.tm][S.eIdx] = entry; else S.day[S.tm].push(entry);
-                await DB.setDay(); window.UI.closeAll(); Sys.sync();
-            },
-            editItem: (mk, idx) => {
-                S.edit=true; S.tm=mk; S.eIdx=idx; S.item = JSON.parse(JSON.stringify(S.day[mk][idx]));
-                window.UI.setQty(S.item); window.UI.view('v-qty'); window.UI.open('m-add');
-            },
-            delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
-            wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
-            wipe: async () => { if(confirm("¿RESET DIA?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); window.UI.closeAll(); } },
-            openCopy: (mk, type) => {
-                S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy');
-            },
-            execCopy: async () => {
-                const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
-                const tData = (await DB.getDayLog(S.uid, d)) || {};
-                if(!tData[tm]) tData[tm]=[];
-                tData[tm] = tData[tm].concat(JSON.parse(JSON.stringify(S.day[S.srcMeal])));
-                const k = new Date(d).toISOString().split('T')[0];
-                await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), tData);
-                if(S.copyMode=='move') { S.day[S.srcMeal]=[]; await DB.setDay(); }
-                window.UI.closeAll(); if(k===S.d.toISOString().split('T')[0]) Sys.sync();
-                alert("Hecho");
-            },
-            parse: async () => { 
-                try {
-                    const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
-                    const json = JSON.parse(txt);
-                    const arr = Array.isArray(json) ? json : (json.detalles || [json]);
-                    const newItems = [];
-                    arr.forEach(it => {
-                        let q=100, u="g"; 
-                        if(it.cantidad) { q = parseFloat(it.cantidad)||100; if(it.cantidad.includes("ml")) u="ml"; }
-                        const fac = q/100; 
-                        const get = (ks) => { for(let k of ks) if(it[k] || (it.macros&&it.macros[k])) return parseFloat(it[k]||it.macros[k]); return 0; };
-                        const base = { n:it.nombre||it.alimento, q:100, u:u, k:get(['kcal','calorias'])/fac, p:get(['p'])/fac, c:get(['c'])/fac, f:get(['f','fat','g'])/fac };
-                        S.day[S.tm].push({ ...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac });
-                        newItems.push(base);
-                    });
-                    await DB.setDay(); await DB.addLib(newItems); window.UI.closeAll(); Sys.sync();
-                } catch(e) { alert("JSON Mal"); }
-            },
-            pdf: () => { window.UI.closeAll(); html2pdf().from(document.body).save(); },
-            exportJSON: async () => {
-                const btn = document.querySelector('#m-glob .btn.sec:nth-child(2)');
-                const originalText = btn.innerText;
-                btn.innerText = "⏳ Descargando historial...";
-                try {
-                    const allData = { perfil: S.u, historial: {} };
-                    const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
-                    snap.forEach(doc => { allData.historial[doc.id] = doc.data(); });
-                    
-                    const s = JSON.stringify(allData, null, 2);
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(new Blob([s], {type: "application/json"}));
-                    a.download = `Full_Backup_${S.u.name}.json`;
-                    document.body.appendChild(a); a.click(); a.remove();
-                    alert("✅ Copia completa descargada");
-                } catch(e) { alert("Error backup: " + e.message); }
-                finally { btn.innerText = originalText; window.UI.closeAll(); }
-            },
-            importJSON: async (input) => {
-                const file = input.files[0];
-                if(!file) return;
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        if(!confirm(`¿Importar historial de ${data.perfil.name} a ${S.u.name}?`)) return;
-                        const batch = fire.writeBatch(db);
-                        Object.entries(data.historial).forEach(([date, dayData]) => {
-                            batch.set(fire.doc(db, `usuarios/${S.uid}/diario`, date), dayData);
-                        });
-                        await batch.commit();
-                        alert("Importación completada");
-                        location.reload();
-                    } catch(err) { alert("Error: "+err.message); }
-                };
-                reader.readAsText(file);
-            }
-        };
-
-        /* --- AI MODULE --- */
-        const AI = {
-            saveConfig: () => {
-                localStorage.setItem('titan_ai_key', document.getElementById('ai-key').value);
-                localStorage.setItem('titan_ai_model', document.getElementById('ai-model').value);
-                window.UI.view('v-home'); window.UI.checkAI();
-            },
-            toggleEye: () => {
-                const inp = document.getElementById('ai-key');
-                inp.type = inp.type === 'password' ? 'text' : 'password';
-            },
-            listen: () => {
-                if(!('webkitSpeechRecognition' in window)) return alert("Navegador no soporta voz (usa Chrome).");
-                const rec = new window.webkitSpeechRecognition();
-                rec.lang = 'es-ES';
-                const mic = document.querySelector('.mic-btn');
-                mic.classList.add('listening');
-                rec.onresult = (e) => {
-                    const t = e.results[0][0].transcript;
-                    const txt = document.getElementById('ai-text');
-                    txt.value = (txt.value + ' ' + t).trim();
-                    mic.classList.remove('listening');
-                };
-                rec.onerror = () => mic.classList.remove('listening');
-                rec.start();
-            },
-            process: async () => {
-                const text = document.getElementById('ai-text').value;
-                const apiKey = localStorage.getItem('titan_ai_key');
-                const model = localStorage.getItem('titan_ai_model') || 'gemini-1.5-flash';
-                if(!text) return alert("Escribe o dicta algo.");
-                if(!apiKey) return window.UI.view('v-conf');
-                
-                const btn = document.querySelector('#v-home .btn.pri');
-                const ogText = btn.innerText;
-                btn.innerText = "Pensando...";
-                
-                try {
-                    const prompt = `Actúa como nutricionista. Analiza: "${text}". Devuelve SOLO UN JSON ARRAY (sin markdown): [{"n":"Nombre","q":cantidad_num,"u":"g" o "ml","k":kcal_total,"p":prot_total,"c":carb_total,"f":grasa_total}]. Ejemplo: [{"n":"Huevo","q":60,"u":"g","k":90,"p":7,"c":0.5,"f":6}]`;
-                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                        method: 'POST', headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                    
-                    if(!resp.ok) throw new Error(`Error API: ${resp.status} ${resp.statusText}`);
-                    
-                    const data = await resp.json();
-                    if(!data.candidates) throw new Error("La IA no devolvió datos válidos.");
-                    
-                    let raw = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
-                    const items = JSON.parse(raw);
-                    
-                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat||0 }));
-                    S.day[S.tm] = S.day[S.tm].concat(mapped);
-                    await DB.setDay();
-                    
-                    const libItems = mapped.map(i => {
-                        const f = i.q/100;
-                        return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f };
-                    });
-                    await DB.addLib(libItems);
-                    
-                    window.UI.closeAll(); Sys.sync(); document.getElementById('ai-text').value='';
-                } catch(e) { alert(e.message); } 
-                finally { btn.innerText = ogText; }
             }
         };
 
@@ -640,28 +427,24 @@
                 document.getElementById('unit-in').value = item.u;
             },
             openUsers: async () => {
-                const list = document.getElementById('u-list'); list.innerHTML='...';
+                const list = document.getElementById('u-list'); list.innerHTML='Cargando...';
                 const users = await DB.getUsers();
                 S.allUsers = users; list.innerHTML='';
                 users.forEach(u => {
-                    const d = document.createElement('div'); d.className = 'user-card-wrapper';
-                    if(S.u && S.u.id === u.id) d.classList.add('active');
-                    let goal=0;
-                    if(u.h && u.w) {
-                        const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
-                        goal = Math.round(bmr*u.act + parseInt(u.mod));
-                    }
+                    const d = document.createElement('div'); d.className = `user-card-wrapper ${S.u && S.u.id===u.id ? 'active':''}`;
+                    const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
+                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
+                    
                     d.innerHTML = `
-                        <div class="u-av">${u.name[0]}</div>
+                        <div class="u-av" onclick="window.Sys.load('${u.id}')">${u.name[0]}</div>
                         <div class="u-inf" onclick="window.Sys.load('${u.id}')">
                             <h4>${u.name}</h4><small>Meta: ${goal} kcal</small>
                         </div>
-                        <div class="u-edt" onclick="event.stopPropagation(); window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>`;
+                        <div class="u-edt" onclick="window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>`;
                     list.appendChild(d);
                 });
                 UI.open('m-users');
             },
-            selUser: (id) => { UI.closeAll(); Sys.load(id); },
             editUser: (id) => {
                 const u = S.allUsers.find(x => x.id === id); if(!u) return;
                 document.getElementById('e-name').value = u.name;
@@ -675,69 +458,252 @@
                     pp = Math.round((u.mac.p*4/goal)*100); pc = Math.round((u.mac.c*4/goal)*100); pf = Math.round((u.mac.f*9/goal)*100);
                 }
                 document.getElementById('pp').value = pp; document.getElementById('pc').value = pc; document.getElementById('pf').value = pf;
-                
-                // Mostrar botón eliminar
                 document.getElementById('btn-del-user').style.display='block';
-                
                 Calc.live(); UI.open('m-prof');
             },
             newProfile: () => { 
-                S.u=null; 
-                document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); 
-                // Ocultar botón eliminar en nuevo
+                S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); 
                 document.getElementById('btn-del-user').style.display='none';
                 UI.open('m-prof'); Calc.live(); 
             }
         };
 
-        const Calc = {
-            bio: () => {
-                const u = S.u; if(!u) return;
-                const h = parseFloat(u.h), w = parseFloat(u.w), y = parseInt(u.y);
-                const age = new Date().getFullYear() - y;
-                let bmr = (10*w) + (6.25*h) - (5*age) + (u.g==='male'?5:-161);
-                let tdee = bmr * parseFloat(u.act);
-                let goal = Math.round(tdee + parseInt(u.mod));
-                u.calc = { goal: goal, burn: Math.round(tdee), tdee: tdee };
-                
-                if(u.mac.p) { u.calc.p = u.mac.p; u.calc.c = u.mac.c; u.calc.f = u.mac.f; } 
-                else { u.calc.p = Math.round(w * 2); u.calc.f = Math.round(w * 0.9); u.calc.c = Math.round((goal - (u.calc.p*4) - (u.calc.f*9))/4); }
-                
-                // ACTUALIZAR HEADER
-                document.getElementById('h-av').innerText = u.name[0];
-                document.getElementById('bio-txt').innerHTML = `<span>🔥 Gasto: ${Math.round(tdee)}</span> | <span>🎯 Meta: <b>${goal} kcal</b></span>`;
-            },
-            live: () => {
-                const elH = document.getElementById('e-h'); if(!elH) return;
-                const h = parseFloat(elH.value)||0, w = parseFloat(document.getElementById('e-w').value)||0;
-                const y = parseInt(document.getElementById('e-y').value)||2000, g = document.getElementById('e-g').value;
-                const act = parseFloat(document.getElementById('e-act').value), mod = parseInt(document.getElementById('e-mod').value);
-                
-                const pp=parseInt(document.getElementById('pp').value)||0, pc=parseInt(document.getElementById('pc').value)||0, pf=parseInt(document.getElementById('pf').value)||0;
-                const tot=pp+pc+pf;
-                const check = document.getElementById('p-check');
-                if(check) { check.innerText=`Total: ${tot}% `+(tot===100?'✅':'⚠️'); check.style.color=tot===100?'var(--ok)':'var(--bad)'; }
-                
-                if(h && w) {
-                    const bmr = (10*w) + (6.25*h) - (5*(new Date().getFullYear()-y)) + (g==='male'?5:-161);
-                    const goal = Math.round(bmr*act+mod);
+        const Logic = {
+            day: (n) => { S.d.setDate(S.d.getDate()+n); Sys.sync(); },
+            saveUser: async () => {
+                const n = document.getElementById('e-name').value;
+                if(!n) return alert("Nombre obligatorio");
+                try {
+                    const h=parseFloat(document.getElementById('e-h').value), w=parseFloat(document.getElementById('e-w').value);
+                    const y=parseInt(document.getElementById('e-y').value), g=document.getElementById('e-g').value;
+                    const act=parseFloat(document.getElementById('e-act').value), mod=parseInt(document.getElementById('e-mod').value);
+                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
+                    const goal = Math.round(bmr*act + mod);
                     
-                    // Calculo IMC
-                    const imc = w / ((h/100)**2);
-                    const ideal = 22 * ((h/100)**2); // Formula simple
+                    const pp=parseInt(document.getElementById('pp').value)||30;
+                    const pc=parseInt(document.getElementById('pc').value)||50;
+                    const pf=parseInt(document.getElementById('pf').value)||20;
+                    const u = {
+                        id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
+                        customMacros: { p:Math.round((goal*(pp/100))/4), c:Math.round((goal*(pc/100))/4), f:Math.round((goal*(pf/100))/9) }
+                    };
+                    await DB.setU(u); alert("✅ Guardado"); S.allUsers=await DB.getUsers(); await Sys.load(u.id); UI.closeAll();
+                } catch(e) { alert("Error: "+e.message); }
+            },
+            deleteUser: async () => {
+                if(confirm("¿Eliminar usuario y datos?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
+            },
+            delFromLib: async (name) => {
+                if(!confirm("¿Borrar " + name + "?")) return;
+                try {
+                    S.lib = S.lib.filter(x => x.n !== name);
+                    await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+                    Logic.search();
+                } catch(e) { alert("Error: " + e.message); }
+            },
+            openAdd: (mk) => { S.tm=mk; S.edit=false; UI.view('v-home'); UI.open('m-add'); if(S.lib.length>0) Logic.search(); UI.checkAI(); },
+            search: () => {
+                const q = document.getElementById('src-in').value.toLowerCase();
+                const b = document.getElementById('res-list'); b.innerHTML='';
+                S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
+                    const d = document.createElement('div'); d.className='food-suggestion';
+                    d.innerHTML = `
+                        <div class="s-info" onclick='window.S.item=${JSON.stringify(f).replace(/'/g,"&#39;")}; window.UI.setQty(window.S.item); window.UI.view("v-qty")'>
+                            <b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small>
+                        </div>
+                        <div class="s-del" onclick="window.Logic.delFromLib('${f.n.replace(/'/g,"\\'")}')"><i class="fas fa-trash-alt"></i></div>
+                    `;
+                    b.appendChild(d);
+                });
+            },
+            saveItem: async () => {
+                const q = parseFloat(document.getElementById('qty-in').value);
+                const u = document.getElementById('unit-in').value;
+                const base = S.item; 
+                let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
+                if(S.edit) { const f = base.q/100; bk/=f; bp/=f; bc/=f; bf/=f; }
+                const f = q/100;
+                const entry = { n:base.n, q:q, u:u, k:bk*f, p:bp*f, c:bc*f, f:bf*f };
+                if(S.edit) S.day[S.tm][S.eIdx] = entry; else S.day[S.tm].push(entry);
+                await DB.setDay(); UI.closeAll(); Sys.sync();
+            },
+            editItem: (mk, idx) => {
+                S.edit=true; S.tm=mk; S.eIdx=idx; S.item = JSON.parse(JSON.stringify(S.day[mk][idx]));
+                UI.setQty(S.item); UI.view('v-qty'); UI.open('m-add');
+            },
+            delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
+            wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
+            wipe: async () => { if(confirm("¿Borrar día?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); UI.closeAll(); } },
+            openCopy: (mk, type) => {
+                S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; UI.open('m-copy');
+            },
+            execCopy: async () => {
+                const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
+                const tData = (await DB.getDayLog(S.uid, d)) || {};
+                if(!tData[tm]) tData[tm]=[];
+                tData[tm] = tData[tm].concat(JSON.parse(JSON.stringify(S.day[S.srcMeal])));
+                await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), tData);
+                if(S.copyMode=='move') { S.day[S.srcMeal]=[]; await DB.setDay(); }
+                UI.closeAll(); if(d===S.d.toISOString().split('T')[0]) Sys.sync(); alert("Hecho");
+            },
+            parse: async () => {
+                try {
+                    const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const json = JSON.parse(txt);
+                    
+                    let items = [];
+                    if(Array.isArray(json)) items = json;
+                    else if(json.comida_combinada && json.comida_combinada.items) items = json.comida_combinada.items;
+                    else if(json.items) items = json.items;
+                    else if(json.detalles) items = json.detalles;
+                    
+                    const newItems = [];
+                    items.forEach(it => {
+                        let q=100, u="g";
+                        if(it.cantidad) {
+                            if(typeof it.cantidad==='string'){ const p=it.cantidad.trim().split(/\s+/); q=parseFloat(p[0])||100; if(p[1])u=p[1].toLowerCase(); }
+                            else q=parseFloat(it.cantidad)||100;
+                        }
+                        const fac=q/100; const get=(keys)=>{ for(let k of keys) { if(it[k]!=undefined)return parseFloat(it[k]); if(it.macros&&it.macros[k]!=undefined)return parseFloat(it.macros[k]); } return 0; };
+                        const base = {
+                            n: it.producto||it.nombre||it.n||"Item", q:100, u:u,
+                            k: get(['energia_kcal','kcal','k','calorias'])/fac, p: get(['proteinas_g','p','prot'])/fac,
+                            c: get(['hidratos_carbono_g','c','hc','carbs'])/fac, f: get(['grasas_g','f','fat'])/fac
+                        };
+                        S.day[S.tm].push({...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac});
+                        newItems.push(base);
+                    });
+                    await DB.setDay(); await DB.addLib(newItems); 
+                    document.getElementById('json-in').value=''; UI.closeAll(); Sys.sync();
+                } catch(e) { alert("JSON Mal: " + e.message); }
+            },
+            pdf: () => { UI.closeAll(); html2pdf().from(document.body).save(); },
+            exportJSON: async () => {
+                const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
+                const data = { perfil: S.u, historial: {} };
+                snap.forEach(d => data.historial[d.id] = d.data());
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
+                a.download = `Backup_${S.u.name}.json`; a.click();
+            },
+            importJSON: async (input) => {
+                const file = input.files[0]; if(!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if(!confirm(`¿Importar datos de ${data.perfil.name}?`)) return;
+                        const batch = fire.writeBatch(db);
+                        Object.entries(data.historial).forEach(([date, dayData]) => {
+                            batch.set(fire.doc(db, `usuarios/${S.uid}/diario`, date), dayData);
+                        });
+                        await batch.commit(); alert("Importado"); location.reload();
+                    } catch(err) { alert("Error: "+err.message); }
+                };
+                reader.readAsText(file);
+            },
+            syncHistory: async () => {
+                const btn = document.querySelector('#m-glob button:nth-child(5)');
+                btn.innerText = "⏳ Sincronizando...";
+                try {
+                    const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
+                    let count = 0;
+                    snap.forEach(doc => {
+                        const day = doc.data();
+                        Object.values(day).forEach(meal => {
+                            if(Array.isArray(meal)) {
+                                meal.forEach(item => {
+                                    if(!S.lib.find(x => x.n === item.n)) {
+                                        let q = parseFloat(item.q) || 100;
+                                        let f = q/100; if(f===0) f=1;
+                                        S.lib.push({
+                                            n: item.n, u: item.u || 'g', q: 100,
+                                            k: (item.k||0)/f, p: (item.p||0)/f, c: (item.c||0)/f, f: (item.f||0)/f
+                                        });
+                                        count++;
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    if(count > 0) {
+                        await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+                        alert(`📚 ${count} alimentos recuperados.`);
+                    } else { alert("Todo al día."); }
+                } catch(e) { alert("Error: " + e.message); }
+                finally { btn.innerText = "📚 Sincronizar Historial"; }
+            }
+        };
 
-                    document.getElementById('l-tmb').innerText = Math.round(bmr);
-                    document.getElementById('l-goal').innerText = Math.round(goal);
-                    document.getElementById('l-imc').innerText = imc.toFixed(1);
-                    document.getElementById('l-ideal').innerText = Math.round(ideal) + " kg";
-                }
+        const AI = {
+            saveConfig: () => {
+                localStorage.setItem('titan_ai_key', document.getElementById('ai-key').value);
+                localStorage.setItem('titan_ai_model', document.getElementById('ai-model').value);
+                UI.view('v-home'); UI.checkAI();
+            },
+            toggleEye: () => {
+                const inp = document.getElementById('ai-key');
+                inp.type = inp.type === 'password' ? 'text' : 'password';
+            },
+            listen: () => {
+                if(!('webkitSpeechRecognition' in window)) return alert("Usa Chrome.");
+                const rec = new window.webkitSpeechRecognition();
+                rec.lang = 'es-ES';
+                const mic = document.querySelector('.mic-btn');
+                mic.classList.add('listening');
+                rec.onresult = (e) => {
+                    const t = e.results[0][0].transcript;
+                    const txt = document.getElementById('ai-text');
+                    txt.value = (txt.value + ' ' + t).trim();
+                    mic.classList.remove('listening');
+                };
+                rec.onerror = () => mic.classList.remove('listening');
+                rec.start();
+            },
+            process: async () => {
+                const text = document.getElementById('ai-text').value;
+                const apiKey = localStorage.getItem('titan_ai_key');
+                const model = localStorage.getItem('titan_ai_model') || 'gemini-1.5-flash';
+                if(!text) return alert("Escribe o dicta algo.");
+                if(!apiKey) return UI.view('v-conf');
+                
+                const btn = document.querySelector('#v-home .btn.pri');
+                const ogText = btn.innerText;
+                btn.innerText = "Pensando...";
+                
+                try {
+                    const prompt = `Actúa como nutricionista. Analiza: "${text}". Devuelve SOLO UN JSON ARRAY: [{"n":"Nombre","q":cantidad_num,"u":"g"|"ml","k":kcal,"p":prot,"c":carb,"f":grasa}]. Si no se dice cantidad, usa 100g.`;
+                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                        method: 'POST', headers: {'Content-Type':'application/json'},
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    
+                    if(!resp.ok) throw new Error(`Error API: ${resp.status}`);
+                    const data = await resp.json();
+                    if(!data.candidates) throw new Error("Error IA");
+                    
+                    let raw = data.candidates[0].content.parts[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const items = JSON.parse(raw);
+                    
+                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat||0 }));
+                    S.day[S.tm] = S.day[S.tm].concat(mapped);
+                    await DB.setDay();
+                    
+                    const libItems = mapped.map(i => {
+                        const f = i.q/100;
+                        return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f };
+                    });
+                    await DB.addLib(libItems);
+                    
+                    UI.closeAll(); Sys.sync(); document.getElementById('ai-text').value='';
+                } catch(e) { alert(e.message); } 
+                finally { btn.innerText = ogText; }
             }
         };
 
         const Render = {
             all: () => {
                 document.getElementById('h-day').innerText = S.d.toLocaleDateString('es-ES', {weekday:'long'});
-                document.getElementById('h-full').innerText = S.d.toLocaleDateString('es-ES');
                 let t = {k:0, p:0, c:0, f:0};
                 Object.values(S.day).forEach(arr => arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }));
                 const tg = S.u.calc;
@@ -760,9 +726,10 @@
                         mk+=i.k; mp+=i.p; mc+=i.c; mf+=i.f;
                         rows += `
                         <div class="item">
-                            <div class="i-info"><h4>${i.n}</h4>
+                            <div class="i-info">
+                                <h4>${i.n}</h4>
                                 <div class="i-det"><span class="i-pill">${i.q}${i.u.replace('100','')}</span> <span>🔥 ${Math.round(i.k)}</span>
-                                <span style="color:var(--pro)">P:${Math.round(i.p)}</span><span style="color:var(--car)">C:${Math.round(i.c)}</span><span style="color:var(--fat)">F:${Math.round(i.f)}</span></div>
+                                <span style="color:var(--pro)">P${Math.round(i.p)}</span><span style="color:var(--car)">C${Math.round(i.c)}</span><span style="color:var(--fat)">F${Math.round(i.f)}</span></div>
                             </div>
                             <div class="c-actions">
                                 <button class="act-btn" onclick="window.Logic.editItem('${m.k}', ${idx})"><i class="fas fa-pencil-alt"></i></button>
@@ -798,46 +765,43 @@
             init: async () => {
                 await DB.lib();
                 if(S.uid) await Sys.load(S.uid);
-                else { document.getElementById('loading-screen').style.display='none'; window.UI.openUsers(); }
+                else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
             },
             load: async (id) => {
-                // PATCH INTEGRIDAD DE DATOS (v23.2)
-                S.day = {}; // LIMPIEZA PREVENTIVA
-                S.uid = id; localStorage.setItem('tid', id);
+                S.day = {}; S.uid = id; localStorage.setItem('tid', id);
                 S.u = await DB.getU(id);
-                if(!S.u) { window.UI.openUsers(); return; }
+                if(!S.u) { UI.openUsers(); return; }
                 S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
                 document.getElementById('loading-screen').style.display='none';
-                window.UI.closeAll();
             },
             sync: async () => { S.day = await DB.getDay(S.d); Render.all(); }
         };
 
-        // EXPORTACIÓN A WINDOW
+        // --- PUENTE VITAL PARA QUE FUNCIONE ---
         window.Logic = Logic;
         window.UI = UI;
         window.AI = AI;
         window.Calc = Calc;
+        window.Render = Render;
         window.Sys = Sys;
 
-        // SWIPE GESTURES
+        // SWIPE
         let ts = 0;
         document.addEventListener('touchstart', e => ts = e.changedTouches[0].screenX);
         document.addEventListener('touchend', e => {
             const te = e.changedTouches[0].screenX;
-            if(te < ts - 50) Logic.day(1); // Left -> Next
-            if(te > ts + 50) Logic.day(-1); // Right -> Prev
+            if(te < ts - 50) Logic.day(1); 
+            if(te > ts + 50) Logic.day(-1);
         });
 
-        // SAFETY BOOT
+        // ARRANQUE SEGURO
         if(document.readyState === 'complete') Sys.init();
         else window.addEventListener('load', Sys.init);
         
-        // TIMEOUT SAFETY
         setTimeout(() => {
             const load = document.getElementById('loading-screen');
             if(load && load.style.display !== 'none' && !S.u) {
-                load.style.display='none'; window.UI.openUsers();
+                load.style.display='none'; UI.openUsers();
             }
         }, 4000);
 
