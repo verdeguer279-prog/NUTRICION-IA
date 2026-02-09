@@ -2,1218 +2,697 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v32.0 | PRO REPORTS</title>
-    
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>POLICÍA LOCAL ALICANTE - VMP 2026</title>
     <style>
-        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; overflow-x: hidden; user-select: none; }
+        :root {
+            --police-blue: #0a2e52;
+            --police-light: #1c4e80;
+            --accent: #ffd700;
+            --danger: #dc3545;
+            --success: #28a745;
+            --white: #ffffff;
+            --bg: #f4f6f9;
+            --warning-bg: #fff3cd;
+            --warning-text: #856404;
+            
+            /* COLORES DE INFRACCIONES */
+            --inf-admin-color: #1565c0; /* Azul fuerte */
+            --inf-soa-color: #2e7d32;   /* Verde fuerte */
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        header {
+            flex: 0 0 auto;
+            background-color: var(--white);
+            color: var(--police-blue);
+            width: 100%;
+            padding: 5px 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-bottom: 4px solid var(--police-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px; 
+            z-index: 10;
+        }
+
+        .header-logo { height: 55px; width: auto; object-fit: contain; }
+        .header-titles { display: flex; flex-direction: column; align-items: center; text-align: center; flex-grow: 1; padding: 0 2px; }
         
-        #loading-screen { position: fixed; inset: 0; background: var(--p); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s; }
-        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--car); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        header h1 { 
+            margin: 0; font-size: 1rem; font-weight: 900; letter-spacing: 0.5px; 
+            text-transform: uppercase; line-height: 1.1;
+            background: linear-gradient(90deg, var(--police-blue), var(--police-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        header h2 { margin: 2px 0 0 0; font-size: 0.65rem; font-weight: 700; color: #555; text-transform: uppercase; }
 
-        /* HEADER */
-        .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 15px 15px 50px 15px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .user-group { display: flex; gap: 10px; }
-        .user-pill { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--car); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid rgba(255,255,255,0.2); font-size: 1.1rem; }
+        .container { 
+            flex: 1 1 auto; 
+            width: 100%; max-width: 600px; margin: 0 auto; padding: 10px;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        .card { 
+            background: var(--white); border-radius: 12px; padding: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%;
+        }
         
-        .date-nav { display: flex; align-items: center; gap: 10px; flex-grow: 1; justify-content: flex-end; }
-        .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 12px; color: white; cursor: pointer; }
-        .date-txt { text-align: right; }
-        #h-day { font-size: 1rem; font-weight: 700; margin: 0; text-transform: capitalize; }
-        #h-full { font-size: 0.7rem; opacity: 0.7; margin: 0; }
+        .question-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--accent); margin-bottom: 15px; padding-bottom: 5px; }
+        .question-title { color: var(--police-blue); font-size: 1.2rem; font-weight: 700; margin: 0; padding-right: 5px; line-height: 1.2; }
+        .help-btn-icon { background: transparent; border: 2px solid var(--police-light); color: var(--police-light); border-radius: 50%; width: 28px; height: 28px; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        .dash { display: grid; grid-template-columns: 110px 1fr; gap: 20px; align-items: center; }
-        .ring { width: 110px; height: 110px; border-radius: 50%; background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); display: flex; align-items: center; justify-content: center; position: relative; transition: background 0.3s; }
-        .ring.danger { background: conic-gradient(var(--bad) 0deg, rgba(255,255,255,0.05) 0deg); }
+        .options-grid { display: flex; flex-direction: column; gap: 10px; }
+
+        button.option-btn { 
+            background-color: var(--police-light); color: var(--white); border: none; padding: 16px; 
+            border-radius: 10px; font-size: 1rem; cursor: pointer; transition: 0.2s; text-align: left; 
+            display: flex; justify-content: space-between; align-items: center; font-weight: 600; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button.option-btn:active { background-color: var(--police-blue); transform: scale(0.98); }
+
+        .controls { margin-top: 20px; display: flex; gap: 10px; }
+        .btn-control { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; font-size: 0.95rem; }
+        .btn-back { background-color: #90a4ae; color: #37474f; }
+        .btn-reset { background-color: var(--accent); color: #000; }
+
+        footer {
+            flex: 0 0 auto; background: var(--police-blue); color: white; text-align: center;
+            padding: 10px; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px;
+            z-index: 10; padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+
+        .modal { 
+            display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; 
+            padding: 5px; backdrop-filter: blur(3px); 
+        }
         
-        .ring-in { width: 90px; height: 90px; background: var(--p); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .val-big { font-size: 1.4rem; font-weight: 800; }
-        .lbl-small { font-size: 0.6rem; opacity: 0.7; }
-        .val-big.danger { color: var(--bad); }
-        .lbl-small.danger { color: var(--bad); opacity: 1; font-weight: 700; }
+        .modal-content { 
+            background-color: var(--white); border-radius: 10px; width: 100%; max-width: 600px; 
+            display: flex; flex-direction: column; max-height: 98dvh; 
+            animation: slideUp 0.2s ease-out; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal-header-strip { 
+            padding: 8px; text-align: center; color: white; font-weight: bold; font-size: 0.95rem; 
+            text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; 
+        }
+        .header-success { background-color: var(--success); }
+        .header-danger { background-color: var(--danger); }
+        .header-warning { background-color: #f57f17; }
+        .header-help { background-color: var(--police-light); }
+
+        .modal-body { 
+            padding: 10px; overflow-y: auto; flex-grow: 1; min-height: 0;
+        }
+
+        .result-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; width: 100%; }
+        .result-logo-img { height: 55px; width: 55px; object-fit: contain; }
+        .result-main-icon { font-size: 2.8rem; line-height: 1; }
+        .result-main-title { text-align: center; font-size: 1.1rem; margin: 0 0 10px 0; color: #333; font-weight: 800; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+
+        .table-plate-wrapper {
+            display: flex; justify-content: space-between; align-items: flex-start; 
+            gap: 2px; margin-bottom: 10px; width: 100%;
+        }
+        .table-container { flex: 1; min-width: 0; }
+
+        .legal-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid #e0e0e0; }
+        .legal-table th { 
+            text-align: left; padding: 6px 4px; background-color: #f5f7fa; width: 1%; white-space: nowrap; 
+            border-bottom: 1px solid #ddd; color: var(--police-blue); vertical-align: middle; 
+        }
+        .legal-table td { 
+            padding: 6px 4px; border-bottom: 1px solid #eee; color: #444; font-weight: 600; vertical-align: middle; font-size: 0.85rem;
+        }
+
+        #res-plate-container {
+            flex: 0 0 auto; display: flex; justify-content: center; align-items: center;
+            max-width: 45%; padding-left: 2px;
+        }
+        #res-plate-container img { width: auto; max-width: 100%; object-fit: contain; display: block; }
+
+        .plate-ciclomotor { height: 110px; } 
+        .plate-moto { height: 100px; }       
+        .plate-vmp { height: 155px; } 
+
+        .legal-box { padding: 10px; border-radius: 6px; font-size: 0.8rem; line-height: 1.3; text-align: left; margin-top: 5px; }
+        .box-penal { background-color: #ffebee; border-left: 4px solid var(--danger); color: #c62828; }
+        .box-admin { background-color: #e8f5e9; border-left: 4px solid var(--success); color: #2e7d32; }
+        .box-info { background-color: #e3f2fd; border-left: 4px solid var(--police-blue); color: #0d47a1; }
+
+        .modal-fixed-bottom {
+            flex-shrink: 0; background: #fff; border-top: 1px solid #eee; padding: 8px; 
+            display: flex; flex-direction: column; gap: 8px; z-index: 10;
+        }
+
+        .btn-soa { 
+            display: none; width: 100%; background-color: #d32f2f; color: white; padding: 12px; 
+            border: none; border-radius: 6px; font-weight: bold; font-size: 0.95rem; 
+            cursor: pointer; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-soa span { margin-right: 8px; font-size: 1.1rem; }
+
+        .nav-buttons-row { display: flex; gap: 8px; width: 100%; }
+        .btn-modal-back { flex: 1; padding: 12px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; cursor: pointer; color: #555; font-size: 0.95rem;}
+        .btn-modal-new { flex: 1; padding: 12px; background: var(--police-blue); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95rem;}
+
+        /* ESTILOS NUEVA VENTANA INFRACCIONES */
+        #infraction-modal { z-index: 3001; } 
+        .infraction-box { background: white; padding: 10px; border-radius: 12px; width: 95%; max-width: 500px; border-top: 6px solid #d32f2f; display: flex; flex-direction: column; max-height: 95dvh; }
+        .infraction-title { color: #d32f2f; font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; text-align: center; }
         
-        .macros { display: flex; flex-direction: column; gap: 8px; }
-        .m-row { display: flex; flex-direction: column; gap: 4px; }
-        .m-head { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; }
-        .bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 4px; }
-
-        .bio-alert { margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.8rem; display: flex; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1); }
-
-        .main { max-width: 800px; margin: -30px auto 0; padding: 0 15px; position: relative; z-index: 10; }
-        .card { background: white; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
+        .inf-toggle-container { display: flex; gap: 5px; margin-bottom: 5px; background: #eee; padding: 3px; border-radius: 6px; flex-shrink: 0;}
+        .inf-toggle-btn { flex: 1; padding: 8px; border: none; font-weight: bold; font-size: 0.85rem; border-radius: 6px; background: transparent; color: #666; }
+        .inf-toggle-btn.active { background: #d32f2f; color: white; }
         
-        .c-head { padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .c-left { font-weight: 800; color: var(--s); font-size: 1rem; display: flex; align-items: center; gap: 8px; }
-        .c-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-grow: 1; }
+        .inf-content-scroll { overflow-y: auto; flex-grow: 1; margin-bottom: 5px; padding-right: 2px; }
         
-        .meal-macros { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 700; font-family: monospace; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-right: 5px; }
-        .mm-item { display: flex; align-items: center; gap: 3px; }
-        .mm-dot { width: 6px; height: 6px; border-radius: 50%; }
-        .k-badge { background: var(--p); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.8rem; }
-
-        .tool-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.9rem; }
-        .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .tool-btn.copy { color: var(--a); border-color: var(--a); background: #eff6ff; }
-        .tool-btn.move { color: var(--warn); border-color: var(--warn); background: #fffbeb; }
-        .tool-btn.del { color: var(--bad); border-color: var(--bad); background: #fef2f2; }
-        .tool-btn.add { color: var(--ok); border-color: var(--ok); background: #ecfdf5; font-weight: bold; width: auto; padding: 0 12px; }
-
-        .item { padding: 14px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .i-info h4 { font-size: 0.95rem; font-weight: 700; color: var(--p); margin-bottom: 4px; }
-        .i-det { font-size: 0.8rem; color: #64748b; display: flex; gap: 10px; font-family: monospace; font-weight: 600; align-items: center; }
-        .i-pill { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--p); font-family: 'Inter', sans-serif; font-weight: 700; }
+        /* TARJETA INFRACCION */
+        .inf-card { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
         
-        .c-actions { display: flex; gap: 8px; }
-        .act-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .act-btn:hover { border-color: var(--car); color: var(--car); }
-        .act-btn.del:hover { border-color: #ef4444; color: #ef4444; }
-
-        .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
-
-        /* MODALES */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
-        .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
-        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 10px; }
-        .btn.pri { background: var(--a); color: white; }
-        .btn.sec { background: #f1f5f9; color: var(--p); }
-        .btn.del-user { background: var(--bad); color: white; margin-top: 20px; }
-
-        .modal-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close-x { font-size: 2rem; background: none; border: none; color: #94a3b8; cursor: pointer; line-height: 1; }
-
-        .user-list-grid { display: grid; gap: 12px; }
-        .user-card-wrapper { display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; transition: all 0.2s; cursor: pointer; }
-        .user-card-wrapper:hover { border-color: var(--a); background: #eff6ff; }
-        .user-card-wrapper.active { border-color: var(--a); background: #f0f9ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-        .u-av { width: 45px; height: 45px; background: var(--car); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-right: 15px; flex-shrink: 0; font-size: 1.1rem; }
-        .u-inf { flex-grow: 1; }
-        .u-inf h4 { margin: 0; font-size: 1rem; color: var(--p); }
-        .u-inf small { color: #64748b; font-size: 0.8rem; }
-        .u-edt { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #94a3b8; border-radius: 8px; }
-        .u-edt:hover { background: #e2e8f0; color: var(--a); }
-
-        .live-box { background: #f0f9ff; padding: 12px; border-radius: 14px; border: 1px solid #bae6fd; margin-bottom: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; gap: 5px; flex-wrap: wrap; }
-        .stat-item { text-align: center; flex: 1; }
-        .stat-val { font-weight: 800; color: var(--a); display: block; }
-        .stat-lbl { font-size: 0.7rem; color: #64748b; }
-
-        .food-suggestion { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
-        .food-suggestion:hover { background: #f8fafc; }
-        .s-info { flex-grow: 1; }
-        .s-del { color: #cbd5e1; padding: 5px 10px; cursor: pointer; transition: 0.2s; }
-        .s-del:hover { color: var(--bad); }
-
-        .unit-selector { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; font-weight: 700; color: var(--text-dark); cursor: pointer; }
-
-        .ai-header-btn { font-size: 0.8rem; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: 700; display:flex; align-items:center; gap:5px; margin-left:10px; transition: all 0.3s; }
-        .ai-header-btn.configured { background: #ecfdf5; color: var(--ok); border-color: var(--ok); }
+        .inf-card-header { padding: 6px 10px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: white; display: flex; justify-content: space-between; align-items: center; }
         
-        .ai-input-area { margin-bottom: 20px; }
-        .ai-textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 14px; font-family: inherit; font-size: 1rem; resize: none; background: #f8fafc; margin-bottom: 10px; }
-        .ai-textarea:focus { border-color: var(--a); background: white; }
-        .ai-actions { display: flex; gap: 10px; align-items: center; }
-        .mic-btn { width: 50px; height: 50px; background: #ef4444; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .mic-btn.listening { animation: pulse 1s infinite; background: #dc2626; }
-        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
-        .password-wrapper { position: relative; }
-        .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
+        /* COLORES */
+        .header-admin { background-color: var(--inf-admin-color); } 
+        .header-soa { background-color: var(--inf-soa-color); }     
         
-        .separator { text-align: center; margin: 20px 0; color: #94a3b8; font-size: 0.8rem; position: relative; }
-        .separator::before, .separator::after { content: ''; position: absolute; top: 50%; width: 45%; height: 1px; background: #e2e8f0; }
-        .separator::before { left: 0; } .separator::after { right: 0; }
+        .inf-card-body { padding: 10px; background-color: #fff; }
         
-        .link-btn { background: none; border: none; color: var(--a); cursor: pointer; text-decoration: underline; font-size: 0.85rem; display: block; margin: 10px auto; }
-        .api-link { display: block; text-align: center; font-size: 0.8rem; color: var(--a); margin-top: 10px; text-decoration: none; border: 1px dashed var(--a); padding: 8px; border-radius: 8px; }
-
-        /* ESTADÍSTICAS */
-        .chart-filters { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
-        .filter-btn { padding: 8px 16px; border: 1px solid #cbd5e1; background: white; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
-        .filter-btn.active { background: var(--p); color: white; border-color: var(--p); }
+        .inf-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; border-bottom: 1px dashed #eee; padding-bottom: 3px; }
+        .inf-val { font-weight: 800; text-align: right; }
+        .inf-text { background: #f9f9f9; padding: 8px; border-radius: 6px; border: 1px solid #eee; font-family: monospace; font-size: 0.8rem; margin: 5px 0; color: #333; line-height: 1.3; }
         
-        .weight-input-box { display: flex; gap: 10px; margin-bottom: 10px; background: #f0f9ff; padding: 15px; border-radius: 12px; align-items: center; flex-wrap: wrap;}
-        .weight-input-box input { margin: 0; flex: 1; }
-        .weight-input-box button { width: auto; margin: 0; padding: 0 20px; }
-        .weight-date { width: 100%; border-bottom: 1px solid #dbeafe; padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; color: #64748b; font-size: 0.9rem; }
-        .w-delta { font-size: 0.8rem; width: 100%; display: flex; justify-content: space-between; color: #64748b; margin-top: 5px; }
-        .text-ok { color: var(--ok); font-weight: bold; }
-        .text-bad { color: var(--bad); font-weight: bold; }
-        .day-stepper { display:flex; gap:5px; align-items:center; }
-        .day-btn { background:#e2e8f0; border:none; border-radius:5px; width:30px; height:30px; cursor:pointer; }
+        .measure-box { margin-top: 5px; padding: 5px; background-color: #ffebee; color: #c62828; font-weight: bold; font-size: 0.8rem; text-align: center; border-radius: 4px; border: 1px solid #ffcdd2; }
 
-        .rings-container { display: flex; justify-content: space-around; gap: 10px; margin-bottom: 20px; }
-        .stat-ring-wrap { position: relative; width: 140px; height: 140px; display: flex; justify-content: center; align-items: center; }
-        .stat-ring-text { position: absolute; text-align: center; font-size: 0.8rem; pointer-events: none; }
-        .srt-val { font-size: 1.1rem; font-weight: 800; color: var(--p); display: block; }
-        .srt-lbl { color: #64748b; font-size: 0.7rem; }
+        .inf-note { font-size: 0.75rem; color: #666; font-style: italic; background: #fff3e0; padding: 8px; border-radius: 5px; margin-top: 5px; border-left: 3px solid #ff9800; }
+        
+        .btn-close-inf { width: 100%; padding: 12px; background: #444; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: auto; font-size: 1rem; flex-shrink: 0;}
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        @media (max-width: 360px) {
+            .plate-vmp { height: 120px !important; } 
+            .legal-table { font-size: 0.75rem; }
+        }
+        .help-list { padding-left: 20px; line-height: 1.5; font-size: 0.9rem; }
+        .help-list li { margin-bottom: 12px; }
+        
+        .disclaimer-note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ffebee;
+            color: #d32f2f;
+            font-size: 0.85rem;
+            text-align: center;
+            border-radius: 6px;
+            border: 1px solid #ffcdd2;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen"><div class="spinner"></div></div>
+<header>
+    <img id="head-logo-left" class="header-logo" alt="Judicial" />
+    <div class="header-titles">
+        <h1>POLICÍA LOCAL ALICANTE</h1>
+        <h2>CATEGORIZACIÓN VEHÍCULOS LIGEROS</h2>
+    </div>
+    <img id="head-logo-right" class="header-logo" alt="GAD" />
+</header>
 
-    <header class="header-wrapper" id="pdf-header">
-        <div class="top-nav-bar">
-            <div class="user-group">
-                <div class="user-pill" onclick="window.UI.openUsers()" title="Cambiar Usuario">
-                    <div class="avatar" id="h-av">?</div>
-                </div>
-                <div class="user-pill" onclick="window.Stats.open()" style="background:white; color:var(--p)" title="Estadísticas">
-                    <i class="fas fa-chart-pie"></i>
-                </div>
-            </div>
-            <div class="date-nav">
-                <button class="nav-btn" onclick="window.Logic.day(-1)"><i class="fas fa-arrow-left"></i></button>
-                <div class="date-txt">
-                    <h2 id="h-day">...</h2>
-                    <p id="h-full">...</p>
-                </div>
-                <button class="nav-btn" onclick="window.Logic.day(1)"><i class="fas fa-arrow-right"></i></button>
-            </div>
+<div class="container">
+    <div class="card">
+        <div id="question-area"></div>
+        <div class="controls">
+            <button class="btn-control btn-back" id="btn-back-main" onclick="app.prevStep()">⬅️ Atrás</button>
+            <button class="btn-control btn-reset" onclick="app.resetApp()">Reiniciar 🔄</button>
         </div>
+    </div>
+</div>
 
-        <div class="dash">
-            <div class="ring" id="ring-bg">
-                <div class="ring-in">
-                    <span class="lbl-small" id="l-restan">RESTAN</span>
-                    <span class="val-big" id="v-rem">0</span>
-                </div>
+<footer>
+    UNIDAD JUDICIAL © 2026 &nbsp;|&nbsp; GAD © 2026
+</footer>
+
+<div id="result-modal" class="modal">
+    <div class="modal-content">
+        <div id="modal-header-strip" class="modal-header-strip">DICTAMEN TÉCNICO POLICIAL</div>
+        <div class="modal-body">
+            <div class="result-top-row">
+                <img id="res-logo-left" class="result-logo-img" alt="Judicial" />
+                <span id="res-icon" class="result-main-icon"></span>
+                <img id="res-logo-right" class="result-logo-img" alt="GAD" />
             </div>
-            <div class="macros">
-                <div class="m-row">
-                    <div class="m-head"><span style="color:var(--pro)">PROTEÍNAS</span><span id="v-p">0/0</span></div>
-                    <div class="bar-bg"><div class="bar-fill" id="b-p" style="background:var(--pro); width:0%"></div></div>
+            <h3 id="res-title" class="result-main-title"></h3>
+            
+            <div class="table-plate-wrapper">
+                <div class="table-container">
+                    <table class="legal-table">
+                        <tr><th>Permiso</th><td id="res-permiso"></td></tr>
+                        <tr><th>Seguro</th><td id="res-seguro"></td></tr>
+                        <tr><th>Matrícula</th><td id="res-matricula-text"></td></tr>
+                        <tr><th>Casco</th><td id="res-casco"></td></tr>
+                    </table>
                 </div>
-                <div class="m-row">
-                    <div class="m-head"><span style="color:var(--car)">CARBOHIDRATOS</span><span id="v-c">0/0</span></div>
-                    <div class="bar-bg"><div class="bar-fill" id="b-c" style="background:var(--car); width:0%"></div></div>
-                </div>
-                <div class="m-row">
-                    <div class="m-head"><span style="color:var(--fat)">GRASAS</span><span id="v-f">0/0</span></div>
-                    <div class="bar-bg"><div class="bar-fill" id="b-f" style="background:var(--fat); width:0%"></div></div>
-                </div>
-            </div>
-        </div>
-        <div class="bio-alert" id="bio-txt">...</div>
-    </header>
-
-    <main class="main" id="feed"></main>
-
-    <button class="fab" onclick="document.getElementById('m-glob').style.display='flex'"><i class="fas fa-bolt"></i></button>
-
-    <div class="modal" id="m-stats">
-        <div class="sheet" style="max-width:600px">
-            <div class="modal-h">
-                <h3>Balance & Peso</h3>
-                <div class="day-stepper">
-                    <button class="day-btn" onclick="window.Stats.changeDate(-1)"><</button>
-                    <input type="date" id="st-date" style="border:none;background:transparent;font-weight:bold" onchange="window.Stats.load(this.value)">
-                    <button class="day-btn" onclick="window.Stats.changeDate(1)">></button>
-                </div>
-                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+                <div id="res-plate-container"></div>
             </div>
             
-            <div class="weight-input-box">
-                <input type="text" id="w-today" class="inp" placeholder="Peso (kg)" inputmode="decimal">
-                <button class="btn pri" onclick="window.Stats.saveWeight()">Guardar</button>
-                <div class="w-delta" id="w-feedback"></div>
+            <div id="res-legal-box" class="legal-box"></div>
+        </div>
+        <div class="modal-fixed-bottom">
+            <button id="btn-soa" class="btn-soa" onclick="app.showInfractions()"><span>👮</span> VER INFRACCIONES (ADMIN + SOA)</button>
+            <div class="nav-buttons-row">
+                <button class="btn-modal-back" onclick="app.closeModal()">🔙 Corregir</button>
+                <button class="btn-modal-new" onclick="app.resetApp()">🔄 Nueva</button>
             </div>
-
-            <div class="rings-container">
-                <div>
-                    <h4 style="text-align:center;font-size:0.8rem;margin-bottom:5px">DIARIO</h4>
-                    <div class="stat-ring-wrap">
-                        <canvas id="chart-daily"></canvas>
-                        <div class="stat-ring-text" id="daily-txt"></div>
-                    </div>
-                </div>
-                <div>
-                    <h4 style="text-align:center;font-size:0.8rem;margin-bottom:5px">SEMANAL</h4>
-                    <div class="stat-ring-wrap">
-                        <canvas id="chart-weekly"></canvas>
-                        <div class="stat-ring-text" id="weekly-txt"></div>
-                    </div>
-                </div>
-            </div>
-
-            <h4 style="margin:20px 0 10px">Evolución Peso</h4>
-            <canvas id="chart-weight" style="width:100%; height:200px"></canvas>
         </div>
     </div>
+</div>
 
-    <div class="modal" id="m-users">
-        <div class="sheet">
-            <div class="modal-h"><h3>Perfiles</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
-            <div id="u-list" class="user-list-grid"></div>
-            <button class="btn pri" onclick="window.UI.newProfile()">+ Crear Nuevo</button>
-        </div>
-    </div>
-
-    <div class="modal" id="m-prof">
-        <div class="sheet">
-            <div class="modal-h"><h3>Perfil</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
-            <div class="live-box">
-                <div class="stat-item"><span class="stat-val" id="l-tmb">--</span><span class="stat-lbl">TMB</span></div>
-                <div class="stat-item"><span class="stat-val" id="l-imc">--</span><span class="stat-lbl">IMC</span></div>
-                <div class="stat-item"><span class="stat-val" id="l-ideal">--</span><span class="stat-lbl">Ideal</span></div>
-                <div class="stat-item"><span class="stat-val" id="l-goal" style="color:var(--bad)">--</span><span class="stat-lbl">Meta</span></div>
-            </div>
+<div id="help-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header-strip header-help">¿CÓMO FUNCIONA?</div>
+        <div class="modal-body">
+            <ul class="help-list">
+                <li><strong>Categorización paso a paso:</strong> Responde las preguntas observando las características del vehículo (potencia, sillín, autoequilibrado...).</li>
+                <li><strong>Resultado Legal:</strong> Obtendrás una ficha técnica completa con la categoría (VMP, L1e, etc.) y los requisitos exigibles.</li>
+                <li><strong>Infracciones (Botón Rojo):</strong> Si está habilitado, pulsa para ver los boletines de denuncia:
+                    <ul style="margin-top:5px; font-size:0.85rem;">
+                        <li style="color: var(--inf-admin-color);"><strong>AZUL:</strong> Administrativa (Carecer de registro/matrícula).</li>
+                        <li style="color: var(--inf-soa-color);"><strong>VERDE:</strong> Seguro Obligatorio (SOA).</li>
+                    </ul>
+                </li>
+                <li><strong>Detección VPL vs Motor:</strong> El sistema calculará automáticamente si un VMP pesado pasa a considerarse vehículo a motor o se mantiene como VPL según su velocidad.</li>
+                <li><strong>Dictamen Fiscalía 2/2021:</strong> Se aplica el criterio del Fiscal de Sala de Seguridad Vial, excluyendo la vía penal para los L1e-A (Ciclos de Motor) y VMP, salvo en caso de accidente lesivo.</li>
+                <li><strong>"Falsas Bicicletas" (>1000W):</strong> Se clasifican según velocidad real. Si supera 45 km/h, se trata como Motocicleta (L3e) a todos los efectos legales y penales (Art 384 CP).</li>
+            </ul>
             
-            <label>Nombre</label><input id="e-name" class="inp">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px">
-                <div><label>Altura (cm)</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
-                <div><label>Peso (kg)</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()"></div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <div><label>Año Nac.</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
-                <div><label>Género</label>
-                    <select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select>
-                </div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-                <div><label>Actividad</label>
-                    <select id="e-act" class="inp" onchange="window.Calc.live()">
-                        <option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option>
-                    </select>
-                </div>
-                <div><label>Objetivo</label>
-                    <select id="e-mod" class="inp" onchange="window.Calc.live()">
-                        <option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option>
-                    </select>
-                </div>
-            </div>
-            
-            <label style="margin-top:10px; display:block; text-align:center; font-size:0.8rem; font-weight:bold">MACROS (%)</label>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
-                <input id="pp" type="number" class="inp" placeholder="P" oninput="window.Calc.live()">
-                <input id="pc" type="number" class="inp" placeholder="C" oninput="window.Calc.live()">
-                <input id="pf" type="number" class="inp" placeholder="G" oninput="window.Calc.live()">
-            </div>
-            <div id="p-check" style="text-align:center; font-size:0.8rem; margin-bottom:15px; color:#94a3b8">Total: 0%</div>
-
-            <button class="btn pri" id="btn-save-user" onclick="window.Logic.saveUser()">Guardar Cambios</button>
-            <button class="btn del-user" id="btn-del-user" onclick="window.Logic.deleteUser()" style="display:none">🗑️ Eliminar Usuario</button>
-        </div>
-    </div>
-
-    <div class="modal" id="m-add">
-        <div class="sheet">
-            <div class="modal-h">
-                <h3>Añadir</h3>
-                <button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')"><i class="fas fa-cog"></i> Config</button>
-                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
-            </div>
-            
-            <div id="v-home">
-                <div class="ai-input-area">
-                    <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos cocidos y un plátano... (Dicta o escribe aquí)"></textarea>
-                    <div class="ai-actions">
-                        <button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
-                        <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">✨ Procesar con IA</button>
-                    </div>
-                </div>
-                
-                <div class="separator">O busca en tu biblioteca</div>
-                
-                <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.Logic.search()">
-                <div id="res-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
-                
-                <button class="link-btn" onclick="window.UI.view('v-json')">Tengo un código JSON</button>
-                <button class="link-btn" onclick="window.UI.view('v-import')">🔄 Clonar comida de otro día</button>
-            </div>
-
-            <div id="v-conf" style="display:none">
-                <h4>Configuración IA</h4>
-                <label style="font-size:0.8rem; color:#64748b">API Key de Gemini</label>
-                <div class="password-wrapper">
-                    <input type="password" id="ai-key" class="inp" placeholder="Pega tu API Key...">
-                    <i class="fas fa-eye eye-icon" onclick="window.AI.toggleEye()"></i>
-                </div>
-                <label style="font-size:0.8rem; color:#64748b">Modelo</label>
-                <input type="text" id="ai-model" class="inp" value="gemini-1.5-flash">
-                <a href="CLAVES API.html" target="_blank" class="api-link">🔑 Gestor de Claves API</a>
-                <button class="btn pri" onclick="window.AI.saveConfig()" style="margin-top:15px">Guardar</button>
-                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
-            </div>
-
-            <div id="v-qty" style="display:none">
-                <h4 id="qty-name" style="margin-bottom:10px"></h4>
-                <div style="display:flex; gap:10px">
-                    <input type="number" id="qty-in" class="inp" placeholder="Cantidad">
-                    <select id="unit-in" class="unit-sel">
-                        <option value="g">Gramos (g)</option>
-                        <option value="ml">Mililitros (ml)</option>
-                    </select>
-                </div>
-                <button class="btn pri" onclick="window.Logic.saveItem()">Guardar</button>
-                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
-            </div>
-
-            <div id="v-json" style="display:none">
-                <textarea id="json-in" class="inp" style="height:100px; background:#1e293b; color:#0ea5e9; font-family:monospace" placeholder="Pega el JSON aquí..."></textarea>
-                <button class="btn pri" onclick="window.Logic.parse()">Procesar</button>
-                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
-            </div>
-
-            <div id="v-import" style="display:none">
-                <h4>Clonar comida</h4>
-                <label>Desde Fecha:</label>
-                <input type="date" id="imp-date" class="inp" style="margin-bottom:10px">
-                <label>Desde Comida:</label>
-                <select id="imp-meal" class="inp" style="margin-bottom:15px">
-                    <option value="01_desayuno">Desayuno</option>
-                    <option value="02_almuerzo">Almuerzo</option>
-                    <option value="03_comida">Comida</option>
-                    <option value="04_merienda">Merienda</option>
-                    <option value="05_cena">Cena</option>
-                </select>
-                <button class="btn pri" onclick="window.Logic.execImport()">Traer Aquí</button>
-                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+            <div class="disclaimer-note">
+                No válido para uso oficial. Pendiente de supervisión por <strong>Pepito</strong>.
             </div>
         </div>
-    </div>
-
-    <div class="modal" id="m-copy">
-        <div class="sheet">
-            <div class="modal-h">
-                <h3 id="copy-ti">Gestionar</h3>
-                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
-            </div>
-            <label>Fecha Destino:</label>
-            <input type="date" id="copy-date" class="inp">
-            <label>Comida Destino:</label>
-            <select id="copy-meal" class="inp">
-                <option value="01_desayuno">Desayuno</option>
-                <option value="02_almuerzo">Almuerzo</option>
-                <option value="03_comida">Comida</option>
-                <option value="04_merienda">Merienda</option>
-                <option value="05_cena">Cena</option>
-            </select>
-            <button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button>
+        <div class="modal-fixed-bottom">
+            <button class="btn-modal-new" style="width:100%" onclick="document.getElementById('help-modal').style.display='none'">ENTENDIDO</button>
         </div>
     </div>
+</div>
 
-    <div class="modal" id="m-glob">
-        <div class="sheet">
-            <h3>Opciones</h3>
-            <button class="btn sec" onclick="window.Logic.pdf()">📄 PDF Diario</button>
-            <button class="btn sec" onclick="window.Logic.pdfHistory()">📚 PDF Historial Completo</button>
-            <button class="btn sec" onclick="window.Logic.exportJSON()">💾 Backup Completo</button>
-            <input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)">
-            <button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar Backup</button>
-            <button class="btn sec" onclick="window.Logic.syncHistory()">🔄 Sincronizar Historial</button>
-            <button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button>
-            <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
-            authDomain: "nutricion-f6e70.firebaseapp.com",
-            projectId: "nutricion-f6e70",
-            storageBucket: "nutricion-f6e70.firebasestorage.app",
-            messagingSenderId: "926932712073",
-            appId: "1:926932712073:web:d660418820d91ec4ec6458",
-            measurementId: "G-MFB78MVX9S"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const fire = { doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, writeBatch, query, where, orderBy, limit };
-
-        const MEALS = [
-            {k:'01_desayuno', n:'Desayuno', i:'fa-coffee'},
-            {k:'02_almuerzo', n:'Almuerzo', i:'fa-bread-slice'},
-            {k:'03_comida', n:'Comida', i:'fa-utensils'},
-            {k:'04_merienda', n:'Merienda', i:'fa-apple-alt'},
-            {k:'05_cena', n:'Cena', i:'fa-moon'}
-        ];
-
-        let S = { 
-            d: new Date(),
-            uid: localStorage.getItem('tid'),
-            u: null, day: {}, lib: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null,
-            srcMeal: null, copyMode: 'copy' 
-        };
-
-        // --- DEFINICIONES ---
+<div id="infraction-modal" class="modal">
+    <div class="infraction-box">
+        <div class="infraction-title">BOLETÍN DE DENUNCIAS</div>
         
-        const DB = {
-            col: (n) => fire.collection(db, n),
-            doc: (p,i) => fire.doc(db, p, i),
-            norm: (u) => ({
-                id: u.id, name: u.name||'Usuario', h: parseFloat(u.height||170), w: parseFloat(u.weight||70),
-                y: parseInt(u.birthYear||1990), g: u.gender||'male', act: u.activity||"1.2", mod: u.goalMod||"0",
-                mac: u.customMacros || {p:null, c:null, f:null}
-            }),
-            getUsers: async () => { const s=await fire.getDocs(DB.col('usuarios')); return S.allUsers=s.docs.map(d=>DB.norm(d.data())); },
-            getU: async(id) => { const s=await fire.getDoc(DB.doc('usuarios', id)); return s.exists()?s.data():null; },
-            setU: async(u) => await fire.setDoc(DB.doc('usuarios', u.id), u),
-            delU: async(id) => await fire.deleteDoc(DB.doc('usuarios', id)),
-            getDay: async(d) => {
-                const k=d.toISOString().split('T')[0]; const s=await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
-                let data=s.exists()?s.data():{}; MEALS.forEach(m=>{ if(!data[m.k]) data[m.k]=[] }); return data;
-            },
-            getDayLog: async (uid, dStr) => { const s=await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dStr)); return s.exists()?s.data():{}; },
-            setDay: async() => { const k=S.d.toISOString().split('T')[0]; await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day); },
-            lib: async() => { const s=await fire.getDoc(DB.doc('sistema','biblioteca')); S.lib=s.exists()?s.data().items:[]; },
-            addLib: async(arr) => {
-                arr.forEach(n=>{ if(!S.lib.find(x=>x.n===n.n)) S.lib.push(n); });
-                await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
-            }
-        };
+        <div class="inf-toggle-container" id="inf-tabs">
+            <button class="inf-toggle-btn active" id="btn-tab-driver" onclick="app.switchInfractionMode('driver')">CIRCULA (Titular)</button>
+            <button class="inf-toggle-btn" id="btn-tab-owner" onclick="app.switchInfractionMode('owner')">NO CIRCULA (Titular)</button>
+        </div>
 
-        const Logic = {
-            day: (n) => { S.d.setDate(S.d.getDate()+n); Sys.sync(); },
-            saveUser: async () => {
-                const n = document.getElementById('e-name').value;
-                if(!n) return alert("Nombre obligatorio");
-                try {
-                    const vals = (ids) => ids.map(i=>document.getElementById(i).value);
-                    const [h, w, y, g, act, mod] = vals(['e-h','e-w','e-y','e-g','e-act','e-mod']);
-                    const [pp, pc, pf] = vals(['pp','pc','pf']);
-                    
-                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
-                    const goal = Math.round(bmr*act + parseInt(mod));
+        <div class="inf-content-scroll">
+            <div id="inf-card-admin" class="inf-card">
+                <div class="inf-card-header header-admin">ADMINISTRATIVA (Registro/Matrícula)</div>
+                <div class="inf-card-body">
+                    <div class="inf-row"><span class="inf-label">Normativa:</span><span id="inf-admin-norm" class="inf-val"></span></div>
+                    <div class="inf-row"><span class="inf-label">Opción:</span><span id="inf-admin-opt" class="inf-val"></span></div>
+                    <div class="inf-row"><span class="inf-label">Importe:</span><span id="inf-admin-amount" class="inf-val" style="color:#d32f2f;"></span></div>
+                    <div class="inf-text" id="inf-admin-text"></div>
+                    <div class="measure-box" id="inf-admin-action"></div>
+                </div>
+            </div>
 
-                    const u = {
-                        id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
-                        customMacros: { p:Math.round(goal*(pp/100)/4), c:Math.round(goal*(pc/100)/4), f:Math.round(goal*(pf/100)/9) }
-                    };
-                    await DB.setU(u); alert("✅ Guardado"); S.allUsers=await DB.getUsers(); await Sys.load(u.id); window.UI.closeAll();
-                } catch(e) { alert("Error: "+e.message); }
-            },
-            saveWeight: async () => {
-                const w = parseFloat(document.getElementById('w-today').value);
-                const d = document.getElementById('w-date').value;
-                if(!w || !d) return alert("Faltan datos");
-                
-                let targetData = S.day;
-                let isToday = (d === S.d.toISOString().split('T')[0]);
-                
-                if(!isToday) {
-                    const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
-                    targetData = snap.exists() ? snap.data() : {};
-                }
-                
-                targetData.weight = w;
-                await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), targetData);
-                
-                if(isToday) S.day = targetData;
-                alert("Peso guardado");
-                window.Stats.load(30); 
-            },
-            checkWeight: () => {
-                if(!S.day.weight) {
-                    setTimeout(() => {
-                        if(confirm("¿Quieres registrar tu peso hoy?")) window.Stats.open();
-                    }, 1000);
-                }
-            },
-            deleteUser: async () => {
-                if(confirm("¿Eliminar usuario y todos sus datos?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
-            },
-            delFromLib: async (name) => {
-                if(!confirm("¿Borrar " + name + "?")) return;
-                try {
-                    S.lib = S.lib.filter(x => x.n !== name);
-                    await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
-                    Logic.search();
-                } catch(e) { alert("Error: " + e.message); }
-            },
-            openAdd: (mk) => { S.tm=mk; S.edit=false; window.UI.view('v-home'); window.UI.open('m-add'); if(S.lib.length>0) Logic.search(); window.UI.checkAI(); },
-            openImport: () => {
-                document.getElementById('imp-date').valueAsDate = new Date();
-                window.UI.view('v-import');
-            },
-            search: () => {
-                const q = document.getElementById('src-in').value.toLowerCase();
-                const b = document.getElementById('res-list'); b.innerHTML='';
-                S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
-                    const d = document.createElement('div'); d.className='food-suggestion';
-                    d.innerHTML = `
-                        <div class="s-info" onclick='window.S.item=${JSON.stringify(f).replace(/'/g,"&#39;")}; window.UI.setQty(window.S.item); window.UI.view("v-qty")'>
-                            <b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small>
-                        </div>
-                        <div class="s-del" onclick="window.Logic.delFromLib('${f.n.replace(/'/g,"\\'")}')"><i class="fas fa-trash-alt"></i></div>
-                    `;
-                    b.appendChild(d);
-                });
-            },
-            saveItem: async () => {
-                const q = parseFloat(document.getElementById('qty-in').value);
-                const u = document.getElementById('unit-in').value;
-                const base = S.item; 
-                let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
-                if(S.edit) { const f = base.q/100; bk/=f; bp/=f; bc/=f; bf/=f; }
-                const f = q/100;
-                const entry = { n:base.n, q:q, u:u, k:bk*f, p:bp*f, c:bc*f, f:bf*f };
-                if(S.edit) S.day[S.tm][S.eIdx] = entry; else S.day[S.tm].push(entry);
-                await DB.setDay(); window.UI.closeAll(); Sys.sync();
-            },
-            editItem: (mk, idx) => {
-                S.edit=true; S.tm=mk; S.eIdx=idx; S.item = JSON.parse(JSON.stringify(S.day[mk][idx]));
-                window.UI.setQty(S.item); window.UI.view('v-qty'); window.UI.open('m-add');
-            },
-            delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
-            wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
-            wipe: async () => { if(confirm("¿Borrar día entero?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); window.UI.closeAll(); } },
-            openCopy: (mk, type) => {
-                S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy');
-            },
-            execCopy: async () => {
-                const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
-                const ref = fire.doc(db, `usuarios/${S.uid}/diario`, d);
-                const snap = await fire.getDoc(ref);
-                let data = snap.exists() ? snap.data() : {};
-                if(!data[tm]) data[tm] = [];
-                data[tm] = data[tm].concat(S.day[S.srcMeal]);
-                await fire.setDoc(ref, data);
-                if(S.copyMode=='move') { S.day[S.srcMeal]=[]; await DB.setDay(); }
-                window.UI.closeAll(); if(d===S.d.toISOString().split('T')[0]) Sys.sync(); alert("Hecho");
-            },
-            execImport: async () => {
-                const d = document.getElementById('imp-date').value; 
-                const meal = document.getElementById('imp-meal').value;
-                const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
-                if(snap.exists() && snap.data()[meal]) {
-                    S.day[S.tm] = S.day[S.tm].concat(snap.data()[meal]);
-                    await DB.setDay();
-                    window.UI.closeAll(); Sys.sync(); alert("Importado");
-                } else { alert("No hay datos en esa fecha/comida."); }
-            },
-            parse: async () => {
-                try {
-                    const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
-                    const json = JSON.parse(txt);
-                    let items = Array.isArray(json)?json:(json.comida_combinada?json.comida_combinada.items:(json.items||json.detalles||[json]));
-                    const newItems = [];
-                    items.forEach(it => {
-                        let q=100, u="g";
-                        if(it.cantidad) {
-                            if(typeof it.cantidad==='string'){ const p=it.cantidad.trim().split(/\s+/); q=parseFloat(p[0])||100; if(p[1])u=p[1].toLowerCase(); }
-                            else q=parseFloat(it.cantidad)||100;
-                        }
-                        const fac=q/100; const get=(keys)=>{ for(let k of keys) { if(it[k]!=undefined)return parseFloat(it[k]); if(it.macros&&it.macros[k]!=undefined)return parseFloat(it.macros[k]); } return 0; };
-                        const base = {
-                            n: it.producto||it.nombre||it.n||"Item", q:100, u:u,
-                            k: get(['energia_kcal','kcal','k'])/fac, p: get(['proteinas_g','p','prot'])/fac,
-                            c: get(['hidratos_carbono_g','c','hc'])/fac, f: get(['grasas_g','f','fat'])/fac
-                        };
-                        S.day[S.tm].push({...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac});
-                        newItems.push(base);
-                    });
-                    await DB.setDay(); await DB.addLib(newItems); 
-                    document.getElementById('json-in').value=''; window.UI.closeAll(); Sys.sync();
-                } catch(e) { alert("JSON Mal: " + e.message); }
-            },
-            createPDF: (content, filename) => {
-                const opt = { margin:10, filename:filename, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} };
-                html2pdf().from(content).set(opt).save();
-            },
-            pdf: () => { 
-                window.UI.closeAll();
-                const dStr = S.d.toLocaleDateString('es-ES');
-                let html = `<div style="padding:20px; font-family:sans-serif">
-                    <h1 style="color:#0f172a">Reporte Diario - ${dStr}</h1>
-                    <p>Usuario: <b>${S.u.name}</b></p>
-                    <hr>
-                    <h3>Resumen</h3>
-                    <table style="width:100%; border-collapse:collapse; margin-bottom:20px">
-                        <tr style="background:#f1f5f9; text-align:left"><th style="padding:8px">Macro</th><th style="padding:8px">Total</th><th style="padding:8px">Meta</th></tr>`;
-                
-                let t = {k:0, p:0, c:0, f:0};
-                Object.values(S.day).forEach(arr => { if(Array.isArray(arr)) arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }); });
-                
-                html += `<tr><td style="padding:8px">Calorías</td><td style="padding:8px">${Math.round(t.k)}</td><td style="padding:8px">${S.u.calc.goal}</td></tr>`;
-                html += `<tr><td style="padding:8px">Proteínas</td><td style="padding:8px">${Math.round(t.p)}g</td><td style="padding:8px">${S.u.calc.p}g</td></tr>`;
-                html += `<tr><td style="padding:8px">Carbohidratos</td><td style="padding:8px">${Math.round(t.c)}g</td><td style="padding:8px">${S.u.calc.c}g</td></tr>`;
-                html += `<tr><td style="padding:8px">Grasas</td><td style="padding:8px">${Math.round(t.f)}g</td><td style="padding:8px">${S.u.calc.f}g</td></tr>`;
-                html += `</table><h3>Detalle Comidas</h3>`;
-                
-                MEALS.forEach(m => {
-                    const arr = S.day[m.k] || [];
-                    if(arr.length > 0) {
-                        html += `<h4 style="background:#e2e8f0; padding:5px">${m.n}</h4><ul>`;
-                        arr.forEach(i => html += `<li>${i.n} (${i.q}${i.u}) - ${Math.round(i.k)} kcal</li>`);
-                        html += `</ul>`;
-                    }
-                });
-                html += `</div>`;
-                
-                const el = document.createElement('div'); el.innerHTML = html;
-                document.body.appendChild(el);
-                Logic.createPDF(el, `Reporte_${dStr}.pdf`);
-                setTimeout(() => el.remove(), 1000);
-            },
-            pdfHistory: async () => {
-                const btn = document.querySelector('#m-glob button:nth-child(2)');
-                btn.innerText = "⏳ Generando...";
-                try {
-                    const snap = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
-                    let html = `<div style="padding:20px; font-family:sans-serif"><h1 style="text-align:center">Historial Completo - ${S.u.name}</h1>`;
-                    
-                    snap.forEach(doc => {
-                        const date = doc.id;
-                        const data = doc.data();
-                        let totalK = 0;
-                        let mealsHtml = '';
-                        
-                        MEALS.forEach(m => {
-                            if(data[m.k] && data[m.k].length > 0) {
-                                mealsHtml += `<b>${m.n}:</b> `;
-                                data[m.k].forEach(i => { totalK += i.k; mealsHtml += `${i.n} (${Math.round(i.k)}), `; });
-                                mealsHtml = mealsHtml.slice(0, -2) + '<br>';
-                            }
-                        });
-                        
-                        if(totalK > 0) {
-                            html += `<div style="border-bottom:1px solid #ccc; padding:10px 0">
-                                <div style="display:flex; justify-content:space-between">
-                                    <strong>${date}</strong> <span>Total: ${Math.round(totalK)} kcal</span>
-                                </div>
-                                <div style="font-size:0.8rem; color:#555; margin-top:5px">${mealsHtml}</div>
-                            </div>`;
-                        }
-                    });
-                    html += `</div>`;
-                    
-                    const el = document.createElement('div'); el.innerHTML = html;
-                    document.body.appendChild(el);
-                    Logic.createPDF(el, `Historial_Completo_${S.u.name}.pdf`);
-                    setTimeout(() => el.remove(), 2000);
-                } catch(e) { alert("Error PDF: "+e.message); }
-                finally { btn.innerText = "📚 PDF Historial Completo"; window.UI.closeAll(); }
-            },
-            exportJSON: async () => {
-                const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
-                const data = { perfil: S.u, historial: {} };
-                snap.forEach(d => data.historial[d.id] = d.data());
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
-                const dateStr = new Date().toISOString().split('T')[0];
-                a.download = `Backup_${S.u.name}_${dateStr}.json`; a.click();
-            },
-            importJSON: async (input) => {
-                const file = input.files[0]; if(!file) return;
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        if(!confirm(`¿Importar historial de ${data.perfil.name} a ${S.u.name}?`)) return;
-                        const batch = fire.writeBatch(db);
-                        Object.entries(data.historial).forEach(([date, dayData]) => {
-                            batch.set(fire.doc(db, `usuarios/${S.uid}/diario`, date), dayData);
-                        });
-                        await batch.commit(); alert("Importado"); location.reload();
-                    } catch(err) { alert("Error: "+err.message); }
-                };
-                reader.readAsText(file);
-            },
-            syncHistory: async () => {
-                const btn = document.querySelector('#m-glob button:nth-child(5)');
-                btn.innerText = "⏳ Sincronizando...";
-                try {
-                    const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
-                    let count = 0;
-                    snap.forEach(doc => {
-                        const day = doc.data();
-                        Object.values(day).forEach(meal => {
-                            if(Array.isArray(meal)) {
-                                meal.forEach(item => {
-                                    if(!S.lib.find(x => x.n === item.n)) {
-                                        let q = parseFloat(item.q) || 100;
-                                        let f = q/100; if(f===0) f=1;
-                                        S.lib.push({
-                                            n: item.n, u: item.u || 'g', q: 100,
-                                            k: (item.k||0)/f, p: (item.p||0)/f, c: (item.c||0)/f, f: (item.f||0)/f
-                                        });
-                                        count++;
-                                    }
-                                });
-                            }
-                        });
-                    });
-                    if(count > 0) {
-                        await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
-                        alert(`📚 ${count} alimentos recuperados.`);
-                    } else { alert("Todo al día."); }
-                } catch(e) { alert("Error: " + e.message); }
-                finally { btn.innerText = "📚 Sincronizar Historial"; }
-            }
-        };
+            <div id="inf-card-soa" class="inf-card">
+                <div class="inf-card-header header-soa">SEGURO OBLIGATORIO (SOA)</div>
+                <div class="inf-card-body">
+                    <div class="inf-row"><span class="inf-label">Normativa:</span><span class="inf-val">RD Leg 8/2004</span></div>
+                    <div class="inf-row"><span class="inf-label">Opción:</span><span id="inf-soa-opt" class="inf-val"></span></div>
+                    <div class="inf-row"><span class="inf-label">Importe:</span><span id="inf-soa-amount" class="inf-val" style="color:#d32f2f;"></span></div>
+                    <div class="inf-row"><span class="inf-label">Reducido:</span><span id="inf-soa-reduced" class="inf-val" style="color:#28a745;"></span></div>
+                    <div class="inf-text" id="inf-soa-text"></div>
+                    <div class="measure-box" id="inf-soa-action">MEDIDA: INMOVILIZACIÓN / DEPÓSITO</div>
+                </div>
+            </div>
+        </div>
 
-        /* --- STATS MODULE --- */
-        const Stats = {
-            chartInstance: null,
-            weightInstance: null,
-            weeklyInstance: null,
-            currentDate: new Date(),
+        <button class="btn-close-inf" onclick="document.getElementById('infraction-modal').style.display='none'">CERRAR</button>
+    </div>
+</div>
 
-            open: () => { 
-                Stats.currentDate = new Date();
-                window.UI.open('m-stats'); 
-                Stats.updateView();
-            },
-            changeDate: (delta) => {
-                Stats.currentDate.setDate(Stats.currentDate.getDate() + delta);
-                Stats.updateView();
-            },
-            load: (dateStr) => {
-                if(dateStr) Stats.currentDate = new Date(dateStr);
-                Stats.updateView();
-            },
-            saveWeight: async () => {
-                let val = document.getElementById('w-today').value;
-                val = val.replace(',', '.');
-                const w = parseFloat(val);
-                const dStr = Stats.currentDate.toISOString().split('T')[0];
-                
-                if(!w) return alert("Introduce un peso");
-                
-                const ref = fire.doc(db, `usuarios/${S.uid}/diario`, dStr);
-                const snap = await fire.getDoc(ref);
-                let data = snap.exists() ? snap.data() : {};
-                
-                data.weight = w;
-                await fire.setDoc(ref, data);
-                
-                if(dStr === S.d.toISOString().split('T')[0]) S.day.weight = w;
-                alert("Peso guardado");
-                Stats.updateView();
-            },
-            
-            updateView: async () => {
-                const dateStr = Stats.currentDate.toISOString().split('T')[0];
-                document.getElementById('st-date').value = dateStr;
-                
-                // 1. FETCH HISTORY
-                const allDocs = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
-                const history = [];
-                allDocs.forEach(d => history.push({id: d.id, ...d.data()}));
-                
-                let firstWeight = null;
-                let prevWeight = null;
-                let currentWeight = null;
+<script>
+    const LOGO_JUDICIAL = "judicial.png";
+    const LOGO_GAD = "logogad.png";
+    const ICON_CILOMOTOR = "CICLOMOTOR.png";
+    const ICON_MOTO = "MOTO.png";
+    const ICON_VMP = "VMPPLACA.png";
 
-                // Find global first weight
-                for(let h of history) { if(h.weight) { firstWeight = h.weight; break; } }
-
-                // Find current and PREVIOUS (strictly before dateStr)
-                for(let h of history) {
-                    if(h.id === dateStr) currentWeight = h.weight;
-                    if(h.id < dateStr && h.weight) prevWeight = h.weight;
-                }
-
-                document.getElementById('w-today').value = currentWeight || '';
-                const fb = document.getElementById('w-feedback');
-                let html = '';
-                
-                // Green if LOST weight (negative diff), Red if GAINED (positive diff)
-                const formatDiff = (curr, base) => {
-                    const diff = curr - base;
-                    // Goal is to lose weight usually? Let's assume standard logic: Lost=Green, Gained=Red
-                    // You requested: Gained=Red, Lost=Green (Objective)
-                    const color = diff > 0 ? 'text-bad' : (diff < 0 ? 'text-ok' : '');
-                    const sign = diff > 0 ? '+' : '';
-                    return `<b class="${color}">${sign}${diff.toFixed(1)}kg</b>`;
-                };
-
-                if(currentWeight) {
-                    if(prevWeight) html += `<span>vs Ant (${prevWeight}): ${formatDiff(currentWeight, prevWeight)}</span>`;
-                    if(firstWeight) html += `<span>vs Inicio (${firstWeight}): ${formatDiff(currentWeight, firstWeight)}</span>`;
-                }
-                fb.innerHTML = html;
-
-                // 2. DAILY RING
-                let dayCals = 0;
-                let dayGoal = S.u.calc.goal;
-                let dayData = history.find(h => h.id === dateStr);
-                if(dayData) MEALS.forEach(m => { if(dayData[m.k]) dayData[m.k].forEach(i => dayCals += i.k) });
-                
-                const diffDay = dayCals - dayGoal;
-                
-                if(Stats.chartDaily) Stats.chartDaily.destroy();
-                Stats.chartDaily = new Chart(document.getElementById('chart-daily'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Comido', 'Restante/Exceso'],
-                        datasets: [{
-                            data: diffDay > 0 ? [dayGoal, diffDay] : [dayCals, dayGoal - dayCals],
-                            backgroundColor: diffDay > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#e2e8f0'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: { cutout: '75%', responsive: true, plugins: { legend: { display: false } } }
-                });
-                
-                const dSign = diffDay > 0 ? '+' : '';
-                const dClass = diffDay > 0 ? 'text-bad' : 'text-ok';
-                document.getElementById('daily-txt').innerHTML = 
-                    `<span class="srt-val">${Math.round(dayCals)}</span>
-                     <span class="srt-lbl">de ${dayGoal}</span>
-                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${dClass}">${dSign}${Math.round(diffDay)}</span>`;
-
-                // 3. WEEKLY RING
-                const dObj = new Date(Stats.currentDate);
-                const dayNum = dObj.getDay() || 7; 
-                dObj.setDate(dObj.getDate() - dayNum + 1); // Monday
-                
-                let weekCals = 0;
-                let weekGoal = dayGoal * 7;
-                
-                for(let i=0; i<7; i++) {
-                    const tempD = new Date(dObj);
-                    tempD.setDate(dObj.getDate() + i);
-                    const k = tempD.toISOString().split('T')[0];
-                    const h = history.find(x => x.id === k);
-                    if(h) MEALS.forEach(m => { if(h[m.k]) h[m.k].forEach(x => weekCals += x.k) });
-                }
-
-                const diffWeek = weekCals - weekGoal;
-                if(Stats.chartWeekly) Stats.chartWeekly.destroy();
-                Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Comido', 'Restante/Exceso'],
-                        datasets: [{
-                            data: diffWeek > 0 ? [weekGoal, diffWeek] : [weekCals, weekGoal - weekCals],
-                            backgroundColor: diffWeek > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#10b981'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: { cutout: '75%', responsive: true, plugins: { legend: { display: false } } }
-                });
-                
-                const wSign = diffWeek > 0 ? '+' : '';
-                const wClass = diffWeek > 0 ? 'text-bad' : 'text-ok';
-                document.getElementById('weekly-txt').innerHTML = 
-                    `<span class="srt-val">${Math.round(weekCals)}</span>
-                     <span class="srt-lbl">de ${weekGoal}</span>
-                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${wClass}">${wSign}${Math.round(diffWeek)}</span>`;
-
-                // 4. WEIGHT CHART
-                const chartDates = [];
-                const chartWeights = [];
-                for(let i=29; i>=0; i--) {
-                    const tempD = new Date(Stats.currentDate);
-                    tempD.setDate(tempD.getDate() - i);
-                    const k = tempD.toISOString().split('T')[0];
-                    chartDates.push(k.slice(5));
-                    const h = history.find(x => x.id === k);
-                    chartWeights.push(h ? h.weight : null);
-                }
-
-                if(Stats.chartWeight) Stats.chartWeight.destroy();
-                Stats.chartWeight = new Chart(document.getElementById('chart-weight'), {
-                    type: 'line',
-                    data: {
-                        labels: chartDates,
-                        datasets: [{ label: 'Peso (kg)', data: chartWeights, borderColor: '#10b981', tension: 0.3, spanGaps: true }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            }
-        };
-
-        /* --- AI --- */
-        const AI = {
-            saveConfig: () => {
-                localStorage.setItem('t_ai_key', document.getElementById('ai-key').value);
-                localStorage.setItem('t_ai_mod', document.getElementById('ai-model').value);
-                window.UI.view('v-home'); window.UI.checkAI();
-            },
-            toggleEye: () => {
-                const x = document.getElementById('ai-key'); x.type = x.type==='password'?'text':'password';
-            },
-            listen: () => {
-                if(!('webkitSpeechRecognition' in window)) return alert("Usa Chrome");
-                const rec = new window.webkitSpeechRecognition();
-                rec.lang = 'es-ES';
-                const btn = document.querySelector('.mic-btn');
-                btn.classList.add('listening');
-                rec.onresult = (e) => { 
-                    const txt = document.getElementById('ai-text');
-                    txt.value = (txt.value + " " + e.results[0][0].transcript).trim();
-                    btn.classList.remove('listening');
-                };
-                rec.onerror = () => btn.classList.remove('listening');
-                rec.start();
-            },
-            process: async () => {
-                const txt = document.getElementById('ai-text').value;
-                const key = localStorage.getItem('t_ai_key');
-                const mod = localStorage.getItem('t_ai_mod') || 'gemini-1.5-flash';
-                if(!txt) return alert("Escribe algo");
-                if(!key) return window.UI.view('v-conf');
-                
-                const btn = document.querySelector('#v-home .btn.pri');
-                const old = btn.innerText; btn.innerText="Pensando...";
-                
-                try {
-                    const prompt = `Analiza: "${txt}". JSON ARRAY: [{"n":"Nombre","q":cantidad,"u":"g"|"ml","k":kcal,"p":prot,"c":carb,"f":grasa}]. Usa 100g si falta cantidad.`;
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${key}`, {
-                        method:'POST', headers:{'Content-Type':'application/json'},
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                    const d = await res.json();
-                    if(!d.candidates) throw new Error(d.error?d.error.message:"Error API");
-                    const raw = d.candidates[0].content.parts[0].text;
-                    const match = raw.match(/\[.*\]/s); // REGEX FIX
-                    if(!match) throw new Error("No JSON");
-                    const items = JSON.parse(match[0]);
-                    
-                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat }));
-                    S.day[S.tm] = S.day[S.tm].concat(mapped);
-                    await DB.setDay();
-                    
-                    const libItems = mapped.map(i => {
-                        const f = i.q/100;
-                        return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f };
-                    });
-                    await DB.addLib(libItems);
-                    
-                    window.UI.closeAll(); Sys.sync(); document.getElementById('ai-text').value='';
-                } catch(e) { alert(e.message); } finally { btn.innerText=old; }
-            }
-        };
-
-        /* --- UI & CALC --- */
-        const UI = {
-            open: (id) => document.getElementById(id).style.display='flex',
-            closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
-            view: (id) => { 
-                ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>document.getElementById(x).style.display='none');
-                document.getElementById(id).style.display='block';
-            },
-            checkAI: () => {
-                const k = localStorage.getItem('t_ai_key');
-                const b = document.getElementById('btn-config-ai');
-                if(k) { b.classList.add('configured'); b.innerHTML='✅ Config'; }
-                document.getElementById('ai-key').value = k||'';
-                document.getElementById('ai-model').value = localStorage.getItem('t_ai_mod')||'gemini-1.5-flash';
-            },
-            setQty: (item) => {
-                document.getElementById('qty-name').innerText = item.n;
-                document.getElementById('qty-in').value = item.q;
-                document.getElementById('unit-in').value = item.u;
-            },
-            openUsers: async () => {
-                const list = document.getElementById('u-list'); list.innerHTML='...';
-                const users = await DB.getUsers();
-                S.allUsers = users; list.innerHTML='';
-                users.forEach(u => {
-                    const d = document.createElement('div'); d.className = `user-card-wrapper ${S.u && S.u.id===u.id ? 'active':''}`;
-                    const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
-                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
-                    
-                    d.innerHTML = `
-                        <div class="u-av" onclick="window.Sys.load('${u.id}')">${u.name[0]}</div>
-                        <div class="u-inf" onclick="window.Sys.load('${u.id}')">
-                            <h4>${u.name}</h4><small>Meta: ${goal} kcal</small>
-                        </div>
-                        <div class="u-edt" onclick="window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>`;
-                    list.appendChild(d);
-                });
-                UI.open('m-users');
-            },
-            editUser: (id) => {
-                const u = S.allUsers.find(x => x.id === id); if(!u) return;
-                document.getElementById('e-name').value = u.name;
-                document.getElementById('e-h').value = u.h; document.getElementById('e-w').value = u.w;
-                document.getElementById('e-y').value = u.y; document.getElementById('e-g').value = u.g;
-                document.getElementById('e-act').value = u.act; document.getElementById('e-mod').value = u.mod;
-                let pp=30, pc=50, pf=20;
-                if(u.mac.p) {
-                    const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
-                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
-                    pp = Math.round((u.mac.p*4/goal)*100); pc = Math.round((u.mac.c*4/goal)*100); pf = Math.round((u.mac.f*9/goal)*100);
-                }
-                document.getElementById('pp').value = pp; document.getElementById('pc').value = pc; document.getElementById('pf').value = pf;
-                document.getElementById('btn-del-user').style.display='block';
-                Calc.live(); UI.open('m-prof');
-            },
-            newProfile: () => { S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); UI.open('m-prof'); Calc.live(); }
-        };
-
-        const Calc = {
-            bio: () => {
-                if(!S.u) return;
-                const h=S.u.h, w=S.u.w, age=new Date().getFullYear()-S.u.y;
-                let bmr = (10*w)+(6.25*h)-(5*age)+(S.u.g=='male'?5:-161);
-                let tdee = bmr * parseFloat(S.u.act);
-                let goal = Math.round(tdee + parseInt(S.u.mod));
-                S.u.calc = { goal:goal, tdee:tdee };
-                
-                if(S.u.mac.p) { S.u.calc.p=S.u.mac.p; S.u.calc.c=S.u.mac.c; S.u.calc.f=S.u.mac.f; }
-                else { S.u.calc.p=Math.round(w*2); S.u.calc.f=Math.round(w*0.9); S.u.calc.c=Math.round((goal-(S.u.calc.p*4)-(S.u.calc.f*9))/4); }
-                
-                document.getElementById('h-av').innerText = S.u.name[0];
-                document.getElementById('bio-txt').innerHTML = `<span>🔥 Gasto: ${Math.round(tdee)}</span> <span>🎯 Meta: <b>${goal}</b></span>`;
-            },
-            live: () => {
-                const val = (id) => parseFloat(document.getElementById(id).value)||0;
-                const h=val('e-h'), w=val('e-w'), y=val('e-y'), act=val('e-act'), mod=val('e-mod');
-                const g = document.getElementById('e-g').value;
-                const pp=val('pp'), pc=val('pc'), pf=val('pf');
-                document.getElementById('p-check').innerText = `Total: ${pp+pc+pf}% ` + (pp+pc+pf===100?'✅':'⚠️');
-
-                if(h && w) {
-                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
-                    const goal = Math.round(bmr*act+mod);
-                    const imc = w/((h/100)**2);
-                    const ideal = 22*((h/100)**2);
-                    
-                    document.getElementById('l-tmb').innerText = Math.round(bmr);
-                    document.getElementById('l-imc').innerText = imc.toFixed(1);
-                    document.getElementById('l-ideal').innerText = Math.round(ideal)+'kg';
-                    document.getElementById('l-goal').innerText = goal;
-                }
-            }
-        };
-
-        const Render = {
-            all: () => {
-                document.getElementById('h-day').innerText = S.d.toLocaleDateString('es-ES',{weekday:'long'});
-                document.getElementById('h-full').innerText = S.d.toLocaleDateString('es-ES');
-                let t = {k:0, p:0, c:0, f:0};
-                Object.values(S.day).forEach(arr => { if(Array.isArray(arr)) arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }); });
-                
-                const tg = S.u.calc;
-                const diff = tg.goal - t.k;
-                
-                const ring = document.getElementById('ring-bg');
-                const lbl = document.getElementById('l-restan');
-                const val = document.getElementById('v-rem');
-                
-                if (diff < 0) {
-                    ring.classList.add('danger');
-                    lbl.innerText = "EXCESO";
-                    lbl.classList.add('danger');
-                    val.innerText = Math.abs(Math.round(diff));
-                    val.classList.add('danger');
-                    ring.style.background = `conic-gradient(var(--bad) 0% 100%, var(--bad) 100%)`;
-                } else {
-                    ring.classList.remove('danger');
-                    lbl.innerText = "RESTAN";
-                    lbl.classList.remove('danger');
-                    val.innerText = Math.round(diff);
-                    val.classList.remove('danger');
-                    const pct = Math.min((t.k/tg.goal)*100, 100);
-                    ring.style.background = `conic-gradient(var(--car) 0% ${pct}%, rgba(255,255,255,0.05) 0%)`;
-                }
-                
-                const bar = (k,v,max) => {
-                    document.getElementById('v-'+k).innerText = `${Math.round(v)}/${max}`;
-                    document.getElementById('b-'+k).style.width = Math.min((v/max)*100, 100)+'%';
-                };
-                bar('p',t.p,tg.p); bar('c',t.c,tg.c); bar('f',t.f,tg.f);
-                
-                const feed = document.getElementById('feed'); feed.innerHTML='';
-                MEALS.forEach(m => {
-                    const arr = S.day[m.k] || [];
-                    let mk=0, mp=0, mc=0, mf=0;
-                    let rows = '';
-                    arr.forEach((i, idx) => {
-                        mk+=i.k; mp+=i.p; mc+=i.c; mf+=i.f;
-                        rows += `
-                        <div class="item">
-                            <div class="i-info">
-                                <h4>${i.n}</h4>
-                                <div class="i-det"><span class="i-pill">${i.q}${i.u}</span> <span>🔥 ${Math.round(i.k)}</span>
-                                <span style="color:var(--pro)">P${Math.round(i.p)}</span><span style="color:var(--car)">C${Math.round(i.c)}</span><span style="color:var(--fat)">F${Math.round(i.f)}</span></div>
-                            </div>
-                            <div class="c-actions">
-                                <button class="act-btn" onclick="window.Logic.editItem('${m.k}', ${idx})"><i class="fas fa-pencil-alt"></i></button>
-                                <button class="act-btn del" onclick="window.Logic.delItem('${m.k}', ${idx})"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>`;
-                    });
-                    
-                    feed.innerHTML += `
-                    <div class="card">
-                        <div class="c-head">
-                            <div class="c-left"><i class="fas ${m.i}"></i> ${m.n}</div>
-                            <div class="c-right">
-                                <div class="meal-macros">
-                                    <span class="mm-item" style="color:var(--pro)"><span class="mm-dot" style="background:var(--pro)"></span>${Math.round(mp)}p</span>
-                                    <span class="mm-item" style="color:var(--car)"><span class="mm-dot" style="background:var(--car)"></span>${Math.round(mc)}c</span>
-                                    <span class="mm-item" style="color:var(--fat)"><span class="mm-dot" style="background:var(--fat)"></span>${Math.round(mf)}g</span>
-                                </div>
-                                <span class="k-badge">${Math.round(mk)} kcal</span>
-                                <button class="tool-btn copy" title="Copiar" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
-                                <button class="tool-btn move" title="Mover" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar-day"></i></button>
-                                <button class="tool-btn del" title="Vaciar" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-trash-alt"></i></button>
-                                <button class="tool-btn add" title="Añadir" onclick="window.Logic.openAdd('${m.k}')">+</button>
-                            </div>
-                        </div>
-                        <div>${rows}</div>
-                    </div>`;
-                });
-            }
-        };
-
-        const Sys = {
-            init: async () => {
-                try {
-                    await DB.lib();
-                    if(S.uid) await Sys.load(S.uid);
-                    else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
-                } catch(e) { alert("Error inicio: " + e.message); }
-            },
-            load: async (id) => {
-                S.day = {}; S.uid = id; localStorage.setItem('tid', id);
-                S.u = await DB.getU(id);
-                if(!S.u) { window.UI.openUsers(); return; }
-                S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
-                document.getElementById('loading-screen').style.display='none';
-                window.Logic.checkWeight();
-            },
-            sync: async () => { S.day = await DB.getDay(S.d); window.Render.all(); }
-        };
-
-        // --- ASIGNACIÓN GLOBAL ---
-        window.DB = DB;
-        window.Logic = Logic;
-        window.UI = UI;
-        window.AI = AI;
-        window.Calc = Calc;
-        window.Render = Render;
-        window.Sys = Sys;
-        window.Stats = Stats;
-
-        // GESTURES
-        let ts = 0;
-        document.addEventListener('touchstart', e => ts = e.changedTouches[0].screenX);
-        document.addEventListener('touchend', e => {
-            const te = e.changedTouches[0].screenX;
-            if(te < ts - 50) Logic.day(1); 
-            if(te > ts + 50) Logic.day(-1);
+    window.onload = function() {
+        document.getElementById('head-logo-left').src = LOGO_JUDICIAL;
+        document.getElementById('head-logo-right').src = LOGO_GAD;
+        document.getElementById('res-logo-left').src = LOGO_JUDICIAL;
+        document.getElementById('res-logo-right').src = LOGO_GAD;
+        const imgs = document.querySelectorAll('img');
+        imgs.forEach(img => img.onerror = function(){ 
+            if(this.parentElement.id !== 'res-plate-container') { this.style.visibility='hidden'; }
         });
+        app.renderStep('start');
+    };
 
-        // ARRANQUE SEGURO
-        if(document.readyState === 'complete') Sys.init();
-        else window.addEventListener('load', Sys.init);
+    const app = {
+        currentInfractionData: null, 
+        currentMode: 'driver',
+        
+        resultsDB: {
+            "r_vmp_vpl": {
+                title: "VMP - VPL (LIGERO)", icon: "🛴", style: "admin", matIconType: "vmp",
+                perm: "Ninguno", seg: "OBLIGATORIO (VPL)", mat: "Registro DGT (Chapa/QR)", casco: "Consultar Ordenanza Mun.",
+                text: "✅ <b>VPL (Vehículo Personal Ligero)</b><br>Peso < 25kg ó (Peso > 25kg y Vel < 14km/h).<br>No se considera vehículo a motor, pero requiere Seguro.<br><b>Sanción SOA:</b> Solo por circular (350€).<br><br>ℹ️ <b>NOTA PENAL:</b> No aplica Art. 384 CP salvo que el vehículo esté manipulado/trucado para superar los 25km/h o 1000W.",
+                infractions: {
+                    admin: { norm: "Art. 3 RGV (Ley 5/2025)", opt: "Generico", amount: "200 €", text: "Circular con un VMP careciendo de la correspondiente certificación o registro obligatorio.", action: "DEPÓSITO (ORD. MUN.)" },
+                    soa: { 
+                        type: "vpl", 
+                        driver: { opt: "2.1.5P", amount: 350, text: "CIRCULAR el vehículo personal ligero (VPL) sin tener suscrito seguro obligatorio." },
+                        owner: null 
+                    }
+                }
+            },
+            "r_vmp_motor": {
+                title: "VMP (>25KG Y >14KM/H)", icon: "🛴", style: "admin", matIconType: "vmp",
+                perm: "Ninguno", seg: "OBLIGATORIO (MOTOR)", mat: "Registro DGT (Chapa/QR)", casco: "Consultar Ordenanza Mun.",
+                text: "⚠️ <b>VMP ASIMILADO A MOTOR</b><br>Peso > 25kg Y Velocidad > 14km/h.<br>A efectos de Seguro se trata como Vehículo a Motor.<br><b>Sanción SOA:</b> 800€ (Circular) / 610€ (Titular).<br><br>ℹ️ <b>NOTA PENAL (Dictamen 2/2021):</b> No aplica Art. 384 CP ni 379 CP (Alcoholemia Penal) salvo que cause lesiones/homicidio imprudente.",
+                infractions: {
+                    admin: { norm: "Art. 3 RGV (Ley 5/2025)", opt: "Generico", amount: "200 €", text: "Circular con un VMP careciendo de la correspondiente certificación o registro obligatorio.", action: "DEPÓSITO (ORD. MUN.)" },
+                    soa: { 
+                        type: "vmp_motor", 
+                        driver: { opt: "2.1.5N", amount: 800, text: "CIRCULAR con el vehículo reseñado (VMP asimilado a motor) careciendo del seguro obligatorio." }, 
+                        owner: { opt: "2.1.5O", amount: 610, text: "INCUMPLIR el propietario la obligación de mantener suscrito el seguro (VMP asimilado a motor)." } 
+                    }
+                }
+            },
+            "r_epac": { title: "BICICLETA EPAC", icon: "🚲", style: "admin", matIconType: "none", perm: "Ninguno", seg: "No", mat: "No", casco: "Recomendado", text: "✅ <b>BICI ASISTIDA</b><br>Tratamiento de bicicleta.", infractions: null },
+            "r_ciclo": { title: "CICLO", icon: "🚲", style: "admin", matIconType: "none", perm: "Ninguno", seg: "No", mat: "No", casco: "Consultar Ordenanza Mun.", text: "✅ <b>BICICLETA</b><br>Tratamiento de bicicleta.", infractions: null },
+            "r_juguete": { title: "JUGUETE", icon: "🛹", style: "info", matIconType: "none", perm: "No", seg: "No", mat: "No", casco: "No", text: "ℹ️ <b>USO PEATONAL</b><br>Velocidad < 6 km/h.", infractions: null },
+            
+            "r_l1e_a": { 
+                title: "L1e-A (CICLO DE MOTOR)", icon: "🛵", style: "admin", matIconType: "ciclomotor", perm: "AM / B", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí", 
+                text: "⚠️ <b>CICLO DE MOTOR (L1e-A)</b><br>Requiere Matrícula, Seguro y Casco.<br><br>ℹ️ <b>CRITERIO FISCALÍA (Dictamen 2/2021):</b> Se excluye de la Vía Penal (Arts. 379/384 CP). Procede denuncia administrativa.", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "moped", driver: { opt: "2.1.5A", amount: 1000, text: "Circular con ciclomotor sin seguro." }, owner: { opt: "2.1.1A", amount: 650, text: "Titular ciclomotor sin seguro." } } 
+                }
+            },
+            "r_l1e_b": { 
+                title: "L1e-B (CICLOMOTOR 2R)", icon: "🛵", style: "penal", matIconType: "ciclomotor", perm: "AM / B", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí", 
+                text: "⚠️ <b>CICLOMOTOR (L1e-B)</b><br>Vehículo matriculable.<br><b>⚖️ VÍA PENAL:</b><br>• 379.2 CP (Alcohol/Drogas)<br>• 384 CP (Permiso)", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "moped", driver: { opt: "2.1.5A", amount: 1000, text: "Circular con ciclomotor sin seguro." }, owner: { opt: "2.1.1A", amount: 650, text: "Titular ciclomotor sin seguro." } } 
+                }
+            },
+            "r_l2e": { 
+                title: "L2e (CICLOMOTOR 3R)", icon: "🛺", style: "penal", matIconType: "ciclomotor", perm: "AM / B", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí", 
+                text: "⚠️ <b>CICLOMOTOR 3 RUEDAS</b><br>Vehículo matriculable.<br><b>⚖️ VÍA PENAL:</b><br>• 379.2 CP (Alcohol/Drogas)<br>• 384 CP (Permiso)", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "moped", driver: { opt: "2.1.5A", amount: 1000, text: "Circular con ciclomotor sin seguro." }, owner: { opt: "2.1.1A", amount: 650, text: "Titular ciclomotor sin seguro." } } 
+                }
+            },
+            "r_l6e": { 
+                title: "L6e (CUADRICICLO LIGERO)", icon: "🚙", style: "penal", matIconType: "ciclomotor", perm: "AM / B", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí/Cinturón", 
+                text: "⚠️ <b>CUADRICICLO LIGERO</b><br>Vehículo matriculable.<br><b>⚖️ VÍA PENAL:</b><br>• 379.2 CP (Alcohol/Drogas)<br>• 384 CP (Permiso)", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "moped", driver: { opt: "2.1.5A", amount: 1000, text: "Circular con ciclomotor sin seguro." }, owner: { opt: "2.1.1A", amount: 650, text: "Titular ciclomotor sin seguro." } } 
+                }
+            },
+            "r_l3e": { 
+                title: "L3e (MOTOCICLETA)", icon: "🏍️", style: "penal", matIconType: "moto", perm: "A1 / A2 / A", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí", 
+                text: "⚠️ <b>MOTOCICLETA (L3e)</b><br>Vehículo matriculable.<br><b>⚖️ VÍA PENAL:</b><br>• 379.2 CP (Alcohol/Drogas)<br>• 384 CP (Permiso)", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "moto", driver: { opt: "2.1.5B", amount: 1250, text: "Circular con motocicleta sin seguro." }, owner: { opt: "2.1.1B", amount: 850, text: "Titular motocicleta sin seguro." } } 
+                }
+            },
+            "r_l4e": { 
+                title: "L4e (MOTO CON SIDECAR)", icon: "🏍️", style: "penal", matIconType: "moto", perm: "A1 / A2 / A", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí", 
+                text: "⚠️ <b>MOTO CON SIDECAR</b><br>Vehículo matriculable.<br><b>⚖️ VÍA PENAL:</b><br>• 379.2 CP (Alcohol/Drogas)<br>• 384 CP (Permiso)", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "moto", driver: { opt: "2.1.5B", amount: 1250, text: "Circular con motocicleta sin seguro." }, owner: { opt: "2.1.1B", amount: 850, text: "Titular motocicleta sin seguro." } } 
+                }
+            },
+            "r_l5e": { 
+                title: "L5e (TRICICLO DE MOTOR)", icon: "🛺", style: "penal", matIconType: "moto", perm: "B / A", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí", 
+                text: "⚠️ <b>TRICICLO SIMÉTRICO</b><br>Vehículo matriculable.<br><b>⚖️ VÍA PENAL:</b><br>• 379.2 CP (Alcohol/Drogas)<br>• 384 CP (Permiso)", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "moto", driver: { opt: "2.1.5B", amount: 1250, text: "Circular con vehículo sin seguro." }, owner: { opt: "2.1.1B", amount: 850, text: "Titular vehículo sin seguro." } } 
+                }
+            },
+            "r_l7e": { 
+                title: "L7e (CUADRICICLO PESADO)", icon: "🚜", style: "penal", matIconType: "moto", perm: "CLASE B", seg: "Sí", mat: "SÍ (Matrícula DGT)", casco: "Sí/Cinturón", 
+                text: "⚠️ <b>CUADRICICLO PESADO</b><br>Vehículo matriculable.<br><b>⚖️ VÍA PENAL:</b><br>• 379.2 CP (Alcohol/Drogas)<br>• 384 CP (Permiso)", 
+                infractions: {
+                    admin: { norm: "Art. 10.2 LSV (RDL 6/2015)", opt: "5A", amount: "200 €", text: "Circular con el vehículo reseñado careciendo de las placas de matrícula.", action: "INMOVILIZACIÓN / DEPÓSITO" },
+                    soa: { type: "turismo", driver: { opt: "2.1.5C", amount: 1500, text: "Circular con vehículo sin seguro." }, owner: { opt: "2.1.1C", amount: 1000, text: "Titular vehículo sin seguro." } } 
+                }
+            },
+            "r_prohibido": { 
+                title: "PROHIBIDO", icon: "⛔", style: "danger", matIconType: "none", perm: "-", seg: "-", mat: "-", casco: "-", 
+                text: "🚫 <b>NO APTO</b><br>No cumple normativa. Denuncia y retirada.", 
+                infractions: {
+                    admin: { norm: "Art. 12 RGV / Art 3 RGV", opt: "Generico", amount: "200 €", text: "Circular con un vehículo que no reúne las condiciones técnicas (No homologado) o no ha sido objeto de inspección (Sin CoC).", action: "INMOVILIZACIÓN DEFINITIVA" },
+                    soa: null 
+                }
+            },
+            "r_prohibido_voltaje": { 
+                title: "ILEGAL (VOLTAJE)", icon: "🔌", style: "danger", matIconType: "none", perm: "-", seg: "-", mat: "-", casco: "-", 
+                text: "🚫 <b>VOLTAJE PELIGROSO</b><br>Excede 100VCC / 240VAC.", 
+                infractions: {
+                    admin: { norm: "Art. 12 RGV", opt: "Generico", amount: "200 €", text: "Circular con un vehículo que no reúne las condiciones técnicas.", action: "INMOVILIZACIÓN DEFINITIVA" },
+                    soa: null 
+                }
+            }
+        },
 
-    </script>
+        steps: {
+            start: { q: "¿El vehículo está motorizado?", opts: [{ t: "Sí", next: "motor_si" }, { t: "No (Bicicleta/Tracción humana)", next: "motor_no" }] },
+            motor_no: { q: "¿Funciona a pedal o manivela?", opts: [{ t: "Sí", next: "pedal_si" }, { t: "No", result: "r_juguete" }] },
+            pedal_si: { q: "¿Cuántas ruedas tiene?", opts: [{ t: "1 rueda", result: "r_prohibido" }, { t: "2 o más ruedas", result: "r_ciclo" }] },
+            
+            // CAMBIO 1: QUITAR (EPAC)
+            motor_si: { q: "¿Tiene pedaleo asistido (solo motor al pedalear) o acelerador/gatillo?", opts: [{ t: "Asistido", next: "pedales_aux_si" }, { t: "Acelerador/Gatillo (Independiente)", next: "pedales_aux_no" }] },
+            
+            // CAMBIO 3: NUEVA LÓGICA 1000W
+            pedales_aux_si: { q: "¿Cuál es la potencia del motor?", opts: [{ t: "Hasta 250 W", next: "potencia_250" }, { t: "Entre 250 W y 1000 W", next: "potencia_1000" }, { t: "Más de 1000 W", next: "check_velocidad_1000w" }] },
+            check_velocidad_1000w: { q: "Motor > 1000W. ¿Cuál es la velocidad máxima por construcción?", opts: [{ t: "Hasta 45 km/h", result: "r_l1e_b" }, { t: "Más de 45 km/h", result: "r_l3e" }] },
+
+            potencia_250: { q: "¿El motor se detiene al superar 25 km/h?", opts: [{ t: "Sí", result: "r_epac" }, { t: "No (Sigue asistiendo)", result: "r_l1e_a" }] },
+            potencia_1000: { q: "¿Hasta qué velocidad auxilia el motor?", opts: [{ t: "Entre 25 y 45 km/h", result: "r_l1e_a" }, { t: "Más de 45 km/h", result: "r_l3e" }] },
+            pedales_aux_no: { q: "¿Cuál es la velocidad máxima por construcción?", opts: [{ t: "Hasta 6 km/h", result: "r_juguete" }, { t: "De 6 a 25 km/h", next: "vel_6_25" }, { t: "De 25 a 45 km/h", next: "vel_hasta_45" }, { t: "Más de 45 km/h", next: "vel_mas_45" }] },
+            
+            vel_6_25: { q: "Velocidad 6-25 km/h. ¿Tiene sillín?", opts: [{ t: "Sí", next: "con_sillin_6_25" }, { t: "No", next: "check_baterias" }] },
+            con_sillin_6_25: { q: "¿Es un vehículo autoequilibrado (ej. Segway)?", opts: [{ t: "Sí", next: "check_baterias" }, { t: "No", next: "check_altura_sillin_vmp" }] }, 
+            
+            check_altura_sillin_vmp: { 
+                q: "¿Cuál es la altura del sillín (Punto R)?", 
+                opts: [
+                    { t: "Menos de 40 cm", result: "r_prohibido" },
+                    { t: "Entre 40 y 53 cm", next: "ruedas_40_53_vmp" },
+                    { t: "54 cm o más", next: "ruedas_54_vmp" }
+                ] 
+            },
+            ruedas_40_53_vmp: { q: "Altura 40-53cm. ¿Cuántas ruedas tiene?", opts: [{ t: "2 Ruedas", result: "r_prohibido" }, { t: "3 Ruedas", result: "r_l2e" }, { t: "4 Ruedas", result: "r_l6e" }] },
+            ruedas_54_vmp: { q: "Altura ≥54cm. ¿Cuántas ruedas tiene?", opts: [{ t: "2 Ruedas", result: "r_l1e_b" }, { t: "3 Ruedas", result: "r_l2e" }, { t: "4 Ruedas", result: "r_l6e" }] },
+
+            check_baterias: { 
+                q: "¿Qué voltaje indican las características técnicas?", 
+                opts: [
+                    { t: "Hasta 100 VCC / 240 VCA", next: "check_peso" }, 
+                    { t: "Superior (Alta Tensión)", result: "r_prohibido_voltaje" }
+                ] 
+            },
+
+            check_peso: {
+                q: "¿Cuál es el PESO del vehículo (Masa en orden de marcha)?",
+                opts: [
+                    { t: "Menos de 25 kg", result: "r_vmp_vpl" }, 
+                    { t: "25 kg o más", next: "check_velocidad_fina" } 
+                ]
+            },
+            check_velocidad_fina: {
+                q: "El vehículo pesa ≥ 25kg. ¿Cuál es su velocidad máxima?",
+                opts: [
+                    { t: "Entre 6 y 14 km/h", result: "r_vmp_vpl" }, 
+                    { t: "Más de 14 km/h (hasta 25)", result: "r_vmp_motor" } 
+                ]
+            },
+
+            vel_hasta_45: { q: "Velocidad 25-45 km/h. ¿Tiene sillín?", opts: [{ t: "Sí", next: "check_potencia_45" }, { t: "No", result: "r_prohibido" }] },
+            check_potencia_45: { q: "Verificación de Potencia / Cilindrada:", opts: [{ t: "≤ 50cc o ≤ 4000 W", next: "check_altura_sillin_baja_potencia" }, { t: "≤ 50cc o 4001 W - 6000 W", next: "ruedas_6000w" }, { t: "> 50cc o > 6000 W", next: "ruedas_heavy" }] },
+            check_altura_sillin_baja_potencia: { 
+                q: "¿Cuál es la altura del sillín (Punto R)?", 
+                opts: [
+                    { t: "Menos de 40 cm", result: "r_prohibido" },
+                    { t: "Entre 40 y 53 cm", next: "ruedas_baja_potencia_40_53" },
+                    { t: "54 cm o más", next: "ruedas_baja_potencia_54" }
+                ] 
+            },
+            ruedas_baja_potencia_40_53: { q: "Altura 40-53cm. ¿Cuántas ruedas tiene?", opts: [{ t: "2 Ruedas", result: "r_prohibido" }, { t: "3 Ruedas", result: "r_l2e" }, { t: "4 Ruedas", result: "r_l6e" }] },
+            ruedas_baja_potencia_54: { q: "Altura ≥54cm. ¿Cuántas ruedas tiene?", opts: [{ t: "2 Ruedas", result: "r_l1e_b" }, { t: "3 Ruedas", result: "r_l2e" }, { t: "4 Ruedas", result: "r_l6e" }] },
+            ruedas_6000w: { q: "Potencia Media (4-6kW). ¿Cuántas ruedas tiene?", opts: [{ t: "2 Ruedas", result: "r_l3e" }, { t: "3 Ruedas", next: "check_tipo_3_ruedas" }, { t: "4 Ruedas", result: "r_l6e" }] },
+            ruedas_heavy: { q: "Potencia Alta (>6kW). ¿Cuántas ruedas tiene?", opts: [{ t: "2 Ruedas", result: "r_l3e" }, { t: "3 Ruedas", next: "check_tipo_3_ruedas" }, { t: "4 Ruedas", result: "r_l7e" }] },
+            vel_mas_45: { q: "Velocidad > 45 km/h. ¿Tiene sillín?", opts: [{ t: "Sí", next: "ruedas_mas_45" }, { t: "No", result: "r_prohibido" }] },
+            ruedas_mas_45: { q: "Alta Velocidad. ¿Cuántas ruedas tiene?", opts: [{ t: "2 Ruedas", result: "r_l3e" }, { t: "3 Ruedas", next: "check_tipo_3_ruedas" }, { t: "4 Ruedas", result: "r_l7e" }] },
+            check_tipo_3_ruedas: { q: "Vehículo 3 ruedas. ¿Disposición de las ruedas?", opts: [{ t: "Simétricas (Triciclo en eje)", result: "r_l5e" }, { t: "Asimétricas (Moto con sidecar)", result: "r_l4e" }] }
+        },
+
+        historyStack: [],
+
+        dom: { qArea: document.getElementById('question-area'), modal: document.getElementById('result-modal'), btnBackMain: document.getElementById('btn-back-main') },
+
+        renderStep: function(key) {
+            const step = this.steps[key];
+            const d = this.dom;
+            let html = `<div class="question-header"><h2 class="question-title">${step.q}</h2><button class="help-btn-icon" onclick="document.getElementById('help-modal').style.display='flex'">?</button></div><div class="options-grid">`;
+            step.opts.forEach(opt => {
+                const action = opt.result ? `app.showResult('${opt.result}')` : `app.nextStep('${key}', '${opt.next}')`;
+                html += `<button class="option-btn" onclick="${action}">${opt.t} <span>👉</span></button>`;
+            });
+            html += `</div>`;
+            d.qArea.innerHTML = html;
+            d.btnBackMain.disabled = (this.historyStack.length === 0);
+            d.btnBackMain.style.opacity = (this.historyStack.length === 0) ? "0.5" : "1";
+        },
+
+        nextStep: function(currentKey, nextKey) { this.historyStack.push(currentKey); this.renderStep(nextKey); },
+        prevStep: function() { if (this.historyStack.length > 0) { const prevKey = this.historyStack.pop(); this.renderStep(prevKey); } },
+
+        showResult: function(resultKey) {
+            const data = this.resultsDB[resultKey];
+            const m = this.dom.modal;
+            const strip = document.getElementById('modal-header-strip');
+            const box = document.getElementById('res-legal-box');
+            const btnSoa = document.getElementById('btn-soa');
+
+            strip.className = "modal-header-strip";
+            box.className = "legal-box";
+            if (data.style === "penal" || data.style === "danger") { strip.classList.add("header-danger"); box.classList.add("box-penal"); }
+            else if (data.style === "admin") { strip.classList.add("header-success"); box.classList.add("box-admin"); }
+            else { strip.classList.add("header-warning"); box.classList.add("box-info"); }
+
+            document.getElementById('res-icon').innerText = data.icon;
+            document.getElementById('res-title').innerText = data.title;
+            document.getElementById('res-permiso').innerText = data.perm;
+            document.getElementById('res-seguro').innerText = data.seg;
+            document.getElementById('res-matricula-text').innerText = data.mat; 
+            document.getElementById('res-casco').innerText = data.casco;
+            box.innerHTML = data.text;
+
+            const plateContainer = document.getElementById('res-plate-container');
+            plateContainer.innerHTML = ''; 
+
+            if (data.matIconType && data.matIconType !== 'none') {
+                let iconSrc = '';
+                let iconClass = '';
+
+                if (data.matIconType === 'ciclomotor') { iconSrc = ICON_CILOMOTOR; iconClass = 'plate-ciclomotor'; } 
+                else if (data.matIconType === 'moto') { iconSrc = ICON_MOTO; iconClass = 'plate-moto'; } 
+                else if (data.matIconType === 'vmp') { iconSrc = ICON_VMP; iconClass = 'plate-vmp'; }
+
+                if (iconSrc) {
+                    plateContainer.innerHTML = `<img src="${iconSrc}" alt="Matrícula" class="${iconClass}">`;
+                }
+            }
+
+            this.currentInfractionData = data.infractions;
+            // SI HAY ALGUNA INFRACCIÓN (Admin o SOA), MOSTRAR BOTÓN
+            if (data.infractions && (data.infractions.admin || data.infractions.soa)) { 
+                btnSoa.style.display = 'block'; 
+            } else { 
+                btnSoa.style.display = 'none'; 
+            }
+            m.style.display = 'flex';
+        },
+
+        showInfractions: function() {
+            if(!this.currentInfractionData) return;
+            const inf = this.currentInfractionData;
+            
+            // CONFIGURAR TARJETA ADMIN
+            const cardAdmin = document.getElementById('inf-card-admin');
+            if(inf.admin) {
+                cardAdmin.style.display = 'block';
+                document.getElementById('inf-admin-norm').innerText = inf.admin.norm;
+                document.getElementById('inf-admin-opt').innerText = inf.admin.opt;
+                document.getElementById('inf-admin-amount').innerText = inf.admin.amount;
+                document.getElementById('inf-admin-text').innerText = inf.admin.text;
+                document.getElementById('inf-admin-action').innerText = "MEDIDA: " + inf.admin.action;
+            } else {
+                cardAdmin.style.display = 'none';
+            }
+
+            // CONFIGURAR TARJETA SOA
+            const cardSoa = document.getElementById('inf-card-soa');
+            const infTabs = document.getElementById('inf-tabs');
+            
+            if(inf.soa) {
+                cardSoa.style.display = 'block';
+                
+                // GESTIÓN DE PESTAÑAS SEGÚN TIPO (VPL vs MOTOR)
+                if (inf.soa.type === 'vpl') {
+                    // Si es VPL, SOLO hay modo conductor. OCULTAR PESTAÑAS.
+                    infTabs.style.display = 'none';
+                    this.switchInfractionMode('driver'); 
+                } else {
+                    // Si es MOTOR, mostrar pestañas y activar la primera
+                    infTabs.style.display = 'flex';
+                    this.switchInfractionMode('driver');
+                }
+                
+            } else {
+                cardSoa.style.display = 'none';
+                infTabs.style.display = 'none';
+            }
+
+            document.getElementById('infraction-modal').style.display = 'flex';
+        },
+
+        switchInfractionMode: function(mode) {
+            this.currentMode = mode;
+            if(!this.currentInfractionData || !this.currentInfractionData.soa) return;
+
+            // Si es VPL, no existe 'owner', forzar 'driver' por seguridad
+            if (this.currentInfractionData.soa.type === 'vpl' && mode === 'owner') return;
+
+            const data = this.currentInfractionData.soa[mode];
+            
+            // Actualizar botones visualmente si están visibles
+            const btns = document.querySelectorAll('.inf-toggle-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+            if(mode === 'driver') btns[0].classList.add('active'); else btns[1].classList.add('active');
+            
+            document.getElementById('inf-soa-opt').innerText = data.opt;
+            document.getElementById('inf-soa-amount').innerText = data.amount + " €";
+            document.getElementById('inf-soa-reduced').innerText = (data.amount / 2) + " €";
+            document.getElementById('inf-soa-text').innerText = data.text;
+        },
+
+        closeModal: function() { this.dom.modal.style.display = 'none'; },
+        resetApp: function() { this.closeModal(); this.historyStack = []; this.renderStep('start'); }
+    };
+</script>
 </body>
 </html>
