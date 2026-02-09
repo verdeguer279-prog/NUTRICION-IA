@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v37.0 | FULL EXTENDED</title>
+    <title>Titanium v32.0 | PRO REPORTS</title>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -11,174 +11,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { 
-            --p: #0f172a; 
-            --s: #334155; 
-            --a: #2563eb; 
-            --pro: #8b5cf6; 
-            --car: #0ea5e9; 
-            --fat: #f59e0b; 
-            --bg: #f8fafc; 
-            --c: #ffffff; 
-            --ok: #10b981; 
-            --bad: #ef4444; 
-        }
-
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            outline: none; 
-            margin: 0; 
-            padding: 0; 
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg); 
-            color: var(--p); 
-            padding-bottom: 150px; 
-            overflow-x: hidden; 
-            user-select: none; 
-        }
+        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; overflow-x: hidden; user-select: none; }
         
-        #loading-screen { 
-            position: fixed; 
-            inset: 0; 
-            background: var(--p); 
-            color: white; 
-            z-index: 9999; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            transition: opacity 0.3s; 
-        }
-
-        .spinner { 
-            width: 50px; 
-            height: 50px; 
-            border: 5px solid rgba(255,255,255,0.1); 
-            border-top: 5px solid var(--car); 
-            border-radius: 50%; 
-            animation: spin 1s linear infinite; 
-            margin-bottom: 20px; 
-        }
-
+        #loading-screen { position: fixed; inset: 0; background: var(--p); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top: 5px solid var(--car); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* HEADER */
-        .header-wrapper { 
-            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); 
-            color: white; 
-            padding: 15px 15px 50px 15px; 
-            border-radius: 0 0 24px 24px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
-        }
-
-        .top-nav-bar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 25px; 
-        }
-
-        .user-group { 
-            display: flex; 
-            gap: 10px; 
-        }
-
-        .user-pill { 
-            width: 44px; 
-            height: 44px; 
-            background: rgba(255,255,255,0.1); 
-            border-radius: 50%; 
-            cursor: pointer; 
-            border: 1px solid rgba(255,255,255,0.1); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            flex-shrink: 0; 
-        }
-
-        .avatar { 
-            width: 100%; 
-            height: 100%; 
-            border-radius: 50%; 
-            background: var(--car); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: 800; 
-            border: 2px solid rgba(255,255,255,0.2); 
-            font-size: 1.1rem; 
-        }
+        .header-wrapper { background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%); color: white; padding: 15px 15px 50px 15px; border-radius: 0 0 24px 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .user-group { display: flex; gap: 10px; }
+        .user-pill { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; background: var(--car); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid rgba(255,255,255,0.2); font-size: 1.1rem; }
         
-        .date-nav { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            flex-grow: 1; 
-            justify-content: flex-end; 
-        }
-
-        .nav-btn { 
-            background: rgba(255,255,255,0.1); 
-            border: none; 
-            width: 40px; 
-            height: 40px; 
-            border-radius: 12px; 
-            color: white; 
-            cursor: pointer; 
-        }
-
+        .date-nav { display: flex; align-items: center; gap: 10px; flex-grow: 1; justify-content: flex-end; }
+        .nav-btn { background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 12px; color: white; cursor: pointer; }
         .date-txt { text-align: right; }
-        
-        #h-day { 
-            font-size: 1rem; 
-            font-weight: 700; 
-            margin: 0; 
-            text-transform: capitalize; 
-        }
-        
-        #h-full { 
-            font-size: 0.7rem; 
-            opacity: 0.7; 
-            margin: 0; 
-        }
+        #h-day { font-size: 1rem; font-weight: 700; margin: 0; text-transform: capitalize; }
+        #h-full { font-size: 0.7rem; opacity: 0.7; margin: 0; }
 
-        /* DASHBOARD RINGS */
-        .dash { 
-            display: grid; 
-            grid-template-columns: 110px 1fr; 
-            gap: 20px; 
-            align-items: center; 
-        }
-
-        .ring { 
-            width: 110px; 
-            height: 110px; 
-            border-radius: 50%; 
-            background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            position: relative; 
-            transition: background 0.3s; 
-        }
-
+        .dash { display: grid; grid-template-columns: 110px 1fr; gap: 20px; align-items: center; }
+        .ring { width: 110px; height: 110px; border-radius: 50%; background: conic-gradient(var(--car) 0deg, rgba(255,255,255,0.05) 0deg); display: flex; align-items: center; justify-content: center; position: relative; transition: background 0.3s; }
         .ring.danger { background: conic-gradient(var(--bad) 0deg, rgba(255,255,255,0.05) 0deg); }
         
-        .ring-in { 
-            width: 90px; 
-            height: 90px; 
-            background: var(--p); 
-            border-radius: 50%; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-        }
-
+        .ring-in { width: 90px; height: 90px; background: var(--p); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .val-big { font-size: 1.4rem; font-weight: 800; }
         .lbl-small { font-size: 0.6rem; opacity: 0.7; }
         .val-big.danger { color: var(--bad); }
@@ -187,235 +45,58 @@
         .macros { display: flex; flex-direction: column; gap: 8px; }
         .m-row { display: flex; flex-direction: column; gap: 4px; }
         .m-head { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; }
-        
-        .bar-bg { 
-            width: 100%; 
-            height: 6px; 
-            background: rgba(255,255,255,0.1); 
-            border-radius: 4px; 
-            overflow: hidden; 
-        }
-
+        .bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
         .bar-fill { height: 100%; border-radius: 4px; }
 
-        .bio-alert { 
-            margin-top: 20px; 
-            padding: 10px; 
-            background: rgba(255,255,255,0.05); 
-            border-radius: 12px; 
-            font-size: 0.8rem; 
-            display: flex; 
-            justify-content: space-around; 
-            border: 1px solid rgba(255,255,255,0.1); 
-        }
+        .bio-alert { margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 0.8rem; display: flex; justify-content: space-around; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* MAIN CONTENT */
-        .main { 
-            max-width: 800px; 
-            margin: -30px auto 0; 
-            padding: 0 15px; 
-            position: relative; 
-            z-index: 10; 
-        }
-
-        .card { 
-            background: white; 
-            border-radius: 16px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            overflow: hidden; 
-            border: 1px solid #e2e8f0; 
-        }
+        .main { max-width: 800px; margin: -30px auto 0; padding: 0 15px; position: relative; z-index: 10; }
+        .card { background: white; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
         
-        .c-head { 
-            padding: 12px 15px; 
-            background: #f8fafc; 
-            border-bottom: 1px solid #f1f5f9; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            flex-wrap: wrap; 
-            gap: 10px; 
-        }
-
+        .c-head { padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .c-left { font-weight: 800; color: var(--s); font-size: 1rem; display: flex; align-items: center; gap: 8px; }
         .c-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; flex-grow: 1; }
         
-        .meal-macros { 
-            display: flex; 
-            gap: 8px; 
-            font-size: 0.75rem; 
-            font-weight: 700; 
-            font-family: monospace; 
-            background: white; 
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            border: 1px solid #e2e8f0; 
-            margin-right: 5px; 
-        }
-
+        .meal-macros { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 700; font-family: monospace; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-right: 5px; }
         .mm-item { display: flex; align-items: center; gap: 3px; }
         .mm-dot { width: 6px; height: 6px; border-radius: 50%; }
-        
-        .k-badge { 
-            background: var(--p); 
-            color: white; 
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            font-weight: 800; 
-            font-size: 0.8rem; 
-        }
+        .k-badge { background: var(--p); color: white; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.8rem; }
 
-        .tool-btn { 
-            width: 34px; 
-            height: 34px; 
-            border-radius: 8px; 
-            border: 1px solid #cbd5e1; 
-            background: white; 
-            color: #64748b; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            transition: all 0.2s; 
-            font-size: 0.9rem; 
-        }
-        
+        .tool-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.9rem; }
         .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .tool-btn.copy { color: var(--a); border-color: var(--a); background: #eff6ff; }
         .tool-btn.move { color: var(--warn); border-color: var(--warn); background: #fffbeb; }
         .tool-btn.del { color: var(--bad); border-color: var(--bad); background: #fef2f2; }
         .tool-btn.add { color: var(--ok); border-color: var(--ok); background: #ecfdf5; font-weight: bold; width: auto; padding: 0 12px; }
-        
-        .item { 
-            padding: 14px 15px; 
-            border-bottom: 1px solid #f1f5f9; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
 
+        .item { padding: 14px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
         .i-info h4 { font-size: 0.95rem; font-weight: 700; color: var(--p); margin-bottom: 4px; }
         .i-det { font-size: 0.8rem; color: #64748b; display: flex; gap: 10px; font-family: monospace; font-weight: 600; align-items: center; }
         .i-pill { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: var(--p); font-family: 'Inter', sans-serif; font-weight: 700; }
         
         .c-actions { display: flex; gap: 8px; }
-        
-        .act-btn { 
-            width: 32px; 
-            height: 32px; 
-            border: 1px solid #e2e8f0; 
-            background: white; 
-            border-radius: 8px; 
-            color: #94a3b8; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-
+        .act-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .act-btn:hover { border-color: var(--car); color: var(--car); }
         .act-btn.del:hover { border-color: #ef4444; color: #ef4444; }
-        .act-btn.cln:hover { border-color: var(--a); color: var(--a); background: #eff6ff; }
 
-        .fab { 
-            position: fixed; 
-            bottom: 30px; 
-            right: 25px; 
-            width: 65px; 
-            height: 65px; 
-            background: var(--p); 
-            color: white; 
-            border-radius: 20px; 
-            border: none; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4); 
-            font-size: 1.5rem; 
-            cursor: pointer; 
-            z-index: 100; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
+        .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
 
         /* MODALES */
-        .modal { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.85); 
-            backdrop-filter: blur(5px); 
-            z-index: 2000; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 20px; 
-        }
-
-        .sheet { 
-            background: white; 
-            width: 100%; 
-            max-width: 500px; 
-            border-radius: 20px; 
-            padding: 25px; 
-            max-height: 85vh; 
-            overflow-y: auto; 
-        }
-
-        .inp { 
-            width: 100%; 
-            padding: 14px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            background: #f8fafc; 
-            margin-bottom: 15px; 
-            font-size: 1rem; 
-        }
-
-        .btn { 
-            width: 100%; 
-            padding: 16px; 
-            border-radius: 14px; 
-            border: none; 
-            font-weight: 800; 
-            font-size: 1rem; 
-            cursor: pointer; 
-            margin-bottom: 10px; 
-        }
-
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .sheet { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 25px; max-height: 85vh; overflow-y: auto; }
+        .inp { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; margin-bottom: 15px; font-size: 1rem; }
+        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 800; font-size: 1rem; cursor: pointer; margin-bottom: 10px; }
         .btn.pri { background: var(--a); color: white; }
         .btn.sec { background: #f1f5f9; color: var(--p); }
         .btn.del-user { background: var(--bad); color: white; margin-top: 20px; }
 
-        .modal-h { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
-        }
+        .modal-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-x { font-size: 2rem; background: none; border: none; color: #94a3b8; cursor: pointer; line-height: 1; }
 
-        .close-x { 
-            font-size: 2rem; 
-            background: none; 
-            border: none; 
-            color: #94a3b8; 
-            cursor: pointer; 
-            line-height: 1; 
-        }
-
-        /* USERS */
         .user-list-grid { display: grid; gap: 12px; }
-        .user-card-wrapper { 
-            display: flex; 
-            align-items: center; 
-            background: white; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 14px; 
-            padding: 12px; 
-            transition: all 0.2s; 
-            cursor: pointer; 
-        }
+        .user-card-wrapper { display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; transition: all 0.2s; cursor: pointer; }
         .user-card-wrapper:hover { border-color: var(--a); background: #eff6ff; }
         .user-card-wrapper.active { border-color: var(--a); background: #f0f9ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-        
         .u-av { width: 45px; height: 45px; background: var(--car); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-right: 15px; flex-shrink: 0; font-size: 1.1rem; }
         .u-inf { flex-grow: 1; }
         .u-inf h4 { margin: 0; font-size: 1rem; color: var(--p); }
@@ -423,31 +104,12 @@
         .u-edt { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #94a3b8; border-radius: 8px; }
         .u-edt:hover { background: #e2e8f0; color: var(--a); }
 
-        .live-box { 
-            background: #f0f9ff; 
-            padding: 12px; 
-            border-radius: 14px; 
-            border: 1px solid #bae6fd; 
-            margin-bottom: 15px; 
-            font-size: 0.85rem; 
-            display: flex; 
-            justify-content: space-between; 
-            gap: 5px; 
-            flex-wrap: wrap; 
-        }
+        .live-box { background: #f0f9ff; padding: 12px; border-radius: 14px; border: 1px solid #bae6fd; margin-bottom: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; gap: 5px; flex-wrap: wrap; }
         .stat-item { text-align: center; flex: 1; }
         .stat-val { font-weight: 800; color: var(--a); display: block; }
         .stat-lbl { font-size: 0.7rem; color: #64748b; }
 
-        /* SEARCH */
-        .food-suggestion { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 12px; 
-            border-bottom: 1px solid #f1f5f9; 
-            cursor: pointer; 
-        }
+        .food-suggestion { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         .food-suggestion:hover { background: #f8fafc; }
         .s-info { flex-grow: 1; }
         .s-del { color: #cbd5e1; padding: 5px 10px; cursor: pointer; transition: 0.2s; }
@@ -455,44 +117,15 @@
 
         .unit-selector { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; font-weight: 700; color: var(--text-dark); cursor: pointer; }
 
-        /* AI AREA */
-        .ai-header-btn { 
-            font-size: 0.8rem; 
-            background: #f1f5f9; 
-            color: #64748b; 
-            border: 1px solid #cbd5e1; 
-            padding: 6px 12px; 
-            border-radius: 20px; 
-            cursor: pointer; 
-            font-weight: 700; 
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-            margin-left: 10px; 
-            transition: all 0.3s; 
-        }
+        .ai-header-btn { font-size: 0.8rem; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: 700; display:flex; align-items:center; gap:5px; margin-left:10px; transition: all 0.3s; }
         .ai-header-btn.configured { background: #ecfdf5; color: var(--ok); border-color: var(--ok); }
         
         .ai-input-area { margin-bottom: 20px; }
-        .ai-textarea { 
-            width: 100%; 
-            height: 100px; 
-            padding: 15px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 14px; 
-            font-family: inherit; 
-            font-size: 1rem; 
-            resize: none; 
-            background: #f8fafc; 
-            margin-bottom: 10px; 
-        }
+        .ai-textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 14px; font-family: inherit; font-size: 1rem; resize: none; background: #f8fafc; margin-bottom: 10px; }
         .ai-textarea:focus { border-color: var(--a); background: white; }
         .ai-actions { display: flex; gap: 10px; align-items: center; }
-        
         .mic-btn { width: 50px; height: 50px; background: #ef4444; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .mic-btn.listening { animation: pulse 1s infinite; background: #dc2626; }
-        .cam-btn { width: 50px; height: 50px; background: #3b82f6; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        
         @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
         .password-wrapper { position: relative; }
         .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
@@ -513,20 +146,15 @@
         .weight-input-box input { margin: 0; flex: 1; }
         .weight-input-box button { width: auto; margin: 0; padding: 0 20px; }
         .weight-date { width: 100%; border-bottom: 1px solid #dbeafe; padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; color: #64748b; font-size: 0.9rem; }
-        
         .w-delta { font-size: 0.8rem; width: 100%; display: flex; justify-content: space-between; color: #64748b; margin-top: 5px; }
-        .w-delta span b { color: var(--p); }
-        
         .text-ok { color: var(--ok); font-weight: bold; }
         .text-bad { color: var(--bad); font-weight: bold; }
-        
         .day-stepper { display:flex; gap:5px; align-items:center; }
         .day-btn { background:#e2e8f0; border:none; border-radius:5px; width:30px; height:30px; cursor:pointer; }
-        
+
         .rings-container { display: flex; justify-content: space-around; gap: 10px; margin-bottom: 20px; }
         .stat-ring-wrap { position: relative; width: 140px; height: 140px; display: flex; justify-content: center; align-items: center; }
-        .stat-ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
-        
+        .stat-ring-text { position: absolute; text-align: center; font-size: 0.8rem; pointer-events: none; }
         .srt-val { font-size: 1.1rem; font-weight: 800; color: var(--p); display: block; }
         .srt-lbl { color: #64748b; font-size: 0.7rem; }
 
@@ -542,20 +170,20 @@
     <header class="header-wrapper" id="pdf-header">
         <div class="top-nav-bar">
             <div class="user-group">
-                <div class="user-pill" onclick="window.App.UI.openUsers()" title="Cambiar Usuario">
+                <div class="user-pill" onclick="window.UI.openUsers()" title="Cambiar Usuario">
                     <div class="avatar" id="h-av">?</div>
                 </div>
-                <div class="user-pill" onclick="window.App.Stats.open()" style="background:white; color:var(--p)" title="Estadísticas">
+                <div class="user-pill" onclick="window.Stats.open()" style="background:white; color:var(--p)" title="Estadísticas">
                     <i class="fas fa-chart-pie"></i>
                 </div>
             </div>
             <div class="date-nav">
-                <button class="nav-btn" onclick="window.App.Logic.day(-1)"><i class="fas fa-arrow-left"></i></button>
+                <button class="nav-btn" onclick="window.Logic.day(-1)"><i class="fas fa-arrow-left"></i></button>
                 <div class="date-txt">
                     <h2 id="h-day">...</h2>
                     <p id="h-full">...</p>
                 </div>
-                <button class="nav-btn" onclick="window.App.Logic.day(1)"><i class="fas fa-arrow-right"></i></button>
+                <button class="nav-btn" onclick="window.Logic.day(1)"><i class="fas fa-arrow-right"></i></button>
             </div>
         </div>
 
@@ -591,31 +219,31 @@
     <div class="modal" id="m-stats">
         <div class="sheet" style="max-width:600px">
             <div class="modal-h">
-                <h3>Estadísticas</h3>
+                <h3>Balance & Peso</h3>
                 <div class="day-stepper">
-                    <button class="day-btn" onclick="window.App.Stats.changeDate(-1)"><</button>
-                    <input type="date" id="st-date" style="border:none;background:transparent;font-weight:bold" onchange="window.App.Stats.load(this.value)">
-                    <button class="day-btn" onclick="window.App.Stats.changeDate(1)">></button>
+                    <button class="day-btn" onclick="window.Stats.changeDate(-1)"><</button>
+                    <input type="date" id="st-date" style="border:none;background:transparent;font-weight:bold" onchange="window.Stats.load(this.value)">
+                    <button class="day-btn" onclick="window.Stats.changeDate(1)">></button>
                 </div>
-                <button class="close-x" onclick="window.App.UI.closeAll()">&times;</button>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
             </div>
             
             <div class="weight-input-box">
                 <input type="text" id="w-today" class="inp" placeholder="Peso (kg)" inputmode="decimal">
-                <button class="btn pri" onclick="window.App.Stats.saveWeight()">Guardar</button>
+                <button class="btn pri" onclick="window.Stats.saveWeight()">Guardar</button>
                 <div class="w-delta" id="w-feedback"></div>
             </div>
 
             <div class="rings-container">
                 <div>
-                    <h4 style="text-align:center;font-size:0.8rem">DIARIO</h4>
+                    <h4 style="text-align:center;font-size:0.8rem;margin-bottom:5px">DIARIO</h4>
                     <div class="stat-ring-wrap">
                         <canvas id="chart-daily"></canvas>
                         <div class="stat-ring-text" id="daily-txt"></div>
                     </div>
                 </div>
                 <div>
-                    <h4 style="text-align:center;font-size:0.8rem">SEMANAL</h4>
+                    <h4 style="text-align:center;font-size:0.8rem;margin-bottom:5px">SEMANAL</h4>
                     <div class="stat-ring-wrap">
                         <canvas id="chart-weekly"></canvas>
                         <div class="stat-ring-text" id="weekly-txt"></div>
@@ -623,62 +251,63 @@
                 </div>
             </div>
 
-            <div class="chart-filters">
-                <button class="filter-btn active" onclick="window.App.Stats.load(7)">Semana</button>
-                <button class="filter-btn" onclick="window.App.Stats.load(30)">Mes</button>
-                <button class="filter-btn" onclick="window.App.Stats.load(365)">Año</button>
-            </div>
-
-            <h4 style="margin:10px 0">Calorías (Apilado)</h4>
-            <canvas id="chart-cal" style="width:100%; height:200px"></canvas>
-            
-            <h4 style="margin:20px 0 10px">Peso</h4>
+            <h4 style="margin:20px 0 10px">Evolución Peso</h4>
             <canvas id="chart-weight" style="width:100%; height:200px"></canvas>
         </div>
     </div>
 
     <div class="modal" id="m-users">
         <div class="sheet">
-            <div class="modal-h"><h3>Perfiles</h3><button class="close-x" onclick="window.App.UI.closeAll()">&times;</button></div>
+            <div class="modal-h"><h3>Perfiles</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
             <div id="u-list" class="user-list-grid"></div>
-            <button class="btn pri" onclick="window.App.UI.newProfile()">+ Crear Nuevo</button>
+            <button class="btn pri" onclick="window.UI.newProfile()">+ Crear Nuevo</button>
         </div>
     </div>
 
     <div class="modal" id="m-prof">
         <div class="sheet">
-            <div class="modal-h"><h3>Perfil</h3><button class="close-x" onclick="window.App.UI.closeAll()">&times;</button></div>
+            <div class="modal-h"><h3>Perfil</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
             <div class="live-box">
-                <div class="stat-item"><span class="stat-val" id="l-tmb">--</span><span>TMB</span></div>
-                <div class="stat-item"><span class="stat-val" id="l-imc">--</span><span>IMC</span></div>
-                <div class="stat-item"><span class="stat-val" id="l-ideal">--</span><span>Ideal</span></div>
-                <div class="stat-item"><span class="stat-val" id="l-goal" style="color:var(--bad)">--</span><span>Meta</span></div>
+                <div class="stat-item"><span class="stat-val" id="l-tmb">--</span><span class="stat-lbl">TMB</span></div>
+                <div class="stat-item"><span class="stat-val" id="l-imc">--</span><span class="stat-lbl">IMC</span></div>
+                <div class="stat-item"><span class="stat-val" id="l-ideal">--</span><span class="stat-lbl">Ideal</span></div>
+                <div class="stat-item"><span class="stat-val" id="l-goal" style="color:var(--bad)">--</span><span class="stat-lbl">Meta</span></div>
             </div>
             
             <label>Nombre</label><input id="e-name" class="inp">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-                <div><label>Altura</label><input type="number" id="e-h" class="inp" oninput="window.App.Calc.live()"></div>
-                <div><label>Peso</label><input type="number" id="e-w" class="inp" oninput="window.App.Calc.live()"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px">
+                <div><label>Altura (cm)</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
+                <div><label>Peso (kg)</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()"></div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <div><label>Año</label><input type="number" id="e-y" class="inp" oninput="window.App.Calc.live()"></div>
-                <div><label>Sexo</label><select id="e-g" class="inp" onchange="window.App.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Año Nac.</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
+                <div><label>Género</label>
+                    <select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">Hombre</option><option value="female">Mujer</option></select>
+                </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <div><label>Actividad</label><select id="e-act" class="inp" onchange="window.App.Calc.live()"><option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option></select></div>
-                <div><label>Objetivo</label><select id="e-mod" class="inp" onchange="window.App.Calc.live()"><option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option></select></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Actividad</label>
+                    <select id="e-act" class="inp" onchange="window.Calc.live()">
+                        <option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option>
+                    </select>
+                </div>
+                <div><label>Objetivo</label>
+                    <select id="e-mod" class="inp" onchange="window.Calc.live()">
+                        <option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option>
+                    </select>
+                </div>
             </div>
             
-            <label style="margin-top:10px;display:block;text-align:center;font-weight:bold">MACROS (%)</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
-                <input id="pp" type="number" class="inp" placeholder="P" oninput="window.App.Calc.live()">
-                <input id="pc" type="number" class="inp" placeholder="C" oninput="window.App.Calc.live()">
-                <input id="pf" type="number" class="inp" placeholder="G" oninput="window.App.Calc.live()">
+            <label style="margin-top:10px; display:block; text-align:center; font-size:0.8rem; font-weight:bold">MACROS (%)</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
+                <input id="pp" type="number" class="inp" placeholder="P" oninput="window.Calc.live()">
+                <input id="pc" type="number" class="inp" placeholder="C" oninput="window.Calc.live()">
+                <input id="pf" type="number" class="inp" placeholder="G" oninput="window.Calc.live()">
             </div>
-            <div id="p-check" style="text-align:center;font-size:0.8rem;margin-bottom:15px;color:#94a3b8">Total: 0%</div>
+            <div id="p-check" style="text-align:center; font-size:0.8rem; margin-bottom:15px; color:#94a3b8">Total: 0%</div>
 
-            <button class="btn pri" id="btn-save-user" onclick="window.App.Logic.saveUser()">Guardar</button>
-            <button class="btn del-user" id="btn-del-user" onclick="window.App.Logic.deleteUser()" style="display:none">🗑️ Eliminar</button>
+            <button class="btn pri" id="btn-save-user" onclick="window.Logic.saveUser()">Guardar Cambios</button>
+            <button class="btn del-user" id="btn-del-user" onclick="window.Logic.deleteUser()" style="display:none">🗑️ Eliminar Usuario</button>
         </div>
     </div>
 
@@ -686,65 +315,66 @@
         <div class="sheet">
             <div class="modal-h">
                 <h3>Añadir</h3>
-                <button class="ai-header-btn" id="btn-config-ai" onclick="window.App.UI.view('v-conf')"><i class="fas fa-cog"></i> Config</button>
-                <button class="close-x" onclick="window.App.UI.closeAll()">&times;</button>
+                <button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')"><i class="fas fa-cog"></i> Config</button>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
             </div>
             
             <div id="v-home">
                 <div class="ai-input-area">
-                    <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos..."></textarea>
+                    <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos cocidos y un plátano... (Dicta o escribe aquí)"></textarea>
                     <div class="ai-actions">
-                        <button class="mic-btn" onclick="window.App.AI.listen()"><i class="fas fa-microphone"></i></button>
-                        <input type="file" id="ai-cam-input" accept="image/*" style="display:none" onchange="window.App.AI.handleImage(this)">
-                        <button class="cam-btn" onclick="document.getElementById('ai-cam-input').click()"><i class="fas fa-camera"></i></button>
-                        <button class="btn pri" style="flex:1;margin:0" onclick="window.App.AI.process()">✨ Procesar</button>
+                        <button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
+                        <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">✨ Procesar con IA</button>
                     </div>
-                    <div id="ai-img-preview" style="font-size:0.8rem;margin-top:5px;color:var(--a)"></div>
                 </div>
                 
                 <div class="separator">O busca en tu biblioteca</div>
                 
-                <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.App.Logic.search()">
-                <div id="res-list" style="max-height:150px;overflow-y:auto;margin-bottom:15px;"></div>
+                <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.Logic.search()">
+                <div id="res-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
                 
-                <button class="link-btn" onclick="window.App.UI.view('v-json')">Tengo un código JSON</button>
-                <button class="link-btn" onclick="window.App.UI.view('v-import')">🔄 Clonar comida de otro día</button>
+                <button class="link-btn" onclick="window.UI.view('v-json')">Tengo un código JSON</button>
+                <button class="link-btn" onclick="window.UI.view('v-import')">🔄 Clonar comida de otro día</button>
             </div>
 
             <div id="v-conf" style="display:none">
                 <h4>Configuración IA</h4>
-                <label>API Key</label>
+                <label style="font-size:0.8rem; color:#64748b">API Key de Gemini</label>
                 <div class="password-wrapper">
-                    <input type="password" id="ai-key" class="inp">
-                    <i class="fas fa-eye eye-icon" onclick="window.App.AI.toggleEye()"></i>
+                    <input type="password" id="ai-key" class="inp" placeholder="Pega tu API Key...">
+                    <i class="fas fa-eye eye-icon" onclick="window.AI.toggleEye()"></i>
                 </div>
-                <label>Modelo</label>
+                <label style="font-size:0.8rem; color:#64748b">Modelo</label>
                 <input type="text" id="ai-model" class="inp" value="gemini-1.5-flash">
-                <button class="btn pri" onclick="window.App.AI.saveConfig()" style="margin-top:15px">Guardar</button>
-                <button class="btn sec" onclick="window.App.UI.view('v-home')">Volver</button>
+                <a href="CLAVES API.html" target="_blank" class="api-link">🔑 Gestor de Claves API</a>
+                <button class="btn pri" onclick="window.AI.saveConfig()" style="margin-top:15px">Guardar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
 
             <div id="v-qty" style="display:none">
-                <h4 id="qty-name"></h4>
-                <div style="display:flex;gap:10px;margin-bottom:15px">
+                <h4 id="qty-name" style="margin-bottom:10px"></h4>
+                <div style="display:flex; gap:10px">
                     <input type="number" id="qty-in" class="inp" placeholder="Cantidad">
-                    <select id="unit-in" class="unit-selector"><option value="g">g</option><option value="ml">ml</option></select>
+                    <select id="unit-in" class="unit-sel">
+                        <option value="g">Gramos (g)</option>
+                        <option value="ml">Mililitros (ml)</option>
+                    </select>
                 </div>
-                <button class="btn pri" onclick="window.App.Logic.saveItem()">Guardar</button>
-                <button class="btn sec" onclick="window.App.UI.view('v-home')">Volver</button>
+                <button class="btn pri" onclick="window.Logic.saveItem()">Guardar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
 
             <div id="v-json" style="display:none">
-                <textarea id="json-in" class="inp" style="height:100px;background:#1e293b;color:#0ea5e9;font-family:monospace"></textarea>
-                <button class="btn pri" onclick="window.App.Logic.parse()">Procesar</button>
-                <button class="btn sec" onclick="window.App.UI.view('v-home')">Volver</button>
+                <textarea id="json-in" class="inp" style="height:100px; background:#1e293b; color:#0ea5e9; font-family:monospace" placeholder="Pega el JSON aquí..."></textarea>
+                <button class="btn pri" onclick="window.Logic.parse()">Procesar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
 
             <div id="v-import" style="display:none">
-                <h4>Clonar</h4>
-                <label>Desde:</label>
-                <input type="date" id="imp-date" class="inp">
-                <label>Comida:</label>
+                <h4>Clonar comida</h4>
+                <label>Desde Fecha:</label>
+                <input type="date" id="imp-date" class="inp" style="margin-bottom:10px">
+                <label>Desde Comida:</label>
                 <select id="imp-meal" class="inp" style="margin-bottom:15px">
                     <option value="01_desayuno">Desayuno</option>
                     <option value="02_almuerzo">Almuerzo</option>
@@ -752,8 +382,8 @@
                     <option value="04_merienda">Merienda</option>
                     <option value="05_cena">Cena</option>
                 </select>
-                <button class="btn pri" onclick="window.App.Logic.execImport()">Traer Aquí</button>
-                <button class="btn sec" onclick="window.App.UI.view('v-home')">Volver</button>
+                <button class="btn pri" onclick="window.Logic.execImport()">Traer Aquí</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
         </div>
     </div>
@@ -762,7 +392,7 @@
         <div class="sheet">
             <div class="modal-h">
                 <h3 id="copy-ti">Gestionar</h3>
-                <button class="close-x" onclick="window.App.UI.closeAll()">&times;</button>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
             </div>
             <label>Fecha Destino:</label>
             <input type="date" id="copy-date" class="inp">
@@ -774,21 +404,21 @@
                 <option value="04_merienda">Merienda</option>
                 <option value="05_cena">Cena</option>
             </select>
-            <button class="btn pri" onclick="window.App.Logic.execCopy()">Confirmar</button>
+            <button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button>
         </div>
     </div>
-    
+
     <div class="modal" id="m-glob">
         <div class="sheet">
             <h3>Opciones</h3>
-            <button class="btn sec" onclick="window.App.Logic.pdf()">📄 PDF Diario</button>
-            <button class="btn sec" onclick="window.App.Logic.pdfHistory()">📚 PDF Historial</button>
-            <button class="btn sec" onclick="window.App.Logic.exportJSON()">💾 Backup Completo</button>
-            <input type="file" id="imp-file" style="display:none" onchange="window.App.Logic.importJSON(this)">
+            <button class="btn sec" onclick="window.Logic.pdf()">📄 PDF Diario</button>
+            <button class="btn sec" onclick="window.Logic.pdfHistory()">📚 PDF Historial Completo</button>
+            <button class="btn sec" onclick="window.Logic.exportJSON()">💾 Backup Completo</button>
+            <input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)">
             <button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar Backup</button>
-            <button class="btn sec" onclick="window.App.Logic.syncHistory()">🔄 Sincronizar Historial</button>
-            <button class="btn pri" style="background:#ef4444" onclick="window.App.Logic.wipe()">Borrar Día</button>
-            <button class="btn sec" onclick="window.App.UI.closeAll()">Cerrar</button>
+            <button class="btn sec" onclick="window.Logic.syncHistory()">🔄 Sincronizar Historial</button>
+            <button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button>
+            <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
         </div>
     </div>
 
@@ -809,323 +439,781 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const fire = { doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, writeBatch, query, where, orderBy, limit };
-        
+
         const MEALS = [
-            {k:'01_desayuno',n:'Desayuno',i:'fa-coffee'},
-            {k:'02_almuerzo',n:'Almuerzo',i:'fa-bread-slice'},
-            {k:'03_comida',n:'Comida',i:'fa-utensils'},
-            {k:'04_merienda',n:'Merienda',i:'fa-apple-alt'},
-            {k:'05_cena',n:'Cena',i:'fa-moon'}
+            {k:'01_desayuno', n:'Desayuno', i:'fa-coffee'},
+            {k:'02_almuerzo', n:'Almuerzo', i:'fa-bread-slice'},
+            {k:'03_comida', n:'Comida', i:'fa-utensils'},
+            {k:'04_merienda', n:'Merienda', i:'fa-apple-alt'},
+            {k:'05_cena', n:'Cena', i:'fa-moon'}
         ];
+
+        let S = { 
+            d: new Date(),
+            uid: localStorage.getItem('tid'),
+            u: null, day: {}, lib: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null,
+            srcMeal: null, copyMode: 'copy' 
+        };
+
+        // --- DEFINICIONES ---
         
-        // --- NÚCLEO GLOBAL (ESTRUCTURA SEGURA) ---
-        window.App = {
-            S: { d: new Date(), uid: localStorage.getItem('tid'), u: null, day: {}, lib: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', srcIdx: null },
-            
-            DB: {
-                col: (n) => fire.collection(db, n),
-                doc: (p,i) => fire.doc(db, p, i),
-                norm: (u) => ({ id: u.id, name: u.name||'Usuario', h: parseFloat(u.height||170), w: parseFloat(u.weight||70), y: parseInt(u.birthYear||1990), g: u.gender||'male', act: u.activity||"1.2", mod: u.goalMod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),
-                getUsers: async () => { const s=await fire.getDocs(App.DB.col('usuarios')); return App.S.allUsers=s.docs.map(d=>App.DB.norm(d.data())); },
-                getU: async(id) => { const s=await fire.getDoc(App.DB.doc('usuarios', id)); return s.exists()?s.data():null; },
-                setU: async(u) => await fire.setDoc(App.DB.doc('usuarios', u.id), u),
-                delU: async(id) => await fire.deleteDoc(App.DB.doc('usuarios', id)),
-                getDay: async(d) => { const k=d.toISOString().split('T')[0]; const s=await fire.getDoc(App.DB.doc('usuarios/'+App.S.uid+'/diario', k)); let data=s.exists()?s.data():{}; MEALS.forEach(m=>{ if(!data[m.k]) data[m.k]=[] }); return data; },
-                getDayLog: async (uid, dStr) => { const s=await fire.getDoc(App.DB.doc('usuarios/'+uid+'/diario', dStr)); return s.exists()?s.data():{}; },
-                setDay: async() => { const k=App.S.d.toISOString().split('T')[0]; await fire.setDoc(App.DB.doc('usuarios/'+App.S.uid+'/diario', k), App.S.day); },
-                lib: async() => { const s=await fire.getDoc(App.DB.doc('sistema','biblioteca')); App.S.lib=s.exists()?s.data().items:[]; },
-                addLib: async(arr) => { arr.forEach(n=>{ if(!App.S.lib.find(x=>x.n===n.n)) App.S.lib.push(n); }); await fire.setDoc(App.DB.doc('sistema','biblioteca'), {items: App.S.lib}); }
+        const DB = {
+            col: (n) => fire.collection(db, n),
+            doc: (p,i) => fire.doc(db, p, i),
+            norm: (u) => ({
+                id: u.id, name: u.name||'Usuario', h: parseFloat(u.height||170), w: parseFloat(u.weight||70),
+                y: parseInt(u.birthYear||1990), g: u.gender||'male', act: u.activity||"1.2", mod: u.goalMod||"0",
+                mac: u.customMacros || {p:null, c:null, f:null}
+            }),
+            getUsers: async () => { const s=await fire.getDocs(DB.col('usuarios')); return S.allUsers=s.docs.map(d=>DB.norm(d.data())); },
+            getU: async(id) => { const s=await fire.getDoc(DB.doc('usuarios', id)); return s.exists()?s.data():null; },
+            setU: async(u) => await fire.setDoc(DB.doc('usuarios', u.id), u),
+            delU: async(id) => await fire.deleteDoc(DB.doc('usuarios', id)),
+            getDay: async(d) => {
+                const k=d.toISOString().split('T')[0]; const s=await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
+                let data=s.exists()?s.data():{}; MEALS.forEach(m=>{ if(!data[m.k]) data[m.k]=[] }); return data;
             },
-
-            Logic: {
-                day: (n) => { App.S.d.setDate(App.S.d.getDate()+n); App.Sys.sync(); },
-                saveUser: async () => {
-                    const n = document.getElementById('e-name').value;
-                    if(!n) return alert("Nombre obligatorio");
-                    const v = (id) => document.getElementById(id).value;
-                    const bmr = (10*v('e-w'))+(6.25*v('e-h'))-(5*(new Date().getFullYear()-v('e-y')))+(v('e-g')=='male'?5:-161);
-                    const goal = Math.round(bmr*v('e-act') + parseInt(v('e-mod')));
-                    const u = { id: App.S.u?App.S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:v('e-h'), weight:v('e-w'), birthYear:v('e-y'), gender:v('e-g'), activity:v('e-act'), goalMod:v('e-mod'), customMacros: { p:Math.round(goal*(v('pp')/100)/4), c:Math.round(goal*(v('pc')/100)/4), f:Math.round(goal*(v('pf')/100)/9) } };
-                    await App.DB.setU(u); alert("Guardado"); App.S.allUsers=await App.DB.getUsers(); await App.Sys.load(u.id); App.UI.closeAll();
-                },
-                saveWeight: async () => {
-                    const w = parseFloat(document.getElementById('w-today').value.replace(',','.'));
-                    const d = document.getElementById('st-date').value;
-                    if(!w || !d) return alert("Faltan datos");
-                    const ref = fire.doc(db, `usuarios/${App.S.uid}/diario`, d);
-                    const snap = await fire.getDoc(ref);
-                    let data = snap.exists() ? snap.data() : {};
-                    data.weight = w;
-                    await fire.setDoc(ref, data);
-                    if(d === App.S.d.toISOString().split('T')[0]) App.S.day.weight = w;
-                    alert("Peso guardado"); App.Stats.load(d);
-                },
-                checkWeight: () => { if(!App.S.day.weight) setTimeout(() => { if(confirm("¿Registrar peso hoy?")) App.Stats.open(); }, 1000); },
-                deleteUser: async () => { if(confirm("¿Eliminar usuario?")) { await App.DB.delU(App.S.u.id); localStorage.removeItem('tid'); location.reload(); } },
-                delFromLib: async (n) => { if(confirm("¿Borrar?")) { App.S.lib=App.S.lib.filter(x=>x.n!==n); await fire.setDoc(App.DB.doc('sistema','biblioteca'), {items: App.S.lib}); App.Logic.search(); } },
-                openAdd: (mk) => { App.S.tm=mk; App.S.edit=false; App.UI.view('v-home'); App.UI.open('m-add'); if(App.S.lib.length>0) App.Logic.search(); App.UI.checkAI(); },
-                openImport: () => { document.getElementById('imp-date').valueAsDate = new Date(); App.UI.view('v-import'); },
-                search: () => {
-                    const q = document.getElementById('src-in').value.toLowerCase();
-                    const b = document.getElementById('res-list'); b.innerHTML='';
-                    App.S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
-                        const d = document.createElement('div'); d.className='food-suggestion';
-                        d.innerHTML = `<div class="s-info"><b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small></div><div class="s-del"><i class="fas fa-trash-alt"></i></div>`;
-                        // ARREGLO CLICK BUSCADOR
-                        d.querySelector('.s-info').onclick = () => { 
-                            window.tempItem = JSON.parse(JSON.stringify(f)); 
-                            App.UI.setQty(window.tempItem); 
-                            App.UI.view('v-qty'); 
-                        };
-                        d.querySelector('.s-del').onclick = () => App.Logic.delFromLib(f.n);
-                        b.appendChild(d);
-                    });
-                },
-                saveItem: async () => {
-                    const q = parseFloat(document.getElementById('qty-in').value); 
-                    const u = document.getElementById('unit-in').value;
-                    const base = window.tempItem || App.S.item; 
-                    let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
-                    // FIX EDIT SCALING
-                    if(App.S.edit) { const f = base.q/100; bk/=f; bp/=f; bc/=f; bf/=f; }
-                    const fac = q/100;
-                    const entry = { n:base.n, q:q, u:u, k:bk*fac, p:bp*fac, c:bc*fac, f:bf*fac };
-                    if(App.S.edit) App.S.day[App.S.tm][App.S.eIdx] = entry; else App.S.day[App.S.tm].push(entry);
-                    await App.DB.setDay(); App.UI.closeAll(); App.Sys.sync();
-                },
-                editItem: (mk, idx) => { App.S.edit=true; App.S.tm=mk; App.S.eIdx=idx; App.S.item = JSON.parse(JSON.stringify(App.S.day[mk][idx])); window.tempItem=App.S.item; App.UI.setQty(App.S.item); App.UI.view('v-qty'); App.UI.open('m-add'); },
-                delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { App.S.day[mk].splice(idx,1); await App.DB.setDay(); App.Sys.sync(); } },
-                wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { App.S.day[mk]=[]; await App.DB.setDay(); App.Sys.sync(); } },
-                wipe: async () => { if(confirm("¿Borrar día?")) { App.S.day={}; MEALS.forEach(m=>App.S.day[m.k]=[]); await App.DB.setDay(); App.Sys.sync(); App.UI.closeAll(); } },
-                
-                openCopy: (mk, type, itemIdx = null) => { 
-                    App.S.srcMeal=mk; App.S.copyMode=type; App.S.srcIdx = itemIdx; 
-                    document.getElementById('copy-ti').innerText = itemIdx!==null ? (type==='move'?'Mover Alimento':'Copiar Alimento') : (type==='move'?'Mover Comida':'Copiar Comida');
-                    document.getElementById('copy-date').valueAsDate=App.S.d; document.getElementById('copy-meal').value=mk; App.UI.open('m-copy'); 
-                },
-                
-                execCopy: async () => {
-                    const d = document.getElementById('copy-date').value; 
-                    const tm = document.getElementById('copy-meal').value;
-                    const ref = fire.doc(db, `usuarios/${App.S.uid}/diario`, d); 
-                    const snap = await fire.getDoc(ref);
-                    let data = snap.exists() ? snap.data() : {}; if(!data[tm]) data[tm] = [];
-                    
-                    // LÓGICA MOVIMIENTO UNITARIO
-                    if(App.S.srcIdx !== null) { 
-                        const item = JSON.parse(JSON.stringify(App.S.day[App.S.srcMeal][App.S.srcIdx]));
-                        data[tm].push(item); 
-                        if(App.S.copyMode === 'move') App.S.day[App.S.srcMeal].splice(App.S.srcIdx, 1); 
-                    } else { 
-                        data[tm] = data[tm].concat(JSON.parse(JSON.stringify(App.S.day[App.S.srcMeal]))); 
-                        if(App.S.copyMode === 'move') App.S.day[App.S.srcMeal] = []; 
-                    }
-                    
-                    await fire.setDoc(ref, data); 
-                    if(App.S.copyMode === 'move') await App.DB.setDay();
-                    App.UI.closeAll(); 
-                    if(d===App.S.d.toISOString().split('T')[0]) App.Sys.sync(); 
-                    alert("Hecho");
-                },
-                execImport: async () => {
-                    const d = document.getElementById('imp-date').value; const meal = document.getElementById('imp-meal').value;
-                    const snap = await fire.getDoc(fire.doc(db, `usuarios/${App.S.uid}/diario`, d));
-                    if(snap.exists() && snap.data()[meal]) { App.S.day[App.S.tm] = App.S.day[App.S.tm].concat(snap.data()[meal]); await App.DB.setDay(); App.UI.closeAll(); App.Sys.sync(); alert("Importado"); }
-                    else { alert("Sin datos"); }
-                },
-                parse: async () => {
-                    try {
-                        const txt = document.getElementById('json-in').value;
-                        // REGEX BLINDADA PARA IA
-                        const match = txt.match(/\[[\s\S]*\]/) || txt.match(/\{[\s\S]*\}/);
-                        if(!match) throw new Error("No se encontró JSON válido en el texto");
-                        const json = JSON.parse(match[0]);
-                        
-                        let items = Array.isArray(json)?json:(json.comida_combinada?json.comida_combinada.items:(json.items||json.detalles||[json]));
-                        const newItems = [];
-                        items.forEach(it => {
-                            let q=100, u="g";
-                            if(it.cantidad) { if(typeof it.cantidad==='string'){ const p=it.cantidad.trim().split(/\s+/); q=parseFloat(p[0])||100; if(p[1])u=p[1].toLowerCase(); } else q=parseFloat(it.cantidad)||100; }
-                            const fac=q/100; const get=(keys)=>{ for(let k of keys) { if(it[k]!=undefined)return parseFloat(it[k]); if(it.macros&&it.macros[k]!=undefined)return parseFloat(it.macros[k]); } return 0; };
-                            const base = { n: it.producto||it.nombre||it.n||"Item", q:100, u:u, k: get(['energia_kcal','kcal','k'])/fac, p: get(['proteinas_g','p','prot'])/fac, c: get(['hidratos_carbono_g','c','hc'])/fac, f: get(['grasas_g','f','fat'])/fac };
-                            App.S.day[App.S.tm].push({...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac}); newItems.push(base);
-                        });
-                        await App.DB.setDay(); await App.DB.addLib(newItems); document.getElementById('json-in').value=''; App.UI.closeAll(); App.Sys.sync();
-                    } catch(e) { alert("Error leyendo JSON: " + e.message); }
-                },
-                pdf: () => { window.UI.closeAll(); html2pdf().from(document.body).save(); },
-                pdfHistory: async () => {
-                    const btn = document.querySelector('#m-glob button:nth-child(2)'); btn.innerText = "Generando...";
-                    try {
-                        const snap = await fire.getDocs(query(fire.collection(db, `usuarios/${App.S.uid}/diario`), orderBy('__name__')));
-                        let html = `<div style="padding:20px;font-family:sans-serif"><h1>Historial ${App.S.u.name}</h1>`;
-                        snap.forEach(doc => {
-                            const data = doc.data(); let totalK = 0; let mealsHtml = '';
-                            MEALS.forEach(m => { if(data[m.k] && data[m.k].length) { mealsHtml += `<b>${m.n}:</b> `; data[m.k].forEach(i => { totalK += i.k; mealsHtml += `${i.n} (${Math.round(i.k)}), `; }); mealsHtml += '<br>'; } });
-                            if(totalK > 0) html += `<div style="border-bottom:1px solid #ccc;padding:10px"><strong>${doc.id}</strong> Total: ${Math.round(totalK)}<br>${mealsHtml}</div>`;
-                        });
-                        html += `</div>`; const el = document.createElement('div'); el.innerHTML = html; document.body.appendChild(el);
-                        html2pdf().from(el).save(); setTimeout(() => el.remove(), 2000);
-                    } catch(e) { alert(e.message); } finally { btn.innerText = "📚 PDF Historial"; App.UI.closeAll(); }
-                },
-                exportJSON: async () => { const snap = await fire.getDocs(fire.collection(db, `usuarios/${App.S.uid}/diario`)); const data = { perfil: App.S.u, historial: {} }; snap.forEach(d => data.historial[d.id] = d.data()); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'})); a.download = `Backup_${App.S.u.name}.json`; a.click(); },
-                importJSON: async (input) => {
-                    const file = input.files[0]; if(!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        try { const data = JSON.parse(e.target.result); if(!confirm("¿Importar?")) return; const batch = fire.writeBatch(db); Object.entries(data.historial).forEach(([d, v]) => batch.set(fire.doc(db, `usuarios/${App.S.uid}/diario`, d), v)); await batch.commit(); location.reload(); } catch(err) { alert(err.message); }
-                    }; reader.readAsText(file);
-                },
-                syncHistory: async () => {
-                    const btn = document.querySelector('#m-glob button:nth-child(5)'); btn.innerText = "Sincronizando...";
-                    try {
-                        const snap = await fire.getDocs(fire.collection(db, `usuarios/${App.S.uid}/diario`)); let count = 0;
-                        snap.forEach(doc => { const d = doc.data(); Object.values(d).forEach(m => { if(Array.isArray(m)) m.forEach(i => { if(!App.S.lib.find(x => x.n === i.n)) { let q=parseFloat(i.q)||100, f=q/100||1; App.S.lib.push({ n:i.n, u:i.u||'g', q:100, k:(i.k||0)/f, p:(i.p||0)/f, c:(i.c||0)/f, f:(i.f||0)/f }); count++; } }); }); });
-                        if(count > 0) { await fire.setDoc(App.DB.doc('sistema','biblioteca'), {items: App.S.lib}); alert(`Recuperados: ${count}`); } else alert("Al día");
-                    } catch(e) { alert(e.message); } finally { btn.innerText = "📚 Sincronizar Historial"; }
-                }
-            },
-
-            AI: {
-                saveConfig: () => { localStorage.setItem('titan_ai_key', document.getElementById('ai-key').value); localStorage.setItem('titan_ai_model', document.getElementById('ai-model').value); App.UI.view('v-home'); App.UI.checkAI(); },
-                toggleEye: () => { const x = document.getElementById('ai-key'); x.type = x.type==='password'?'text':'password'; },
-                listen: () => { const r = new window.webkitSpeechRecognition(); r.lang='es-ES'; const b=document.querySelector('.mic-btn'); b.classList.add('listening'); r.onresult=(e)=>{document.getElementById('ai-text').value+=e.results[0][0].transcript;b.classList.remove('listening')}; r.start(); },
-                handleImage: (i) => { const f=i.files[0]; const r=new FileReader(); r.onload=(e)=>{window.App.AI.img=e.target.result.split(',')[1]; window.App.AI.mime=f.type; document.getElementById('ai-img-preview').innerText="Imagen OK"; }; r.readAsDataURL(f); },
-                process: async () => {
-                    const k=localStorage.getItem('titan_ai_key'); if(!k) return App.UI.view('v-conf');
-                    const btn=document.querySelector('#v-home .btn.pri'); const old=btn.innerText; btn.innerText="Thinking...";
-                    try {
-                        const body = { contents: [{ parts: [] }] };
-                        const txt = document.getElementById('ai-text').value;
-                        if(txt) body.contents[0].parts.push({text: `Analiza: "${txt}". JSON ARRAY: [{"n":"Nombre","q":cantidad,"u":"g"|"ml","k":kcal,"p":prot,"c":carb,"f":grasa}]. 100g default.`});
-                        if(window.App.AI.img) body.contents[0].parts.push({inlineData: {mimeType: window.App.AI.mime, data: window.App.AI.img}});
-                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-                        const d = await r.json();
-                        const raw = d.candidates[0].content.parts[0].text;
-                        const match = raw.match(/\[[\s\S]*\]/); // REGEX FIX
-                        if(!match) throw new Error("No JSON found");
-                        const items = JSON.parse(match[0]);
-                        const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f }));
-                        App.S.day[App.S.tm] = App.S.day[App.S.tm].concat(mapped); await App.DB.setDay();
-                        const lib = mapped.map(i => { const f = i.q/100; return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f }; });
-                        await App.DB.addLib(lib); App.UI.closeAll(); App.Sys.sync();
-                    } catch(e) { alert("Error IA: "+e.message); } finally { btn.innerText=old; }
-                }
-            },
-
-            UI: {
-                open: (id) => document.getElementById(id).style.display='flex',
-                closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
-                view: (id) => { ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>document.getElementById(x).style.display='none'); document.getElementById(id).style.display='block'; },
-                checkAI: () => { const k=localStorage.getItem('titan_ai_key'); const b=document.getElementById('btn-config-ai'); if(k) b.classList.add('configured'); document.getElementById('ai-key').value=k||''; },
-                setQty: (i) => { document.getElementById('qty-name').innerText=i.n; document.getElementById('qty-in').value=i.q; document.getElementById('unit-in').value=i.u; },
-                openUsers: async () => { const l=document.getElementById('u-list'); l.innerHTML='...'; const us=await App.DB.getUsers(); l.innerHTML=''; us.forEach(u=>{ const d=document.createElement('div'); d.className=`user-card-wrapper ${App.S.u&&App.S.u.id===u.id?'active':''}`; d.innerHTML=`<div class="u-av" onclick="window.App.Sys.load('${u.id}')">${u.name[0]}</div><div class="u-inf" onclick="window.App.Sys.load('${u.id}')"><h4>${u.name}</h4></div><div class="u-edt" onclick="window.App.UI.editUser('${u.id}')">✎</div>`; l.appendChild(d); }); App.UI.open('m-users'); },
-                editUser: (id) => { const u=App.S.allUsers.find(x=>x.id===id); document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-w').value=u.w; document.getElementById('e-y').value=u.y; document.getElementById('e-act').value=u.act; document.getElementById('e-mod').value=u.mod; if(u.mac.p){ const bm=(10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161); const g=Math.round(bm*u.act+parseInt(u.mod)); document.getElementById('pp').value=Math.round((u.mac.p*4/g)*100); document.getElementById('pc').value=Math.round((u.mac.c*4/g)*100); document.getElementById('pf').value=Math.round((u.mac.f*9/g)*100); } document.getElementById('btn-del-user').style.display='block'; App.Calc.live(); App.UI.open('m-prof'); },
-                newProfile: () => { App.S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); App.UI.open('m-prof'); App.Calc.live(); }
-            },
-
-            Calc: {
-                bio: () => { if(!App.S.u) return; const h=App.S.u.h, w=App.S.u.w, a=new Date().getFullYear()-App.S.u.y; const bm=(10*w)+(6.25*h)-(5*a)+(App.S.u.g=='male'?5:-161); const td=bm*parseFloat(App.S.u.act); const g=Math.round(td+parseInt(App.S.u.mod)); App.S.u.calc={goal:g, tdee:td}; if(App.S.u.mac.p){App.S.u.calc.p=App.S.u.mac.p;App.S.u.calc.c=App.S.u.mac.c;App.S.u.calc.f=App.S.u.mac.f} else {App.S.u.calc.p=Math.round(w*2);App.S.u.calc.f=Math.round(w*0.9);App.S.u.calc.c=Math.round((g-(App.S.u.calc.p*4)-(App.S.u.calc.f*9))/4)} document.getElementById('h-av').innerText=App.S.u.name[0]; document.getElementById('bio-txt').innerText=`Meta: ${g} kcal`; },
-                live: () => { const v=(i)=>parseFloat(document.getElementById(i).value)||0; const bm=(10*v('e-w'))+(6.25*v('e-h'))-(5*(new Date().getFullYear()-v('e-y')))+(document.getElementById('e-g').value=='male'?5:-161); const g=Math.round(bm*v('e-act')+v('e-mod')); document.getElementById('l-tmb').innerText=Math.round(bm); document.getElementById('l-goal').innerText=g; }
-            },
-
-            Stats: {
-                chartDaily: null, chartWeekly: null, chartWeight: null, chartInstance:null, weightInstance:null, currentDate: new Date(),
-                open: () => { App.Stats.currentDate = new Date(); App.UI.open('m-stats'); App.Stats.updateView(); },
-                changeDate: (delta) => { App.Stats.currentDate.setDate(App.Stats.currentDate.getDate() + delta); App.Stats.updateView(); },
-                load: (dStr) => { if(dStr) App.Stats.currentDate = new Date(dStr); App.Stats.updateView(); },
-                saveWeight: async () => {
-                    let val = document.getElementById('w-today').value.replace(',','.'); const w = parseFloat(val);
-                    const dStr = App.Stats.currentDate.toISOString().split('T')[0];
-                    if(!w) return alert("Falta peso");
-                    const ref = fire.doc(db, `usuarios/${App.S.uid}/diario`, dStr); const snap = await fire.getDoc(ref);
-                    let data = snap.exists() ? snap.data() : {}; data.weight = w; await fire.setDoc(ref, data);
-                    if(dStr === App.S.d.toISOString().split('T')[0]) App.S.day.weight = w;
-                    alert("Guardado"); App.Stats.updateView();
-                },
-                updateView: async () => {
-                    const dateStr = App.Stats.currentDate.toISOString().split('T')[0]; document.getElementById('st-date').value = dateStr;
-                    const allDocs = await fire.getDocs(query(fire.collection(db, `usuarios/${App.S.uid}/diario`), orderBy('__name__')));
-                    const history = []; allDocs.forEach(d => history.push({id: d.id, ...d.data()}));
-                    
-                    let firstW=null, prevW=null, currW=null;
-                    for(let h of history) { if(h.weight) { firstW=h.weight; break; } }
-                    for(let h of history) { if(h.id === dateStr) currW=h.weight; if(h.id < dateStr && h.weight) prevW=h.weight; }
-                    
-                    document.getElementById('w-today').value = currW || '';
-                    const fmtDiff = (c, b) => { const diff = c - b; const cl = diff > 0 ? 'text-bad' : 'text-ok'; return `<b class="${cl}">${diff > 0 ? '+' : ''}${diff.toFixed(1)}kg</b>`; };
-                    let html = '';
-                    if(currW) { if(prevW) html += `<span>vs Ant (${prevW}): ${fmtDiff(currW, prevW)}</span>`; if(firstW) html += `<span>vs Inicio (${firstW}): ${fmtDiff(currW, firstW)}</span>`; }
-                    document.getElementById('w-feedback').innerHTML = html;
-
-                    // DAILY
-                    let dCal=0, dGoal=App.S.u.calc.goal, dDat=history.find(h=>h.id===dateStr);
-                    if(dDat) MEALS.forEach(m=>{if(dDat[m.k]) dDat[m.k].forEach(i=>dCal+=i.k)});
-                    const diffD = dCal - dGoal;
-                    if(App.Stats.chartDaily) App.Stats.chartDaily.destroy();
-                    App.Stats.chartDaily = new Chart(document.getElementById('chart-daily'), { type: 'doughnut', data: { datasets: [{ data: diffD > 0 ? [dGoal, diffD] : [dCal, dGoal - dCal], backgroundColor: diffD > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#e2e8f0'], borderWidth: 0 }] }, options: { cutout: '75%', plugins: { legend: false } } });
-                    document.getElementById('daily-txt').innerHTML = `<span class="srt-val">${Math.round(dCal)}</span><div class="${diffD>0?'text-bad':'text-ok'}">${diffD>0?'+':''}${Math.round(diffD)}</div>`;
-
-                    // WEEKLY
-                    const dObj=new Date(App.Stats.currentDate); dObj.setDate(dObj.getDate()-(dObj.getDay()||7)+1);
-                    let wCal=0, wGoal=dGoal*7;
-                    for(let i=0;i<7;i++){ const t=new Date(dObj); t.setDate(dObj.getDate()+i); const k=t.toISOString().split('T')[0]; const h=history.find(x=>x.id===k); if(h) MEALS.forEach(m=>{if(h[m.k]) h[m.k].forEach(x=>wCal+=x.k)}); }
-                    const diffW = wCal - wGoal;
-                    if(App.Stats.chartWeekly) App.Stats.chartWeekly.destroy();
-                    App.Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), { type: 'doughnut', data: { datasets: [{ data: diffW > 0 ? [wGoal, diffW] : [wCal, wGoal - wCal], backgroundColor: diffW > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#10b981'], borderWidth: 0 }] }, options: { cutout: '75%', plugins: { legend: false } } });
-                    document.getElementById('weekly-txt').innerHTML = `<span class="srt-val">${Math.round(wCal)}</span><div class="${diffW>0?'text-bad':'text-ok'}">${diffW>0?'+':''}${Math.round(diffW)}</div>`;
-
-                    // CHARTS
-                    const dts=[], cS=[], cE=[], wts=[];
-                    for(let i=29;i>=0;i--){
-                        const t=new Date(App.Stats.currentDate); t.setDate(t.getDate()-i); const k=t.toISOString().split('T')[0]; dts.push(k.slice(5)); const h=history.find(x=>x.id===k);
-                        let dc=0; if(h) MEALS.forEach(m=>{if(h[m.k]) h[m.k].forEach(x=>dc+=x.k)});
-                        if(dc>dGoal){cS.push(dGoal); cE.push(dc-dGoal)} else {cS.push(dc); cE.push(0)}
-                        wts.push(h?h.weight:null);
-                    }
-                    if(App.Stats.chartInstance) App.Stats.chartInstance.destroy();
-                    App.Stats.chartInstance = new Chart(document.getElementById('chart-cal').getContext('2d'), { type: 'bar', data: { labels:dts, datasets:[{label:'Exceso',data:cE,backgroundColor:'#ef4444',stack:'0'},{label:'Base',data:cS,backgroundColor:'#3b82f6',stack:'0'}]}, options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}});
-                    if(App.Stats.weightInstance) App.Stats.weightInstance.destroy();
-                    App.Stats.weightInstance = new Chart(document.getElementById('chart-weight').getContext('2d'), { type: 'line', data: { labels:dts, datasets:[{label:'Peso',data:wts,borderColor:'#10b981',tension:0.3,spanGaps:true}]}, options:{maintainAspectRatio:false}});
-                }
-            },
-
-            Render: {
-                all: () => {
-                    document.getElementById('h-day').innerText = App.S.d.toLocaleDateString('es-ES',{weekday:'long'});
-                    let t={k:0,p:0,c:0,f:0}; Object.values(App.S.day).forEach(arr=>{if(Array.isArray(arr)) arr.forEach(i=>{t.k+=i.k;t.p+=i.p;t.c+=i.c;t.f+=i.f})});
-                    const g = App.S.u.calc; const dif = g.goal - t.k;
-                    const r = document.getElementById('ring-bg');
-                    if(dif<0) { r.classList.add('danger'); document.getElementById('l-restan').innerText="EXCESO"; document.getElementById('v-rem').innerText=Math.abs(Math.round(dif)); r.style.background=`conic-gradient(var(--bad) 0% 100%, var(--bad) 100%)`; }
-                    else { r.classList.remove('danger'); document.getElementById('l-restan').innerText="RESTAN"; document.getElementById('v-rem').innerText=Math.round(dif); const p=Math.min((t.k/g.goal)*100,100); r.style.background=`conic-gradient(var(--car) 0% ${p}%, rgba(255,255,255,0.05) 0%)`; }
-                    const b=(k,v,m)=>document.getElementById('b-'+k).style.width=Math.min((v/m)*100,100)+'%'; b('p',t.p,g.p); b('c',t.c,g.c); b('f',t.f,g.f);
-                    document.getElementById('v-p').innerText=`${Math.round(t.p)}/${g.p}`;
-                    const f = document.getElementById('feed'); f.innerHTML='';
-                    MEALS.forEach(m => {
-                        const arr = App.S.day[m.k] || [];
-                        let mk=0, mp=0, mc=0, mf=0, html='';
-                        arr.forEach((i, idx) => {
-                            mk+=i.k; mp+=i.p; mc+=i.c; mf+=i.f;
-                            html += `<div class="item"><div class="i-info"><h4>${i.n}</h4><div class="i-det"><span class="i-pill">${i.q}${i.u}</span> <span>🔥 ${Math.round(i.k)}</span></div></div><div class="c-actions"><button class="act-btn cln" title="Mover" onclick="window.App.Logic.openCopy('${m.k}','copy',${idx})">❐</button><button class="act-btn" onclick="window.App.Logic.editItem('${m.k}',${idx})">✎</button><button class="act-btn del" onclick="window.App.Logic.delItem('${m.k}',${idx})">✕</button></div></div>`;
-                        });
-                        f.innerHTML += `<div class="card"><div class="c-head"><div class="c-left"><i class="fas ${m.i}"></i> ${m.n}</div><div class="c-right"><span class="k-badge">${Math.round(mk)} kcal</span><button class="tool-btn add" onclick="window.App.Logic.openAdd('${m.k}')">+</button><button class="tool-btn copy" onclick="window.App.Logic.openCopy('${m.k}','copy')"><i class="far fa-copy"></i></button><button class="tool-btn move" onclick="window.App.Logic.openCopy('${m.k}','move')"><i class="far fa-calendar"></i></button><button class="tool-btn del" onclick="window.App.Logic.wipeMeal('${m.k}')"><i class="far fa-trash-alt"></i></button></div></div><div>${html}</div></div>`;
-                    });
-                }
-            },
-
-            Sys: {
-                init: async () => { try { await App.DB.lib(); if(App.S.uid) await App.Sys.load(App.S.uid); else { document.getElementById('loading-screen').style.display='none'; App.UI.openUsers(); } } catch(e){console.error(e)} },
-                load: async (id) => { App.S.day={}; App.S.uid=id; localStorage.setItem('tid', id); App.S.u=await App.DB.getU(id); if(!App.S.u){App.UI.openUsers();return} App.Calc.bio(); await App.Sys.sync(); window.App.Logic.checkWeight(); document.getElementById('loading-screen').style.display='none'; },
-                sync: async () => { App.S.day = await App.DB.getDay(App.S.d); App.Render.all(); }
+            getDayLog: async (uid, dStr) => { const s=await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dStr)); return s.exists()?s.data():{}; },
+            setDay: async() => { const k=S.d.toISOString().split('T')[0]; await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day); },
+            lib: async() => { const s=await fire.getDoc(DB.doc('sistema','biblioteca')); S.lib=s.exists()?s.data().items:[]; },
+            addLib: async(arr) => {
+                arr.forEach(n=>{ if(!S.lib.find(x=>x.n===n.n)) S.lib.push(n); });
+                await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
             }
         };
 
-        // GESTURES
-        let ts=0;
-        document.addEventListener('touchstart',e=>ts=e.changedTouches[0].screenX);
-        document.addEventListener('touchend',e=>{if(e.changedTouches[0].screenX<ts-50)App.Logic.day(1);if(e.changedTouches[0].screenX>ts+50)App.Logic.day(-1)});
+        const Logic = {
+            day: (n) => { S.d.setDate(S.d.getDate()+n); Sys.sync(); },
+            saveUser: async () => {
+                const n = document.getElementById('e-name').value;
+                if(!n) return alert("Nombre obligatorio");
+                try {
+                    const vals = (ids) => ids.map(i=>document.getElementById(i).value);
+                    const [h, w, y, g, act, mod] = vals(['e-h','e-w','e-y','e-g','e-act','e-mod']);
+                    const [pp, pc, pf] = vals(['pp','pc','pf']);
+                    
+                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
+                    const goal = Math.round(bmr*act + parseInt(mod));
 
-        if(document.readyState==='complete') App.Sys.init(); else window.addEventListener('load', App.Sys.init);
+                    const u = {
+                        id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
+                        customMacros: { p:Math.round(goal*(pp/100)/4), c:Math.round(goal*(pc/100)/4), f:Math.round(goal*(pf/100)/9) }
+                    };
+                    await DB.setU(u); alert("✅ Guardado"); S.allUsers=await DB.getUsers(); await Sys.load(u.id); window.UI.closeAll();
+                } catch(e) { alert("Error: "+e.message); }
+            },
+            saveWeight: async () => {
+                const w = parseFloat(document.getElementById('w-today').value);
+                const d = document.getElementById('w-date').value;
+                if(!w || !d) return alert("Faltan datos");
+                
+                let targetData = S.day;
+                let isToday = (d === S.d.toISOString().split('T')[0]);
+                
+                if(!isToday) {
+                    const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
+                    targetData = snap.exists() ? snap.data() : {};
+                }
+                
+                targetData.weight = w;
+                await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), targetData);
+                
+                if(isToday) S.day = targetData;
+                alert("Peso guardado");
+                window.Stats.load(30); 
+            },
+            checkWeight: () => {
+                if(!S.day.weight) {
+                    setTimeout(() => {
+                        if(confirm("¿Quieres registrar tu peso hoy?")) window.Stats.open();
+                    }, 1000);
+                }
+            },
+            deleteUser: async () => {
+                if(confirm("¿Eliminar usuario y todos sus datos?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
+            },
+            delFromLib: async (name) => {
+                if(!confirm("¿Borrar " + name + "?")) return;
+                try {
+                    S.lib = S.lib.filter(x => x.n !== name);
+                    await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+                    Logic.search();
+                } catch(e) { alert("Error: " + e.message); }
+            },
+            openAdd: (mk) => { S.tm=mk; S.edit=false; window.UI.view('v-home'); window.UI.open('m-add'); if(S.lib.length>0) Logic.search(); window.UI.checkAI(); },
+            openImport: () => {
+                document.getElementById('imp-date').valueAsDate = new Date();
+                window.UI.view('v-import');
+            },
+            search: () => {
+                const q = document.getElementById('src-in').value.toLowerCase();
+                const b = document.getElementById('res-list'); b.innerHTML='';
+                S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
+                    const d = document.createElement('div'); d.className='food-suggestion';
+                    d.innerHTML = `
+                        <div class="s-info" onclick='window.S.item=${JSON.stringify(f).replace(/'/g,"&#39;")}; window.UI.setQty(window.S.item); window.UI.view("v-qty")'>
+                            <b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small>
+                        </div>
+                        <div class="s-del" onclick="window.Logic.delFromLib('${f.n.replace(/'/g,"\\'")}')"><i class="fas fa-trash-alt"></i></div>
+                    `;
+                    b.appendChild(d);
+                });
+            },
+            saveItem: async () => {
+                const q = parseFloat(document.getElementById('qty-in').value);
+                const u = document.getElementById('unit-in').value;
+                const base = S.item; 
+                let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
+                if(S.edit) { const f = base.q/100; bk/=f; bp/=f; bc/=f; bf/=f; }
+                const f = q/100;
+                const entry = { n:base.n, q:q, u:u, k:bk*f, p:bp*f, c:bc*f, f:bf*f };
+                if(S.edit) S.day[S.tm][S.eIdx] = entry; else S.day[S.tm].push(entry);
+                await DB.setDay(); window.UI.closeAll(); Sys.sync();
+            },
+            editItem: (mk, idx) => {
+                S.edit=true; S.tm=mk; S.eIdx=idx; S.item = JSON.parse(JSON.stringify(S.day[mk][idx]));
+                window.UI.setQty(S.item); window.UI.view('v-qty'); window.UI.open('m-add');
+            },
+            delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
+            wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
+            wipe: async () => { if(confirm("¿Borrar día entero?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); window.UI.closeAll(); } },
+            openCopy: (mk, type) => {
+                S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy');
+            },
+            execCopy: async () => {
+                const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
+                const ref = fire.doc(db, `usuarios/${S.uid}/diario`, d);
+                const snap = await fire.getDoc(ref);
+                let data = snap.exists() ? snap.data() : {};
+                if(!data[tm]) data[tm] = [];
+                data[tm] = data[tm].concat(S.day[S.srcMeal]);
+                await fire.setDoc(ref, data);
+                if(S.copyMode=='move') { S.day[S.srcMeal]=[]; await DB.setDay(); }
+                window.UI.closeAll(); if(d===S.d.toISOString().split('T')[0]) Sys.sync(); alert("Hecho");
+            },
+            execImport: async () => {
+                const d = document.getElementById('imp-date').value; 
+                const meal = document.getElementById('imp-meal').value;
+                const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
+                if(snap.exists() && snap.data()[meal]) {
+                    S.day[S.tm] = S.day[S.tm].concat(snap.data()[meal]);
+                    await DB.setDay();
+                    window.UI.closeAll(); Sys.sync(); alert("Importado");
+                } else { alert("No hay datos en esa fecha/comida."); }
+            },
+            parse: async () => {
+                try {
+                    const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
+                    const json = JSON.parse(txt);
+                    let items = Array.isArray(json)?json:(json.comida_combinada?json.comida_combinada.items:(json.items||json.detalles||[json]));
+                    const newItems = [];
+                    items.forEach(it => {
+                        let q=100, u="g";
+                        if(it.cantidad) {
+                            if(typeof it.cantidad==='string'){ const p=it.cantidad.trim().split(/\s+/); q=parseFloat(p[0])||100; if(p[1])u=p[1].toLowerCase(); }
+                            else q=parseFloat(it.cantidad)||100;
+                        }
+                        const fac=q/100; const get=(keys)=>{ for(let k of keys) { if(it[k]!=undefined)return parseFloat(it[k]); if(it.macros&&it.macros[k]!=undefined)return parseFloat(it.macros[k]); } return 0; };
+                        const base = {
+                            n: it.producto||it.nombre||it.n||"Item", q:100, u:u,
+                            k: get(['energia_kcal','kcal','k'])/fac, p: get(['proteinas_g','p','prot'])/fac,
+                            c: get(['hidratos_carbono_g','c','hc'])/fac, f: get(['grasas_g','f','fat'])/fac
+                        };
+                        S.day[S.tm].push({...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac});
+                        newItems.push(base);
+                    });
+                    await DB.setDay(); await DB.addLib(newItems); 
+                    document.getElementById('json-in').value=''; window.UI.closeAll(); Sys.sync();
+                } catch(e) { alert("JSON Mal: " + e.message); }
+            },
+            createPDF: (content, filename) => {
+                const opt = { margin:10, filename:filename, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} };
+                html2pdf().from(content).set(opt).save();
+            },
+            pdf: () => { 
+                window.UI.closeAll();
+                const dStr = S.d.toLocaleDateString('es-ES');
+                let html = `<div style="padding:20px; font-family:sans-serif">
+                    <h1 style="color:#0f172a">Reporte Diario - ${dStr}</h1>
+                    <p>Usuario: <b>${S.u.name}</b></p>
+                    <hr>
+                    <h3>Resumen</h3>
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:20px">
+                        <tr style="background:#f1f5f9; text-align:left"><th style="padding:8px">Macro</th><th style="padding:8px">Total</th><th style="padding:8px">Meta</th></tr>`;
+                
+                let t = {k:0, p:0, c:0, f:0};
+                Object.values(S.day).forEach(arr => { if(Array.isArray(arr)) arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }); });
+                
+                html += `<tr><td style="padding:8px">Calorías</td><td style="padding:8px">${Math.round(t.k)}</td><td style="padding:8px">${S.u.calc.goal}</td></tr>`;
+                html += `<tr><td style="padding:8px">Proteínas</td><td style="padding:8px">${Math.round(t.p)}g</td><td style="padding:8px">${S.u.calc.p}g</td></tr>`;
+                html += `<tr><td style="padding:8px">Carbohidratos</td><td style="padding:8px">${Math.round(t.c)}g</td><td style="padding:8px">${S.u.calc.c}g</td></tr>`;
+                html += `<tr><td style="padding:8px">Grasas</td><td style="padding:8px">${Math.round(t.f)}g</td><td style="padding:8px">${S.u.calc.f}g</td></tr>`;
+                html += `</table><h3>Detalle Comidas</h3>`;
+                
+                MEALS.forEach(m => {
+                    const arr = S.day[m.k] || [];
+                    if(arr.length > 0) {
+                        html += `<h4 style="background:#e2e8f0; padding:5px">${m.n}</h4><ul>`;
+                        arr.forEach(i => html += `<li>${i.n} (${i.q}${i.u}) - ${Math.round(i.k)} kcal</li>`);
+                        html += `</ul>`;
+                    }
+                });
+                html += `</div>`;
+                
+                const el = document.createElement('div'); el.innerHTML = html;
+                document.body.appendChild(el);
+                Logic.createPDF(el, `Reporte_${dStr}.pdf`);
+                setTimeout(() => el.remove(), 1000);
+            },
+            pdfHistory: async () => {
+                const btn = document.querySelector('#m-glob button:nth-child(2)');
+                btn.innerText = "⏳ Generando...";
+                try {
+                    const snap = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
+                    let html = `<div style="padding:20px; font-family:sans-serif"><h1 style="text-align:center">Historial Completo - ${S.u.name}</h1>`;
+                    
+                    snap.forEach(doc => {
+                        const date = doc.id;
+                        const data = doc.data();
+                        let totalK = 0;
+                        let mealsHtml = '';
+                        
+                        MEALS.forEach(m => {
+                            if(data[m.k] && data[m.k].length > 0) {
+                                mealsHtml += `<b>${m.n}:</b> `;
+                                data[m.k].forEach(i => { totalK += i.k; mealsHtml += `${i.n} (${Math.round(i.k)}), `; });
+                                mealsHtml = mealsHtml.slice(0, -2) + '<br>';
+                            }
+                        });
+                        
+                        if(totalK > 0) {
+                            html += `<div style="border-bottom:1px solid #ccc; padding:10px 0">
+                                <div style="display:flex; justify-content:space-between">
+                                    <strong>${date}</strong> <span>Total: ${Math.round(totalK)} kcal</span>
+                                </div>
+                                <div style="font-size:0.8rem; color:#555; margin-top:5px">${mealsHtml}</div>
+                            </div>`;
+                        }
+                    });
+                    html += `</div>`;
+                    
+                    const el = document.createElement('div'); el.innerHTML = html;
+                    document.body.appendChild(el);
+                    Logic.createPDF(el, `Historial_Completo_${S.u.name}.pdf`);
+                    setTimeout(() => el.remove(), 2000);
+                } catch(e) { alert("Error PDF: "+e.message); }
+                finally { btn.innerText = "📚 PDF Historial Completo"; window.UI.closeAll(); }
+            },
+            exportJSON: async () => {
+                const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
+                const data = { perfil: S.u, historial: {} };
+                snap.forEach(d => data.historial[d.id] = d.data());
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
+                const dateStr = new Date().toISOString().split('T')[0];
+                a.download = `Backup_${S.u.name}_${dateStr}.json`; a.click();
+            },
+            importJSON: async (input) => {
+                const file = input.files[0]; if(!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if(!confirm(`¿Importar historial de ${data.perfil.name} a ${S.u.name}?`)) return;
+                        const batch = fire.writeBatch(db);
+                        Object.entries(data.historial).forEach(([date, dayData]) => {
+                            batch.set(fire.doc(db, `usuarios/${S.uid}/diario`, date), dayData);
+                        });
+                        await batch.commit(); alert("Importado"); location.reload();
+                    } catch(err) { alert("Error: "+err.message); }
+                };
+                reader.readAsText(file);
+            },
+            syncHistory: async () => {
+                const btn = document.querySelector('#m-glob button:nth-child(5)');
+                btn.innerText = "⏳ Sincronizando...";
+                try {
+                    const snap = await fire.getDocs(fire.collection(db, `usuarios/${S.uid}/diario`));
+                    let count = 0;
+                    snap.forEach(doc => {
+                        const day = doc.data();
+                        Object.values(day).forEach(meal => {
+                            if(Array.isArray(meal)) {
+                                meal.forEach(item => {
+                                    if(!S.lib.find(x => x.n === item.n)) {
+                                        let q = parseFloat(item.q) || 100;
+                                        let f = q/100; if(f===0) f=1;
+                                        S.lib.push({
+                                            n: item.n, u: item.u || 'g', q: 100,
+                                            k: (item.k||0)/f, p: (item.p||0)/f, c: (item.c||0)/f, f: (item.f||0)/f
+                                        });
+                                        count++;
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    if(count > 0) {
+                        await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+                        alert(`📚 ${count} alimentos recuperados.`);
+                    } else { alert("Todo al día."); }
+                } catch(e) { alert("Error: " + e.message); }
+                finally { btn.innerText = "📚 Sincronizar Historial"; }
+            }
+        };
+
+        /* --- STATS MODULE --- */
+        const Stats = {
+            chartInstance: null,
+            weightInstance: null,
+            weeklyInstance: null,
+            currentDate: new Date(),
+
+            open: () => { 
+                Stats.currentDate = new Date();
+                window.UI.open('m-stats'); 
+                Stats.updateView();
+            },
+            changeDate: (delta) => {
+                Stats.currentDate.setDate(Stats.currentDate.getDate() + delta);
+                Stats.updateView();
+            },
+            load: (dateStr) => {
+                if(dateStr) Stats.currentDate = new Date(dateStr);
+                Stats.updateView();
+            },
+            saveWeight: async () => {
+                let val = document.getElementById('w-today').value;
+                val = val.replace(',', '.');
+                const w = parseFloat(val);
+                const dStr = Stats.currentDate.toISOString().split('T')[0];
+                
+                if(!w) return alert("Introduce un peso");
+                
+                const ref = fire.doc(db, `usuarios/${S.uid}/diario`, dStr);
+                const snap = await fire.getDoc(ref);
+                let data = snap.exists() ? snap.data() : {};
+                
+                data.weight = w;
+                await fire.setDoc(ref, data);
+                
+                if(dStr === S.d.toISOString().split('T')[0]) S.day.weight = w;
+                alert("Peso guardado");
+                Stats.updateView();
+            },
+            
+            updateView: async () => {
+                const dateStr = Stats.currentDate.toISOString().split('T')[0];
+                document.getElementById('st-date').value = dateStr;
+                
+                // 1. FETCH HISTORY
+                const allDocs = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
+                const history = [];
+                allDocs.forEach(d => history.push({id: d.id, ...d.data()}));
+                
+                let firstWeight = null;
+                let prevWeight = null;
+                let currentWeight = null;
+
+                // Find global first weight
+                for(let h of history) { if(h.weight) { firstWeight = h.weight; break; } }
+
+                // Find current and PREVIOUS (strictly before dateStr)
+                for(let h of history) {
+                    if(h.id === dateStr) currentWeight = h.weight;
+                    if(h.id < dateStr && h.weight) prevWeight = h.weight;
+                }
+
+                document.getElementById('w-today').value = currentWeight || '';
+                const fb = document.getElementById('w-feedback');
+                let html = '';
+                
+                // Green if LOST weight (negative diff), Red if GAINED (positive diff)
+                const formatDiff = (curr, base) => {
+                    const diff = curr - base;
+                    // Goal is to lose weight usually? Let's assume standard logic: Lost=Green, Gained=Red
+                    // You requested: Gained=Red, Lost=Green (Objective)
+                    const color = diff > 0 ? 'text-bad' : (diff < 0 ? 'text-ok' : '');
+                    const sign = diff > 0 ? '+' : '';
+                    return `<b class="${color}">${sign}${diff.toFixed(1)}kg</b>`;
+                };
+
+                if(currentWeight) {
+                    if(prevWeight) html += `<span>vs Ant (${prevWeight}): ${formatDiff(currentWeight, prevWeight)}</span>`;
+                    if(firstWeight) html += `<span>vs Inicio (${firstWeight}): ${formatDiff(currentWeight, firstWeight)}</span>`;
+                }
+                fb.innerHTML = html;
+
+                // 2. DAILY RING
+                let dayCals = 0;
+                let dayGoal = S.u.calc.goal;
+                let dayData = history.find(h => h.id === dateStr);
+                if(dayData) MEALS.forEach(m => { if(dayData[m.k]) dayData[m.k].forEach(i => dayCals += i.k) });
+                
+                const diffDay = dayCals - dayGoal;
+                
+                if(Stats.chartDaily) Stats.chartDaily.destroy();
+                Stats.chartDaily = new Chart(document.getElementById('chart-daily'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Comido', 'Restante/Exceso'],
+                        datasets: [{
+                            data: diffDay > 0 ? [dayGoal, diffDay] : [dayCals, dayGoal - dayCals],
+                            backgroundColor: diffDay > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#e2e8f0'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { cutout: '75%', responsive: true, plugins: { legend: { display: false } } }
+                });
+                
+                const dSign = diffDay > 0 ? '+' : '';
+                const dClass = diffDay > 0 ? 'text-bad' : 'text-ok';
+                document.getElementById('daily-txt').innerHTML = 
+                    `<span class="srt-val">${Math.round(dayCals)}</span>
+                     <span class="srt-lbl">de ${dayGoal}</span>
+                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${dClass}">${dSign}${Math.round(diffDay)}</span>`;
+
+                // 3. WEEKLY RING
+                const dObj = new Date(Stats.currentDate);
+                const dayNum = dObj.getDay() || 7; 
+                dObj.setDate(dObj.getDate() - dayNum + 1); // Monday
+                
+                let weekCals = 0;
+                let weekGoal = dayGoal * 7;
+                
+                for(let i=0; i<7; i++) {
+                    const tempD = new Date(dObj);
+                    tempD.setDate(dObj.getDate() + i);
+                    const k = tempD.toISOString().split('T')[0];
+                    const h = history.find(x => x.id === k);
+                    if(h) MEALS.forEach(m => { if(h[m.k]) h[m.k].forEach(x => weekCals += x.k) });
+                }
+
+                const diffWeek = weekCals - weekGoal;
+                if(Stats.chartWeekly) Stats.chartWeekly.destroy();
+                Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Comido', 'Restante/Exceso'],
+                        datasets: [{
+                            data: diffWeek > 0 ? [weekGoal, diffWeek] : [weekCals, weekGoal - weekCals],
+                            backgroundColor: diffWeek > 0 ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { cutout: '75%', responsive: true, plugins: { legend: { display: false } } }
+                });
+                
+                const wSign = diffWeek > 0 ? '+' : '';
+                const wClass = diffWeek > 0 ? 'text-bad' : 'text-ok';
+                document.getElementById('weekly-txt').innerHTML = 
+                    `<span class="srt-val">${Math.round(weekCals)}</span>
+                     <span class="srt-lbl">de ${weekGoal}</span>
+                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${wClass}">${wSign}${Math.round(diffWeek)}</span>`;
+
+                // 4. WEIGHT CHART
+                const chartDates = [];
+                const chartWeights = [];
+                for(let i=29; i>=0; i--) {
+                    const tempD = new Date(Stats.currentDate);
+                    tempD.setDate(tempD.getDate() - i);
+                    const k = tempD.toISOString().split('T')[0];
+                    chartDates.push(k.slice(5));
+                    const h = history.find(x => x.id === k);
+                    chartWeights.push(h ? h.weight : null);
+                }
+
+                if(Stats.chartWeight) Stats.chartWeight.destroy();
+                Stats.chartWeight = new Chart(document.getElementById('chart-weight'), {
+                    type: 'line',
+                    data: {
+                        labels: chartDates,
+                        datasets: [{ label: 'Peso (kg)', data: chartWeights, borderColor: '#10b981', tension: 0.3, spanGaps: true }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        };
+
+        /* --- AI --- */
+        const AI = {
+            saveConfig: () => {
+                localStorage.setItem('t_ai_key', document.getElementById('ai-key').value);
+                localStorage.setItem('t_ai_mod', document.getElementById('ai-model').value);
+                window.UI.view('v-home'); window.UI.checkAI();
+            },
+            toggleEye: () => {
+                const x = document.getElementById('ai-key'); x.type = x.type==='password'?'text':'password';
+            },
+            listen: () => {
+                if(!('webkitSpeechRecognition' in window)) return alert("Usa Chrome");
+                const rec = new window.webkitSpeechRecognition();
+                rec.lang = 'es-ES';
+                const btn = document.querySelector('.mic-btn');
+                btn.classList.add('listening');
+                rec.onresult = (e) => { 
+                    const txt = document.getElementById('ai-text');
+                    txt.value = (txt.value + " " + e.results[0][0].transcript).trim();
+                    btn.classList.remove('listening');
+                };
+                rec.onerror = () => btn.classList.remove('listening');
+                rec.start();
+            },
+            process: async () => {
+                const txt = document.getElementById('ai-text').value;
+                const key = localStorage.getItem('t_ai_key');
+                const mod = localStorage.getItem('t_ai_mod') || 'gemini-1.5-flash';
+                if(!txt) return alert("Escribe algo");
+                if(!key) return window.UI.view('v-conf');
+                
+                const btn = document.querySelector('#v-home .btn.pri');
+                const old = btn.innerText; btn.innerText="Pensando...";
+                
+                try {
+                    const prompt = `Analiza: "${txt}". JSON ARRAY: [{"n":"Nombre","q":cantidad,"u":"g"|"ml","k":kcal,"p":prot,"c":carb,"f":grasa}]. Usa 100g si falta cantidad.`;
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${key}`, {
+                        method:'POST', headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const d = await res.json();
+                    if(!d.candidates) throw new Error(d.error?d.error.message:"Error API");
+                    const raw = d.candidates[0].content.parts[0].text;
+                    const match = raw.match(/\[.*\]/s); // REGEX FIX
+                    if(!match) throw new Error("No JSON");
+                    const items = JSON.parse(match[0]);
+                    
+                    const mapped = items.map(i => ({ n:i.n, q:i.q, u:i.u, k:i.k, p:i.p, c:i.c, f:i.f||i.g||i.fat }));
+                    S.day[S.tm] = S.day[S.tm].concat(mapped);
+                    await DB.setDay();
+                    
+                    const libItems = mapped.map(i => {
+                        const f = i.q/100;
+                        return { n:i.n, q:100, u:i.u, k:i.k/f, p:i.p/f, c:i.c/f, f:i.f/f };
+                    });
+                    await DB.addLib(libItems);
+                    
+                    window.UI.closeAll(); Sys.sync(); document.getElementById('ai-text').value='';
+                } catch(e) { alert(e.message); } finally { btn.innerText=old; }
+            }
+        };
+
+        /* --- UI & CALC --- */
+        const UI = {
+            open: (id) => document.getElementById(id).style.display='flex',
+            closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
+            view: (id) => { 
+                ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>document.getElementById(x).style.display='none');
+                document.getElementById(id).style.display='block';
+            },
+            checkAI: () => {
+                const k = localStorage.getItem('t_ai_key');
+                const b = document.getElementById('btn-config-ai');
+                if(k) { b.classList.add('configured'); b.innerHTML='✅ Config'; }
+                document.getElementById('ai-key').value = k||'';
+                document.getElementById('ai-model').value = localStorage.getItem('t_ai_mod')||'gemini-1.5-flash';
+            },
+            setQty: (item) => {
+                document.getElementById('qty-name').innerText = item.n;
+                document.getElementById('qty-in').value = item.q;
+                document.getElementById('unit-in').value = item.u;
+            },
+            openUsers: async () => {
+                const list = document.getElementById('u-list'); list.innerHTML='...';
+                const users = await DB.getUsers();
+                S.allUsers = users; list.innerHTML='';
+                users.forEach(u => {
+                    const d = document.createElement('div'); d.className = `user-card-wrapper ${S.u && S.u.id===u.id ? 'active':''}`;
+                    const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
+                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
+                    
+                    d.innerHTML = `
+                        <div class="u-av" onclick="window.Sys.load('${u.id}')">${u.name[0]}</div>
+                        <div class="u-inf" onclick="window.Sys.load('${u.id}')">
+                            <h4>${u.name}</h4><small>Meta: ${goal} kcal</small>
+                        </div>
+                        <div class="u-edt" onclick="window.UI.editUser('${u.id}')"><i class="fas fa-pencil-alt"></i></div>`;
+                    list.appendChild(d);
+                });
+                UI.open('m-users');
+            },
+            editUser: (id) => {
+                const u = S.allUsers.find(x => x.id === id); if(!u) return;
+                document.getElementById('e-name').value = u.name;
+                document.getElementById('e-h').value = u.h; document.getElementById('e-w').value = u.w;
+                document.getElementById('e-y').value = u.y; document.getElementById('e-g').value = u.g;
+                document.getElementById('e-act').value = u.act; document.getElementById('e-mod').value = u.mod;
+                let pp=30, pc=50, pf=20;
+                if(u.mac.p) {
+                    const bmr = (10*u.w)+(6.25*u.h)-(5*(new Date().getFullYear()-u.y))+(u.g=='male'?5:-161);
+                    const goal = Math.round(bmr*u.act + parseInt(u.mod));
+                    pp = Math.round((u.mac.p*4/goal)*100); pc = Math.round((u.mac.c*4/goal)*100); pf = Math.round((u.mac.f*9/goal)*100);
+                }
+                document.getElementById('pp').value = pp; document.getElementById('pc').value = pc; document.getElementById('pf').value = pf;
+                document.getElementById('btn-del-user').style.display='block';
+                Calc.live(); UI.open('m-prof');
+            },
+            newProfile: () => { S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); UI.open('m-prof'); Calc.live(); }
+        };
+
+        const Calc = {
+            bio: () => {
+                if(!S.u) return;
+                const h=S.u.h, w=S.u.w, age=new Date().getFullYear()-S.u.y;
+                let bmr = (10*w)+(6.25*h)-(5*age)+(S.u.g=='male'?5:-161);
+                let tdee = bmr * parseFloat(S.u.act);
+                let goal = Math.round(tdee + parseInt(S.u.mod));
+                S.u.calc = { goal:goal, tdee:tdee };
+                
+                if(S.u.mac.p) { S.u.calc.p=S.u.mac.p; S.u.calc.c=S.u.mac.c; S.u.calc.f=S.u.mac.f; }
+                else { S.u.calc.p=Math.round(w*2); S.u.calc.f=Math.round(w*0.9); S.u.calc.c=Math.round((goal-(S.u.calc.p*4)-(S.u.calc.f*9))/4); }
+                
+                document.getElementById('h-av').innerText = S.u.name[0];
+                document.getElementById('bio-txt').innerHTML = `<span>🔥 Gasto: ${Math.round(tdee)}</span> <span>🎯 Meta: <b>${goal}</b></span>`;
+            },
+            live: () => {
+                const val = (id) => parseFloat(document.getElementById(id).value)||0;
+                const h=val('e-h'), w=val('e-w'), y=val('e-y'), act=val('e-act'), mod=val('e-mod');
+                const g = document.getElementById('e-g').value;
+                const pp=val('pp'), pc=val('pc'), pf=val('pf');
+                document.getElementById('p-check').innerText = `Total: ${pp+pc+pf}% ` + (pp+pc+pf===100?'✅':'⚠️');
+
+                if(h && w) {
+                    const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
+                    const goal = Math.round(bmr*act+mod);
+                    const imc = w/((h/100)**2);
+                    const ideal = 22*((h/100)**2);
+                    
+                    document.getElementById('l-tmb').innerText = Math.round(bmr);
+                    document.getElementById('l-imc').innerText = imc.toFixed(1);
+                    document.getElementById('l-ideal').innerText = Math.round(ideal)+'kg';
+                    document.getElementById('l-goal').innerText = goal;
+                }
+            }
+        };
+
+        const Render = {
+            all: () => {
+                document.getElementById('h-day').innerText = S.d.toLocaleDateString('es-ES',{weekday:'long'});
+                document.getElementById('h-full').innerText = S.d.toLocaleDateString('es-ES');
+                let t = {k:0, p:0, c:0, f:0};
+                Object.values(S.day).forEach(arr => { if(Array.isArray(arr)) arr.forEach(i => { t.k+=i.k; t.p+=i.p; t.c+=i.c; t.f+=i.f; }); });
+                
+                const tg = S.u.calc;
+                const diff = tg.goal - t.k;
+                
+                const ring = document.getElementById('ring-bg');
+                const lbl = document.getElementById('l-restan');
+                const val = document.getElementById('v-rem');
+                
+                if (diff < 0) {
+                    ring.classList.add('danger');
+                    lbl.innerText = "EXCESO";
+                    lbl.classList.add('danger');
+                    val.innerText = Math.abs(Math.round(diff));
+                    val.classList.add('danger');
+                    ring.style.background = `conic-gradient(var(--bad) 0% 100%, var(--bad) 100%)`;
+                } else {
+                    ring.classList.remove('danger');
+                    lbl.innerText = "RESTAN";
+                    lbl.classList.remove('danger');
+                    val.innerText = Math.round(diff);
+                    val.classList.remove('danger');
+                    const pct = Math.min((t.k/tg.goal)*100, 100);
+                    ring.style.background = `conic-gradient(var(--car) 0% ${pct}%, rgba(255,255,255,0.05) 0%)`;
+                }
+                
+                const bar = (k,v,max) => {
+                    document.getElementById('v-'+k).innerText = `${Math.round(v)}/${max}`;
+                    document.getElementById('b-'+k).style.width = Math.min((v/max)*100, 100)+'%';
+                };
+                bar('p',t.p,tg.p); bar('c',t.c,tg.c); bar('f',t.f,tg.f);
+                
+                const feed = document.getElementById('feed'); feed.innerHTML='';
+                MEALS.forEach(m => {
+                    const arr = S.day[m.k] || [];
+                    let mk=0, mp=0, mc=0, mf=0;
+                    let rows = '';
+                    arr.forEach((i, idx) => {
+                        mk+=i.k; mp+=i.p; mc+=i.c; mf+=i.f;
+                        rows += `
+                        <div class="item">
+                            <div class="i-info">
+                                <h4>${i.n}</h4>
+                                <div class="i-det"><span class="i-pill">${i.q}${i.u}</span> <span>🔥 ${Math.round(i.k)}</span>
+                                <span style="color:var(--pro)">P${Math.round(i.p)}</span><span style="color:var(--car)">C${Math.round(i.c)}</span><span style="color:var(--fat)">F${Math.round(i.f)}</span></div>
+                            </div>
+                            <div class="c-actions">
+                                <button class="act-btn" onclick="window.Logic.editItem('${m.k}', ${idx})"><i class="fas fa-pencil-alt"></i></button>
+                                <button class="act-btn del" onclick="window.Logic.delItem('${m.k}', ${idx})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    feed.innerHTML += `
+                    <div class="card">
+                        <div class="c-head">
+                            <div class="c-left"><i class="fas ${m.i}"></i> ${m.n}</div>
+                            <div class="c-right">
+                                <div class="meal-macros">
+                                    <span class="mm-item" style="color:var(--pro)"><span class="mm-dot" style="background:var(--pro)"></span>${Math.round(mp)}p</span>
+                                    <span class="mm-item" style="color:var(--car)"><span class="mm-dot" style="background:var(--car)"></span>${Math.round(mc)}c</span>
+                                    <span class="mm-item" style="color:var(--fat)"><span class="mm-dot" style="background:var(--fat)"></span>${Math.round(mf)}g</span>
+                                </div>
+                                <span class="k-badge">${Math.round(mk)} kcal</span>
+                                <button class="tool-btn copy" title="Copiar" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
+                                <button class="tool-btn move" title="Mover" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar-day"></i></button>
+                                <button class="tool-btn del" title="Vaciar" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-trash-alt"></i></button>
+                                <button class="tool-btn add" title="Añadir" onclick="window.Logic.openAdd('${m.k}')">+</button>
+                            </div>
+                        </div>
+                        <div>${rows}</div>
+                    </div>`;
+                });
+            }
+        };
+
+        const Sys = {
+            init: async () => {
+                try {
+                    await DB.lib();
+                    if(S.uid) await Sys.load(S.uid);
+                    else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
+                } catch(e) { alert("Error inicio: " + e.message); }
+            },
+            load: async (id) => {
+                S.day = {}; S.uid = id; localStorage.setItem('tid', id);
+                S.u = await DB.getU(id);
+                if(!S.u) { window.UI.openUsers(); return; }
+                S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
+                document.getElementById('loading-screen').style.display='none';
+                window.Logic.checkWeight();
+            },
+            sync: async () => { S.day = await DB.getDay(S.d); window.Render.all(); }
+        };
+
+        // --- ASIGNACIÓN GLOBAL ---
+        window.DB = DB;
+        window.Logic = Logic;
+        window.UI = UI;
+        window.AI = AI;
+        window.Calc = Calc;
+        window.Render = Render;
+        window.Sys = Sys;
+        window.Stats = Stats;
+
+        // GESTURES
+        let ts = 0;
+        document.addEventListener('touchstart', e => ts = e.changedTouches[0].screenX);
+        document.addEventListener('touchend', e => {
+            const te = e.changedTouches[0].screenX;
+            if(te < ts - 50) Logic.day(1); 
+            if(te > ts + 50) Logic.day(-1);
+        });
+
+        // ARRANQUE SEGURO
+        if(document.readyState === 'complete') Sys.init();
+        else window.addEventListener('load', Sys.init);
+
     </script>
 </body>
 </html>
