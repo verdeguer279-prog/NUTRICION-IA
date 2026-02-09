@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Claves API - Ajustesia (Nube)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos base */
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+        
+        .header-pro {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 15px -3px rgba(37, 99, 235, 0.3);
+            position: relative;
+            overflow: hidden; 
+        }
+
+        /* Tabla estilizada */
+        .api-table th { background-color: #f1f5f9; color: #475569; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 12px 16px; font-weight: 700; }
+        .api-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+        .api-table tr:last-child td { border-bottom: none; }
+        .api-table tr:hover { background-color: #f8fafc; }
+
+        /* Inputs editables */
+        .editable-input { width: 100%; background: transparent; border: 1px solid transparent; padding: 4px; border-radius: 4px; transition: all 0.2s; outline: none; }
+        .editable-input:hover, .editable-input:focus { background: white; border-color: #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
+        /* Botones */
+        .btn-copy { background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .btn-copy:hover { background-color: #2563eb; color: white; }
+        .btn-copy:active { transform: scale(0.95); }
+
+        .btn-delete { color: #ef4444; background: transparent; border: none; font-size: 1.1rem; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.2s; }
+        .btn-delete:hover { background-color: #fee2e2; }
+
+        /* Toast */
+        #toast-notification {
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+            transform: translateY(100px); opacity: 0;
+        }
+        #toast-notification.show { transform: translateY(0); opacity: 1; }
+        
+        /* Loading */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen pb-6">
+
+    <div id="toast-notification" class="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 border-l-4 border-green-500 max-w-sm">
+        <span class="text-2xl">📋</span>
+        <div>
+            <h4 class="font-bold text-sm uppercase text-green-400">Portapapeles</h4>
+            <p id="toast-message" class="text-sm font-medium text-gray-200">Clave copiada</p>
+        </div>
+    </div>
+
+    <header class="header-pro py-8 shadow-lg relative z-10">
+        <div class="container mx-auto flex flex-col items-center justify-center">
+            <div class="w-32 h-32 mb-2 flex items-center justify-center">
+                <img src="logogad.png" onerror="this.style.opacity='0'" alt="GAD Logo" class="w-full h-full object-contain drop-shadow-lg">
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">GESTOR DE CLAVES API</h1>
+            <p class="text-blue-100 text-sm font-bold mt-1 tracking-widest uppercase opacity-90">Sincronizado en la Nube (Firebase)</p>
+        </div>
+    </header>
+
+    <main class="w-full max-w-5xl mx-auto px-4 mt-8 flex-grow">
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8 shadow-sm">
+            <h3 class="text-blue-900 font-bold mb-2 flex items-center gap-2">☁️ Conexión Compartida</h3>
+            <p class="text-sm text-blue-800 mb-2">
+                Estas claves se guardan en la base de datos común. Cualquier cambio que hagas aquí se reflejará para el resto de los 5 usuarios.
+            </p>
+            <ul class="list-disc ml-5 text-sm text-blue-700 space-y-1">
+                <li>Usa el botón <strong>COPIAR</strong> para llevarte la clave a la aplicación principal.</li>
+                <li>Si una clave da error, bórrala o edítala para no confundir a los compañeros.</li>
+            </ul>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    🔑 Listado de Claves
+                    <span id="loading-indicator" class="loader hidden"></span>
+                </h3>
+                <button onclick="agregarFila()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm text-xs flex items-center gap-2 transition">
+                    <span>➕</span> AÑADIR NUEVA
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left api-table">
+                    <thead>
+                        <tr>
+                            <th class="w-1/4">Alias / Proyecto</th>
+                            <th class="w-1/2">Clave API (Gemini)</th>
+                            <th class="w-1/6 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div id="empty-state" class="hidden p-12 text-center text-gray-400">
+                <p>No hay claves en la nube. Pulsa "Añadir Nueva".</p>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center">
+            <p class="text-xs text-gray-400">🔒 Acceso restringido a usuarios con este archivo.</p>
+        </div>
+
+    </main>
+
+    <footer class="mt-auto text-center py-6 bg-gray-200">
+        <hr class="border-t border-gray-400 w-11/12 max-w-md mx-auto mb-4">
+        <p class="font-bold">GRUPO DE ANÁLISIS DOCUMENTAL</p>
+        <p class="font-bold">POLICÍA LOCAL DE ALICANTE</p>
+        <p>&copy; GAD - Todos los derechos reservados</p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+    <script>
+        // --- 1. CONFIGURACIÓN FIREBASE (La misma que tu app principal) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyA6EDUJ2dG50DphB-dF6GLi3P2IlW8lDz4",
+  authDomain: "gad-alicante-v3.firebaseapp.com",
+  databaseURL: "https://gad-alicante-v3-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "gad-alicante-v3",
+  storageBucket: "gad-alicante-v3.firebasestorage.app",
+  messagingSenderId: "906986258369",
+  appId: "1:906986258369:web:21a7ea29a33b5f395e3940",
+  measurementId: "G-Q0E3H1996K"
+};
+        
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+        // Usaremos un nodo específico para las claves
+        const refClaves = db.ref('gestion_claves_api');
+
+        // --- 2. LÓGICA DE DATOS ---
+
+        // Escuchar cambios en tiempo real
+        function iniciarListener() {
+            document.getElementById('loading-indicator').classList.remove('hidden');
+            
+            refClaves.on('value', (snapshot) => {
+                document.getElementById('loading-indicator').classList.add('hidden');
+                const tbody = document.getElementById('tabla-body');
+                tbody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    return;
+                }
+                
+                document.getElementById('empty-state').classList.add('hidden');
+                
+                snapshot.forEach((childSnapshot) => {
+                    const key = childSnapshot.key;
+                    const data = childSnapshot.val();
+                    crearFilaHTML(key, data.alias || '', data.api_key || '');
+                });
+            });
+        }
+
+        function crearFilaHTML(firebaseKey, alias, apiKey) {
+            const tbody = document.getElementById('tabla-body');
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
+                <td>
+                    <input type="text" class="editable-input font-bold text-gray-700" 
+                           value="${alias}" placeholder="Nombre del proyecto..." 
+                           onchange="guardarCambioFirebase('${firebaseKey}', 'alias', this.value)">
+                </td>
+                <td>
+                    <div class="relative">
+                        <input type="text" class="editable-input font-mono text-gray-500 text-xs" 
+                               value="${apiKey}" placeholder="Pega aquí tu API Key..." 
+                               onchange="guardarCambioFirebase('${firebaseKey}', 'api_key', this.value)">
+                    </div>
+                </td>
+                <td class="text-center flex justify-center items-center gap-2">
+                    <button onclick="copiarAlPortapapeles('${apiKey}')" class="btn-copy" title="Copiar Clave">
+                        COPIAR
+                    </button>
+                    <button onclick="borrarFila('${firebaseKey}')" class="btn-delete" title="Eliminar fila">
+                        🗑️
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // --- 3. OPERACIONES FIREBASE ---
+
+        function agregarFila() {
+            // Creamos un nuevo registro vacío en Firebase
+            refClaves.push({
+                alias: "Nuevo Proyecto",
+                api_key: ""
+            }).catch(error => showToast("Error al añadir: " + error.message));
+        }
+
+        function guardarCambioFirebase(key, campo, valor) {
+            // Actualizamos solo el campo modificado
+            let updateData = {};
+            updateData[campo] = valor;
+            refClaves.child(key).update(updateData)
+                .then(() => {
+                    // Opcional: Feedback visual sutil (no intrusivo)
+                    console.log("Guardado");
+                })
+                .catch(error => showToast("Error al guardar"));
+        }
+
+        function borrarFila(key) {
+            if(!confirm("¿Seguro que quieres borrar esta clave para todos los usuarios?")) return;
+            refClaves.child(key).remove()
+                .catch(error => showToast("Error al borrar"));
+        }
+
+        // --- 4. UTILIDADES ---
+
+        function copiarAlPortapapeles(texto) {
+            if (!texto) {
+                showToast("⚠️ La casilla está vacía");
+                return;
+            }
+            navigator.clipboard.writeText(texto).then(() => {
+                showToast("✅ Clave copiada al portapapeles");
+            }).catch(err => {
+                showToast("❌ Error al copiar");
+            });
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast-notification');
+            const m = document.getElementById('toast-message');
+            m.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => {
+                t.classList.remove('show');
+            }, 2000);
+        }
+
+        // Inicializar al cargar
+        document.addEventListener('DOMContentLoaded', iniciarListener);
+
+    </script>
+</body>
+</html>
