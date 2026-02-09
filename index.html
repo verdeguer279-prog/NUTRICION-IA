@@ -3,15 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titanium v32.0 | PRO REPORTS</title>
+    <title>Titanium v33.2 | FULL RECOVERY</title>
     
+    <!-- Font Awesome for icons (e.g., edit pencil, mic, camera) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- html2pdf for downloading PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Chart.js for graphical displays -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- Firestore & Firebase App (needed for saving edits) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase Auth if needed for user context -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+    <!-- Estilos para mostrar nombres completos de macronutrientes en escritorio y abreviados en móvil -->
     <style>
-        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; }
+        .macro-desglose-desc { display: inline-block; }
+        .macro-desglose-abbr { display: none; }
+        /* Siempre mostrar nombres completos de macronutrientes, tanto en escritorio como en móvil */
+        .macro-desglose-desc { display: inline-block; }
+        .macro-desglose-abbr { display: none !important; }
+        /* Si en algún punto futuro se usa 'macro-desglose-abbr', forzar que NO aparezca nunca. */
+        @media (max-width: 600px) {
+            .macro-desglose-desc { display: inline-block; }
+            .macro-desglose-abbr { display: none !important; }
+        }
+    </style>
+    <script>
+        // Este script actualizará dinámicamente el desglose de macros en cada tarjeta de comida.
+        // Ejecuta el cambio tras asegurarse de que el DOM está cargado.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Busca todos los contenedores de macros por comida, deben tener la clase .macros o una clase similar
+            document.querySelectorAll(".macros").forEach(function(macrosDiv) {
+                let protein = macrosDiv.getAttribute('data-pro') || '';
+                let carb = macrosDiv.getAttribute('data-car') || '';
+                let fat = macrosDiv.getAttribute('data-fat') || '';
+
+                // Si ya tiene el desglose, saltar
+                if (macrosDiv.classList.contains('macro-desglose-inserted')) return;
+
+                let desgloseHTML = `
+                  <div class="macro-desglose">
+                    <span class="macro-desglose-desc">
+                      Proteínas ${protein}g | Carbohidratos ${carb}g | Grasas ${fat}g
+                    </span>
+                    <span class="macro-desglose-abbr">
+                      Pro ${protein}g | Car ${carb}g | GR ${fat}g
+                    </span>
+                  </div>
+                `;
+
+                // Insertar al principio del div de macros
+                macrosDiv.insertAdjacentHTML('afterbegin', desgloseHTML);
+                macrosDiv.classList.add('macro-desglose-inserted');
+            });
+        });
+    </script>
+
+    <!-- Library for speech recognition (mic) -->
+    <script src="https://cdn.jsdelivr.net/npm/@picovoice/web-voice-processor/dist/picovoice-web-voice-processor.umd.min.js"></script>
+    <!-- Tesseract.js OCR for extracting nutritional info from images -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+
+    <style>
+        :root { --p: #0f172a; --s: #334155; --a: #2563eb; --pro: #8b5cf6; --car: #0ea5e9; --fat: #f59e0b; --bg: #f8fafc; --c: #ffffff; --ok: #10b981; --bad: #ef4444; --warn: #f59e0b; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--p); padding-bottom: 150px; overflow-x: hidden; user-select: none; }
         
@@ -66,6 +125,7 @@
         .tool-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .tool-btn.copy { color: var(--a); border-color: var(--a); background: #eff6ff; }
         .tool-btn.move { color: var(--warn); border-color: var(--warn); background: #fffbeb; }
+        .tool-btn.plate { color: #8b5cf6; border-color: #8b5cf6; background: #f3e8ff; }
         .tool-btn.del { color: var(--bad); border-color: var(--bad); background: #fef2f2; }
         .tool-btn.add { color: var(--ok); border-color: var(--ok); background: #ecfdf5; font-weight: bold; width: auto; padding: 0 12px; }
 
@@ -78,6 +138,7 @@
         .act-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .act-btn:hover { border-color: var(--car); color: var(--car); }
         .act-btn.del:hover { border-color: #ef4444; color: #ef4444; }
+        .act-btn.move:hover { border-color: var(--warn); color: var(--warn); }
 
         .fab { position: fixed; bottom: 30px; right: 25px; width: 65px; height: 65px; background: var(--p); color: white; border-radius: 20px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.4); font-size: 1.5rem; cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
 
@@ -126,6 +187,7 @@
         .ai-actions { display: flex; gap: 10px; align-items: center; }
         .mic-btn { width: 50px; height: 50px; background: #ef4444; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .mic-btn.listening { animation: pulse 1s infinite; background: #dc2626; }
+        .cam-btn { width: 50px; height: 50px; background: #3b82f6; color: white; border: none; border-radius: 14px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
         .password-wrapper { position: relative; }
         .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; }
@@ -157,6 +219,10 @@
         .stat-ring-text { position: absolute; text-align: center; font-size: 0.8rem; pointer-events: none; }
         .srt-val { font-size: 1.1rem; font-weight: 800; color: var(--p); display: block; }
         .srt-lbl { color: #64748b; font-size: 0.7rem; }
+
+        /* CHECKBOXES PARA PLATOS */
+        .plate-check-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .plate-check-row input[type="checkbox"] { width: 20px; height: 20px; }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -324,6 +390,9 @@
                     <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos cocidos y un plátano... (Dicta o escribe aquí)"></textarea>
                     <div class="ai-actions">
                         <button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
+                        <button class="cam-btn" onclick="document.getElementById('cam-in').click()"><i class="fas fa-camera"></i></button>
+                        <input type="file" id="cam-in" accept="image/*" capture="environment" hidden onchange="window.AI.processImage(this.files[0])">
+                        
                         <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">✨ Procesar con IA</button>
                     </div>
                 </div>
@@ -352,13 +421,40 @@
             </div>
 
             <div id="v-qty" style="display:none">
-                <h4 id="qty-name" style="margin-bottom:10px"></h4>
-                <div style="display:flex; gap:10px">
-                    <input type="number" id="qty-in" class="inp" placeholder="Cantidad">
+                <label>Nombre del alimento</label>
+                <input type="text" id="qty-name-in" class="inp" placeholder="Nombre">
+                <div id="qty-edit-section" style="display:flex; gap:10px; margin-top:10px">
+                    <input type="number" id="qty-in" class="inp" placeholder="Cantidad" oninput="window.Logic.updateCalories()">
                     <select id="unit-in" class="unit-sel">
                         <option value="g">Gramos (g)</option>
                         <option value="ml">Mililitros (ml)</option>
                     </select>
+                </div>
+                <div id="lib-edit-section" style="display:none; margin-top:10px">
+                    <label style="font-size:0.9rem; color:#64748b; margin-bottom:5px; display:block">Valores nutricionales por 100g/ml:</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px">
+                        <div>
+                            <label style="font-size:0.8rem">Calorías</label>
+                            <input type="number" id="lib-k" class="inp" placeholder="kcal" step="0.1" oninput="window.Logic.updateLibCalories()">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem">Proteínas (g)</label>
+                            <input type="number" id="lib-p" class="inp" placeholder="g" step="0.1">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                        <div>
+                            <label style="font-size:0.8rem">Carbohidratos (g)</label>
+                            <input type="number" id="lib-c" class="inp" placeholder="g" step="0.1">
+                        </div>
+                        <div>
+                            <label style="font-size:0.8rem">Grasas (g)</label>
+                            <input type="number" id="lib-f" class="inp" placeholder="g" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:10px; padding:10px; background:#f0f9ff; border-radius:8px; font-size:0.9rem">
+                    <strong>Calorías calculadas:</strong> <span id="calc-kcal">0</span> kcal
                 </div>
                 <button class="btn pri" onclick="window.Logic.saveItem()">Guardar</button>
                 <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
@@ -408,6 +504,67 @@
         </div>
     </div>
 
+    <div id="m-item-act" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+        <div class="sheet" style="background:white; padding:20px; border-radius:20px; width:90%; max-width:400px;">
+            <div class="modal-h" style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>Gestionar Alimento</h3>
+                <button onclick="document.getElementById('m-item-act').style.display='none'" style="background:none; border:none; font-size:2rem;">&times;</button>
+            </div>
+            <h4 id="ia-name" style="color:#2563eb; margin-bottom:15px; text-align:center;"></h4>
+            
+            <label style="font-weight:bold; font-size:0.9rem;">Fecha Destino:</label>
+            <input type="date" id="ia-date" class="inp" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ccc; border-radius:8px;">
+            
+            <label style="font-weight:bold; font-size:0.9rem;">Comida Destino:</label>
+            <select id="ia-meal" class="inp" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ccc; border-radius:8px; background:white;">
+                <option value="01_desayuno">Desayuno</option>
+                <option value="02_almuerzo">Almuerzo</option>
+                <option value="03_comida">Comida</option>
+                <option value="04_merienda">Merienda</option>
+                <option value="05_cena">Cena</option>
+            </select>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button onclick="window.Logic.execItemAct('copy')" style="padding:15px; background:#eff6ff; color:#2563eb; border:1px solid #2563eb; border-radius:10px; font-weight:bold; cursor:pointer;">Copiar</button>
+                <button onclick="window.Logic.execItemAct('move')" style="padding:15px; background:#fffbeb; color:#f59e0b; border:1px solid #f59e0b; border-radius:10px; font-weight:bold; cursor:pointer;">Mover</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="m-create-plate" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+        <div class="sheet" style="background:white; padding:20px; border-radius:20px; width:90%; max-width:400px; max-height:80vh; overflow-y:auto;">
+            <div class="modal-h" style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>Crear Plato</h3>
+                <button onclick="document.getElementById('m-create-plate').style.display='none'" style="background:none; border:none; font-size:2rem;">&times;</button>
+            </div>
+            
+            <label>Nombre del Plato:</label>
+            <input type="text" id="plate-name" class="inp" placeholder="Ej: Arroz a la Cubana">
+            
+            <div style="margin:15px 0;">Selecciona ingredientes:</div>
+            <div id="plate-ingredients-list"></div>
+
+            <button class="btn pri" onclick="window.Logic.savePlateToDb()">Guardar Plato</button>
+        </div>
+    </div>
+
+    <div id="m-edit-plate" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+        <div class="sheet" style="background:white; padding:20px; border-radius:20px; width:90%; max-width:400px; max-height:80vh; overflow-y:auto;">
+            <div class="modal-h" style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>Editar Plato</h3>
+                <button onclick="document.getElementById('m-edit-plate').style.display='none'" style="background:none; border:none; font-size:2rem;">&times;</button>
+            </div>
+            
+            <label>Nombre del Plato:</label>
+            <input type="text" id="plate-edit-name" class="inp" placeholder="Ej: Arroz a la Cubana">
+            
+            <div style="margin:15px 0;">Selecciona ingredientes:</div>
+            <div id="plate-edit-ingredients-list"></div>
+
+            <button class="btn pri" onclick="window.Logic.saveLibEdit()">Guardar Cambios</button>
+        </div>
+    </div>
+
     <div class="modal" id="m-glob">
         <div class="sheet">
             <h3>Opciones</h3>
@@ -425,6 +582,15 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // SEGURO ANTI-BLOQUEO
+        setTimeout(() => {
+            const spin = document.getElementById('loading-screen');
+            if(spin && spin.style.display !== 'none') {
+                console.warn("Forzando inicio por retraso...");
+                spin.style.display = 'none';
+            }
+        }, 3000);
 
         const firebaseConfig = {
             apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
@@ -451,12 +617,30 @@
         let S = { 
             d: new Date(),
             uid: localStorage.getItem('tid'),
-            u: null, day: {}, lib: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null,
-            srcMeal: null, copyMode: 'copy' 
+            u: null, day: {}, lib: [], platos: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null,
+            srcMeal: null, copyMode: 'copy',
+            lastSearch: [], editLibItem: null, editLib: false
         };
 
-        // --- DEFINICIONES ---
-        
+        // --- FUNCIONES GLOBALES ---
+        window.selectFoundItem = function(index) {
+            if(!S.lastSearch || !S.lastSearch[index]) return;
+            const selection = S.lastSearch[index];
+            
+            if(selection.isPlate) {
+                // Es un PLATO: Añadir todos sus ingredientes
+                if(confirm(`¿Añadir el plato "${selection.n}" completo?`)) {
+                    selection.items.forEach(it => S.day[S.tm].push(it));
+                    window.Logic.autoSave();
+                }
+            } else {
+                // Es un ingrediente normal
+                S.item = selection;
+                window.UI.setQty(S.item);
+                window.UI.view("v-qty");
+            }
+        };
+
         const DB = {
             col: (n) => fire.collection(db, n),
             doc: (p,i) => fire.doc(db, p, i),
@@ -473,17 +657,26 @@
                 const k=d.toISOString().split('T')[0]; const s=await fire.getDoc(DB.doc('usuarios/'+S.uid+'/diario', k));
                 let data=s.exists()?s.data():{}; MEALS.forEach(m=>{ if(!data[m.k]) data[m.k]=[] }); return data;
             },
-            getDayLog: async (uid, dStr) => { const s=await fire.getDoc(DB.doc('usuarios/'+uid+'/diario', dStr)); return s.exists()?s.data():{}; },
             setDay: async() => { const k=S.d.toISOString().split('T')[0]; await fire.setDoc(DB.doc('usuarios/'+S.uid+'/diario', k), S.day); },
             lib: async() => { const s=await fire.getDoc(DB.doc('sistema','biblioteca')); S.lib=s.exists()?s.data().items:[]; },
             addLib: async(arr) => {
                 arr.forEach(n=>{ if(!S.lib.find(x=>x.n===n.n)) S.lib.push(n); });
                 await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+            },
+            // NUEVO: Platos (ruta corregida para evitar error Invalid document reference)
+            getPlates: async () => { 
+                // Guardamos en una colección anidada válida: usuarios/{uid}/mis_datos/platos
+                const s = await fire.getDoc(fire.doc(db, 'usuarios', S.uid, 'mis_datos', 'platos'));
+                S.platos = s.exists() ? s.data().items : [];
+            },
+            savePlates: async () => {
+                await fire.setDoc(fire.doc(db, 'usuarios', S.uid, 'mis_datos', 'platos'), {items: S.platos});
             }
         };
 
         const Logic = {
             day: (n) => { S.d.setDate(S.d.getDate()+n); Sys.sync(); },
+            autoSave: async () => { await DB.setDay(); window.UI.closeAll(); Sys.sync(); },
             saveUser: async () => {
                 const n = document.getElementById('e-name').value;
                 if(!n) return alert("Nombre obligatorio");
@@ -491,10 +684,8 @@
                     const vals = (ids) => ids.map(i=>document.getElementById(i).value);
                     const [h, w, y, g, act, mod] = vals(['e-h','e-w','e-y','e-g','e-act','e-mod']);
                     const [pp, pc, pf] = vals(['pp','pc','pf']);
-                    
                     const bmr = (10*w)+(6.25*h)-(5*(new Date().getFullYear()-y))+(g=='male'?5:-161);
                     const goal = Math.round(bmr*act + parseInt(mod));
-
                     const u = {
                         id: S.u?S.u.id : n.toLowerCase().replace(/\s/g,'_'), name:n, height:h, weight:w, birthYear:y, gender:g, activity:act, goalMod:mod,
                         customMacros: { p:Math.round(goal*(pp/100)/4), c:Math.round(goal*(pc/100)/4), f:Math.round(goal*(pf/100)/9) }
@@ -503,40 +694,33 @@
                 } catch(e) { alert("Error: "+e.message); }
             },
             saveWeight: async () => {
-                const w = parseFloat(document.getElementById('w-today').value);
-                const d = document.getElementById('w-date').value;
+                const w = parseFloat(document.getElementById('w-today').value.replace(',','.'));
+                const d = document.getElementById('st-date').value;
                 if(!w || !d) return alert("Faltan datos");
-                
                 let targetData = S.day;
                 let isToday = (d === S.d.toISOString().split('T')[0]);
-                
                 if(!isToday) {
                     const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
                     targetData = snap.exists() ? snap.data() : {};
                 }
-                
                 targetData.weight = w;
                 await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), targetData);
-                
                 if(isToday) S.day = targetData;
-                alert("Peso guardado");
-                window.Stats.load(30); 
+                alert("Peso guardado"); window.Stats.load(d); 
             },
             checkWeight: () => {
-                if(!S.day.weight) {
-                    setTimeout(() => {
-                        if(confirm("¿Quieres registrar tu peso hoy?")) window.Stats.open();
-                    }, 1000);
-                }
+                if(!S.day.weight) setTimeout(() => { if(confirm("¿Registrar peso hoy?")) window.Stats.open(); }, 1000);
             },
             deleteUser: async () => {
-                if(confirm("¿Eliminar usuario y todos sus datos?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
+                if(confirm("¿Eliminar usuario?")) { await DB.delU(S.u.id); localStorage.removeItem('tid'); location.reload(); }
             },
             delFromLib: async (name) => {
-                if(!confirm("¿Borrar " + name + "?")) return;
+                if(!confirm("¿Borrar " + name + " de la lista?")) return;
                 try {
                     S.lib = S.lib.filter(x => x.n !== name);
+                    S.platos = S.platos.filter(x => x.n !== name);
                     await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+                    await DB.savePlates(); // Guardar también platos si borramos uno
                     Logic.search();
                 } catch(e) { alert("Error: " + e.message); }
             },
@@ -545,41 +729,287 @@
                 document.getElementById('imp-date').valueAsDate = new Date();
                 window.UI.view('v-import');
             },
+            
+            // --- BUSCADOR UNIFICADO (INGREDIENTES + PLATOS) ---
             search: () => {
                 const q = document.getElementById('src-in').value.toLowerCase();
                 const b = document.getElementById('res-list'); b.innerHTML='';
-                S.lib.filter(x => x.n.toLowerCase().includes(q)).forEach(f => {
+                
+                // Buscar ingredientes
+                const foundIng = S.lib.filter(x => x.n.toLowerCase().includes(q));
+                // Buscar platos (marcar como isPlate)
+                const foundPlates = S.platos.filter(x => x.n.toLowerCase().includes(q)).map(p => ({...p, isPlate:true}));
+                
+                S.lastSearch = [...foundPlates, ...foundIng];
+                
+                if(S.lastSearch.length === 0) { b.innerHTML='<div style="padding:10px;text-align:center;color:#999">No encontrado</div>'; return; }
+
+                S.lastSearch.forEach((f, idx) => {
                     const d = document.createElement('div'); d.className='food-suggestion';
+                    const icon = f.isPlate ? '<i class="fas fa-utensils" style="color:#8b5cf6"></i> ' : '';
                     d.innerHTML = `
-                        <div class="s-info" onclick='window.S.item=${JSON.stringify(f).replace(/'/g,"&#39;")}; window.UI.setQty(window.S.item); window.UI.view("v-qty")'>
-                            <b>${f.n}</b> <small>${Math.round(f.k)} kcal/100${f.u}</small>
+                        <div class="s-info" onclick="window.selectFoundItem(${idx})">
+                            <b>${icon}${f.n}</b> <small>${Math.round(f.k)} kcal ${f.isPlate ? '(PLATO)' : '/100g'}</small>
                         </div>
-                        <div class="s-del" onclick="window.Logic.delFromLib('${f.n.replace(/'/g,"\\'")}')"><i class="fas fa-trash-alt"></i></div>
+                        <div style="display:flex; gap:5px; align-items:center;">
+                            <div class="s-del" onclick="window.Logic.editFromLib(${idx})" style="color:#2563eb; cursor:pointer;" title="Editar"><i class="fas fa-pencil-alt"></i></div>
+                            <div class="s-del" onclick="window.Logic.delFromLib('${f.n.replace(/'/g,"\\'")}')"><i class="fas fa-trash-alt"></i></div>
+                        </div>
                     `;
                     b.appendChild(d);
                 });
             },
+            editFromLib: (idx) => {
+                const item = S.lastSearch[idx];
+                if(!item) return;
+                
+                if(item.isPlate) {
+                    // Editar plato
+                    S.editLibItem = {type: 'plate', index: S.platos.findIndex(p => p.n === item.n), data: JSON.parse(JSON.stringify(item))};
+                    document.getElementById('plate-edit-name').value = item.n;
+                    const container = document.getElementById('plate-edit-ingredients-list');
+                    container.innerHTML = '';
+                    
+                    item.items.forEach((it, iidx) => {
+                        const div = document.createElement('div');
+                        div.className = 'plate-check-row';
+                        div.innerHTML = `
+                            <span>${it.n} (${it.q}${it.u})</span>
+                            <input type="checkbox" value="${iidx}" checked>
+                        `;
+                        container.appendChild(div);
+                    });
+                    
+                    document.getElementById('m-edit-plate').style.display = 'flex';
+                } else {
+                    // Editar alimento de biblioteca
+                    S.editLibItem = {type: 'food', index: S.lib.findIndex(x => x.n === item.n), data: JSON.parse(JSON.stringify(item))};
+                    S.item = JSON.parse(JSON.stringify(item));
+                    S.item.q = 100; // Resetear a 100g para edición
+                    window.UI.setQty(S.item);
+                    window.UI.view("v-qty");
+                    window.UI.open('m-add');
+                    S.editLib = true;
+                }
+            },
+            saveLibEdit: async () => {
+                if(!S.editLibItem) return;
+                
+                if(S.editLibItem.type === 'food') {
+                    // Guardar alimento editado de la biblioteca
+                    const name = document.getElementById('qty-name-in').value.trim();
+                    if(!name) return alert("El nombre es obligatorio");
+                    
+                    const k = parseFloat(document.getElementById('lib-k').value) || 0;
+                    const p = parseFloat(document.getElementById('lib-p').value) || 0;
+                    const c = parseFloat(document.getElementById('lib-c').value) || 0;
+                    const f = parseFloat(document.getElementById('lib-f').value) || 0;
+                    
+                    const newBase = {
+                        n: name,
+                        q: 100,
+                        u: document.getElementById('unit-in').value,
+                        k: k,
+                        p: p,
+                        c: c,
+                        f: f
+                    };
+                    
+                    const oldName = S.editLibItem.data.n;
+                    S.lib[S.editLibItem.index] = newBase;
+                    await fire.setDoc(DB.doc('sistema','biblioteca'), {items: S.lib});
+                    
+                    // Actualizar también en el día si existe (mantener las cantidades pero recalcular valores)
+                    Object.keys(S.day).forEach(mk => {
+                        if(Array.isArray(S.day[mk])) {
+                            S.day[mk].forEach((it, idx) => {
+                                if(it.n === oldName) {
+                                    // Mantener la cantidad y recalcular proporcionalmente con los nuevos valores base
+                                    const itemF = it.q/100;
+                                    S.day[mk][idx] = {
+                                        n: name,
+                                        q: it.q,
+                                        u: it.u,
+                                        k: newBase.k * itemF,
+                                        p: newBase.p * itemF,
+                                        c: newBase.c * itemF,
+                                        f: newBase.f * itemF
+                                    };
+                                }
+                            });
+                        }
+                    });
+                    await DB.setDay();
+                    
+                    Logic.search();
+                    window.UI.closeAll();
+                    Sys.sync();
+                    alert("✅ Alimento actualizado");
+                } else if(S.editLibItem.type === 'plate') {
+                    // Guardar plato editado
+                    const name = document.getElementById('plate-edit-name').value.trim();
+                    if(!name) return alert("El nombre es obligatorio");
+                    
+                    const checks = document.querySelectorAll('#plate-edit-ingredients-list input:checked');
+                    if(checks.length === 0) return alert("Selecciona al menos un ingrediente");
+                    
+                    const selectedItems = [];
+                    let totalK = 0;
+                    checks.forEach(c => {
+                        const item = S.editLibItem.data.items[parseInt(c.value)];
+                        selectedItems.push(item);
+                        totalK += item.k;
+                    });
+                    
+                    S.platos[S.editLibItem.index] = {
+                        n: name,
+                        k: totalK,
+                        items: selectedItems
+                    };
+                    
+                    await DB.savePlates();
+                    document.getElementById('m-edit-plate').style.display = 'none';
+                    Logic.search();
+                    alert("✅ Plato actualizado");
+                }
+                
+                S.editLibItem = null;
+                S.editLib = false;
+            },
+            
             saveItem: async () => {
                 const q = parseFloat(document.getElementById('qty-in').value);
                 const u = document.getElementById('unit-in').value;
+                const name = document.getElementById('qty-name-in').value.trim() || S.item.n;
+                
+                if(S.editLib && S.editLibItem) {
+                    // Guardar edición de biblioteca
+                    await Logic.saveLibEdit();
+                    return;
+                }
+                
                 const base = S.item; 
                 let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
                 if(S.edit) { const f = base.q/100; bk/=f; bp/=f; bc/=f; bf/=f; }
                 const f = q/100;
-                const entry = { n:base.n, q:q, u:u, k:bk*f, p:bp*f, c:bc*f, f:bf*f };
+                const entry = { n:name, q:q, u:u, k:bk*f, p:bp*f, c:bc*f, f:bf*f };
                 if(S.edit) S.day[S.tm][S.eIdx] = entry; else S.day[S.tm].push(entry);
                 await DB.setDay(); window.UI.closeAll(); Sys.sync();
             },
+            updateCalories: () => {
+                if(!S.item) return;
+                const q = parseFloat(document.getElementById('qty-in').value) || 0;
+                const base = S.item;
+                let bk=base.k, bp=base.p, bc=base.c, bf=base.f;
+                
+                // Si estamos editando un item del día, necesitamos normalizar primero
+                if(S.edit && !S.editLib) { 
+                    const f = base.q/100; 
+                    if(f > 0) {
+                        bk/=f; bp/=f; bc/=f; bf/=f; 
+                    }
+                }
+                // Si estamos editando de la biblioteca, los valores ya están en base 100g
+                
+                const f = q/100;
+                document.getElementById('calc-kcal').innerText = Math.round(bk*f);
+            },
             editItem: (mk, idx) => {
                 S.edit=true; S.tm=mk; S.eIdx=idx; S.item = JSON.parse(JSON.stringify(S.day[mk][idx]));
+                S.editLib = false; // No es edición de biblioteca
                 window.UI.setQty(S.item); window.UI.view('v-qty'); window.UI.open('m-add');
             },
             delItem: async (mk, idx) => { if(confirm("¿Borrar?")) { S.day[mk].splice(idx,1); await DB.setDay(); Sys.sync(); } },
-            wipeMeal: async (mk) => { if(confirm("¿Vaciar?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
-            wipe: async () => { if(confirm("¿Borrar día entero?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); window.UI.closeAll(); } },
+            wipeMeal: async (mk) => { if(confirm("¿Vaciar comida?")) { S.day[mk]=[]; await DB.setDay(); Sys.sync(); } },
+            wipe: async () => { if(confirm("¿Borrar TODO el día?")) { S.day={}; MEALS.forEach(m=>S.day[m.k]=[]); await DB.setDay(); Sys.sync(); window.UI.closeAll(); } },
             openCopy: (mk, type) => {
                 S.srcMeal=mk; S.copyMode=type; document.getElementById('copy-date').valueAsDate=S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy');
             },
+
+            // --- GESTIÓN INDIVIDUAL ---
+            openItemAct: (mealKey, index) => {
+                S.tm = mealKey; S.eIdx = index; S.item = S.day[mealKey][index];
+                document.getElementById('ia-name').innerText = S.item.n;
+                document.getElementById('ia-date').valueAsDate = S.d;
+                document.getElementById('ia-meal').value = mealKey;
+                window.UI.open('m-item-act');
+            },
+            execItemAct: async (mode) => { 
+                const d = document.getElementById('ia-date').value;
+                const tm = document.getElementById('ia-meal').value;
+                if(!d) return alert("Fecha incorrecta");
+
+                let targetData = {};
+                let isSameDay = (d === S.d.toISOString().split('T')[0]);
+
+                if(isSameDay) targetData = S.day;
+                else {
+                    const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
+                    targetData = snap.exists() ? snap.data() : {};
+                }
+
+                if(!targetData[tm]) targetData[tm] = [];
+                targetData[tm].push(S.item);
+
+                if(mode === 'move') { S.day[S.tm].splice(S.eIdx, 1); }
+
+                if(!isSameDay) await fire.setDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d), targetData);
+                await DB.setDay(); 
+
+                window.UI.closeAll(); Sys.sync();
+                alert(mode==='copy' ? "Copiado" : "Movido");
+            },
+
+            // --- LÓGICA DE CREACIÓN DE PLATOS ---
+            openCreatePlate: (mealKey) => {
+                const items = S.day[mealKey];
+                if(!items || items.length === 0) return alert("La comida está vacía. Añade ingredientes primero.");
+                
+                S.srcMeal = mealKey;
+                const container = document.getElementById('plate-ingredients-list');
+                container.innerHTML = '';
+                document.getElementById('plate-name').value = '';
+
+                items.forEach((it, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'plate-check-row';
+                    div.innerHTML = `
+                        <span>${it.n} (${it.q}${it.u})</span>
+                        <input type="checkbox" value="${idx}" checked>
+                    `;
+                    container.appendChild(div);
+                });
+                
+                document.getElementById('m-create-plate').style.display = 'flex';
+            },
+            savePlateToDb: async () => {
+                const name = document.getElementById('plate-name').value;
+                if(!name) return alert("Ponle nombre al plato");
+                
+                const checks = document.querySelectorAll('#plate-ingredients-list input:checked');
+                if(checks.length === 0) return alert("Selecciona al menos un ingrediente");
+
+                const selectedItems = [];
+                let totalK = 0;
+                checks.forEach(c => {
+                    const item = S.day[S.srcMeal][parseInt(c.value)];
+                    selectedItems.push(item);
+                    totalK += item.k;
+                });
+
+                const newPlate = {
+                    n: name,
+                    k: totalK,
+                    items: selectedItems
+                };
+
+                S.platos.push(newPlate);
+                await DB.savePlates();
+                
+                document.getElementById('m-create-plate').style.display = 'none';
+                alert("Plato guardado. Búscalo por nombre para añadirlo.");
+            },
+
             execCopy: async () => {
                 const d = document.getElementById('copy-date').value; const tm = document.getElementById('copy-meal').value;
                 const ref = fire.doc(db, `usuarios/${S.uid}/diario`, d);
@@ -597,38 +1027,33 @@
                 const snap = await fire.getDoc(fire.doc(db, `usuarios/${S.uid}/diario`, d));
                 if(snap.exists() && snap.data()[meal]) {
                     S.day[S.tm] = S.day[S.tm].concat(snap.data()[meal]);
-                    await DB.setDay();
-                    window.UI.closeAll(); Sys.sync(); alert("Importado");
-                } else { alert("No hay datos en esa fecha/comida."); }
+                    await DB.setDay(); window.UI.closeAll(); Sys.sync(); alert("Importado");
+                } else { alert("No hay datos"); }
             },
             parse: async () => {
                 try {
                     const txt = document.getElementById('json-in').value.replace(/```json/g,'').replace(/```/g,'').trim();
                     const json = JSON.parse(txt);
-                    let items = Array.isArray(json)?json:(json.comida_combinada?json.comida_combinada.items:(json.items||json.detalles||[json]));
+                    let items = Array.isArray(json)?json:(json.items||[json]);
                     const newItems = [];
                     items.forEach(it => {
-                        let q=100, u="g";
-                        if(it.cantidad) {
-                            if(typeof it.cantidad==='string'){ const p=it.cantidad.trim().split(/\s+/); q=parseFloat(p[0])||100; if(p[1])u=p[1].toLowerCase(); }
-                            else q=parseFloat(it.cantidad)||100;
-                        }
-                        const fac=q/100; const get=(keys)=>{ for(let k of keys) { if(it[k]!=undefined)return parseFloat(it[k]); if(it.macros&&it.macros[k]!=undefined)return parseFloat(it.macros[k]); } return 0; };
+                        let q=parseFloat(it.cantidad)||100;
+                        const fac=q/100; 
+                        const get=(keys)=>{ for(let k of keys) if(it[k]!=undefined) return parseFloat(it[k]); return 0; };
                         const base = {
-                            n: it.producto||it.nombre||it.n||"Item", q:100, u:u,
-                            k: get(['energia_kcal','kcal','k'])/fac, p: get(['proteinas_g','p','prot'])/fac,
-                            c: get(['hidratos_carbono_g','c','hc'])/fac, f: get(['grasas_g','f','fat'])/fac
+                            n: it.producto||it.nombre||"Item", q:100, u:'g',
+                            k: get(['kcal','energia_kcal'])/fac, p: get(['p','proteinas_g'])/fac,
+                            c: get(['c','hc'])/fac, f: get(['f','grasas_g'])/fac
                         };
                         S.day[S.tm].push({...base, q:q, k:base.k*fac, p:base.p*fac, c:base.c*fac, f:base.f*fac});
                         newItems.push(base);
                     });
                     await DB.setDay(); await DB.addLib(newItems); 
-                    document.getElementById('json-in').value=''; window.UI.closeAll(); Sys.sync();
+                    window.UI.closeAll(); Sys.sync();
                 } catch(e) { alert("JSON Mal: " + e.message); }
             },
-            createPDF: (content, filename) => {
-                const opt = { margin:10, filename:filename, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} };
-                html2pdf().from(content).set(opt).save();
+            createPDF: (content, fn) => {
+                html2pdf().from(content).set({ margin:10, filename:fn, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4'} }).save();
             },
             pdf: () => { 
                 window.UI.closeAll();
@@ -677,7 +1102,6 @@
                         const data = doc.data();
                         let totalK = 0;
                         let mealsHtml = '';
-                        
                         MEALS.forEach(m => {
                             if(data[m.k] && data[m.k].length > 0) {
                                 mealsHtml += `<b>${m.n}:</b> `;
@@ -685,18 +1109,11 @@
                                 mealsHtml = mealsHtml.slice(0, -2) + '<br>';
                             }
                         });
-                        
                         if(totalK > 0) {
-                            html += `<div style="border-bottom:1px solid #ccc; padding:10px 0">
-                                <div style="display:flex; justify-content:space-between">
-                                    <strong>${date}</strong> <span>Total: ${Math.round(totalK)} kcal</span>
-                                </div>
-                                <div style="font-size:0.8rem; color:#555; margin-top:5px">${mealsHtml}</div>
-                            </div>`;
+                            html += `<div style="border-bottom:1px solid #ccc; padding:10px 0"><div style="display:flex; justify-content:space-between"><strong>${date}</strong> <span>Total: ${Math.round(totalK)} kcal</span></div><div style="font-size:0.8rem; color:#555; margin-top:5px">${mealsHtml}</div></div>`;
                         }
                     });
                     html += `</div>`;
-                    
                     const el = document.createElement('div'); el.innerHTML = html;
                     document.body.appendChild(el);
                     Logic.createPDF(el, `Historial_Completo_${S.u.name}.pdf`);
@@ -762,7 +1179,6 @@
             }
         };
 
-        /* --- STATS MODULE --- */
         const Stats = {
             chartInstance: null,
             weightInstance: null,
@@ -787,16 +1203,12 @@
                 val = val.replace(',', '.');
                 const w = parseFloat(val);
                 const dStr = Stats.currentDate.toISOString().split('T')[0];
-                
                 if(!w) return alert("Introduce un peso");
-                
                 const ref = fire.doc(db, `usuarios/${S.uid}/diario`, dStr);
                 const snap = await fire.getDoc(ref);
                 let data = snap.exists() ? snap.data() : {};
-                
                 data.weight = w;
                 await fire.setDoc(ref, data);
-                
                 if(dStr === S.d.toISOString().split('T')[0]) S.day.weight = w;
                 alert("Peso guardado");
                 Stats.updateView();
@@ -806,7 +1218,6 @@
                 const dateStr = Stats.currentDate.toISOString().split('T')[0];
                 document.getElementById('st-date').value = dateStr;
                 
-                // 1. FETCH HISTORY
                 const allDocs = await fire.getDocs(query(fire.collection(db, `usuarios/${S.uid}/diario`), orderBy('__name__')));
                 const history = [];
                 allDocs.forEach(d => history.push({id: d.id, ...d.data()}));
@@ -815,10 +1226,7 @@
                 let prevWeight = null;
                 let currentWeight = null;
 
-                // Find global first weight
                 for(let h of history) { if(h.weight) { firstWeight = h.weight; break; } }
-
-                // Find current and PREVIOUS (strictly before dateStr)
                 for(let h of history) {
                     if(h.id === dateStr) currentWeight = h.weight;
                     if(h.id < dateStr && h.weight) prevWeight = h.weight;
@@ -828,11 +1236,8 @@
                 const fb = document.getElementById('w-feedback');
                 let html = '';
                 
-                // Green if LOST weight (negative diff), Red if GAINED (positive diff)
                 const formatDiff = (curr, base) => {
                     const diff = curr - base;
-                    // Goal is to lose weight usually? Let's assume standard logic: Lost=Green, Gained=Red
-                    // You requested: Gained=Red, Lost=Green (Objective)
                     const color = diff > 0 ? 'text-bad' : (diff < 0 ? 'text-ok' : '');
                     const sign = diff > 0 ? '+' : '';
                     return `<b class="${color}">${sign}${diff.toFixed(1)}kg</b>`;
@@ -844,7 +1249,6 @@
                 }
                 fb.innerHTML = html;
 
-                // 2. DAILY RING
                 let dayCals = 0;
                 let dayGoal = S.u.calc.goal;
                 let dayData = history.find(h => h.id === dateStr);
@@ -868,19 +1272,14 @@
                 
                 const dSign = diffDay > 0 ? '+' : '';
                 const dClass = diffDay > 0 ? 'text-bad' : 'text-ok';
-                document.getElementById('daily-txt').innerHTML = 
-                    `<span class="srt-val">${Math.round(dayCals)}</span>
-                     <span class="srt-lbl">de ${dayGoal}</span>
-                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${dClass}">${dSign}${Math.round(diffDay)}</span>`;
+                document.getElementById('daily-txt').innerHTML = `<span class="srt-val">${Math.round(dayCals)}</span><span class="srt-lbl">de ${dayGoal}</span><span style="display:block;font-size:0.8rem;margin-top:2px" class="${dClass}">${dSign}${Math.round(diffDay)}</span>`;
 
-                // 3. WEEKLY RING
                 const dObj = new Date(Stats.currentDate);
                 const dayNum = dObj.getDay() || 7; 
-                dObj.setDate(dObj.getDate() - dayNum + 1); // Monday
+                dObj.setDate(dObj.getDate() - dayNum + 1); 
                 
                 let weekCals = 0;
                 let weekGoal = dayGoal * 7;
-                
                 for(let i=0; i<7; i++) {
                     const tempD = new Date(dObj);
                     tempD.setDate(dObj.getDate() + i);
@@ -906,12 +1305,8 @@
                 
                 const wSign = diffWeek > 0 ? '+' : '';
                 const wClass = diffWeek > 0 ? 'text-bad' : 'text-ok';
-                document.getElementById('weekly-txt').innerHTML = 
-                    `<span class="srt-val">${Math.round(weekCals)}</span>
-                     <span class="srt-lbl">de ${weekGoal}</span>
-                     <span style="display:block;font-size:0.8rem;margin-top:2px" class="${wClass}">${wSign}${Math.round(diffWeek)}</span>`;
+                document.getElementById('weekly-txt').innerHTML = `<span class="srt-val">${Math.round(weekCals)}</span><span class="srt-lbl">de ${weekGoal}</span><span style="display:block;font-size:0.8rem;margin-top:2px" class="${wClass}">${wSign}${Math.round(diffWeek)}</span>`;
 
-                // 4. WEIGHT CHART
                 const chartDates = [];
                 const chartWeights = [];
                 for(let i=29; i>=0; i--) {
@@ -935,7 +1330,6 @@
             }
         };
 
-        /* --- AI --- */
         const AI = {
             saveConfig: () => {
                 localStorage.setItem('t_ai_key', document.getElementById('ai-key').value);
@@ -978,7 +1372,7 @@
                     const d = await res.json();
                     if(!d.candidates) throw new Error(d.error?d.error.message:"Error API");
                     const raw = d.candidates[0].content.parts[0].text;
-                    const match = raw.match(/\[.*\]/s); // REGEX FIX
+                    const match = raw.match(/\[.*\]/s); 
                     if(!match) throw new Error("No JSON");
                     const items = JSON.parse(match[0]);
                     
@@ -994,10 +1388,59 @@
                     
                     window.UI.closeAll(); Sys.sync(); document.getElementById('ai-text').value='';
                 } catch(e) { alert(e.message); } finally { btn.innerText=old; }
+            },
+            // NUEVO: PROCESAMIENTO DE IMAGEN
+            processImage: async (file) => {
+                if(!file) return;
+                const key = localStorage.getItem('t_ai_key');
+                const mod = localStorage.getItem('t_ai_mod') || 'gemini-1.5-flash';
+                if(!key) return window.UI.view('v-conf');
+
+                const btn = document.querySelector('.cam-btn');
+                btn.style.background = '#8b5cf6'; // Color procesando
+
+                try {
+                    // Convertir a base64
+                    const toBase64 = file => new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = error => reject(error);
+                    });
+                    
+                    const b64 = await toBase64(file);
+
+                    const prompt = "Analiza esta etiqueta nutricional. Extrae el nombre probable del producto. Devuelve un JSON ARRAY con un solo objeto: [{'n':'Nombre producto','q':100,'u':'g','k':calorias_100g,'p':proteinas_100g,'c':carbohidratos_100g,'f':grasas_100g}]";
+
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${key}`, {
+                        method:'POST', headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({ contents: [{ parts: [
+                            { text: prompt },
+                            { inline_data: { mime_type: file.type, data: b64 } }
+                        ]}]})
+                    });
+
+                    const d = await res.json();
+                    if(!d.candidates) throw new Error(d.error?d.error.message:"Error API");
+                    const raw = d.candidates[0].content.parts[0].text;
+                    const match = raw.match(/\[.*\]/s); 
+                    if(!match) throw new Error("No JSON");
+                    const items = JSON.parse(match[0]);
+
+                    // Guardar en biblioteca
+                    const mapped = items.map(i => ({ n:i.n, q:100, u:'g', k:i.k, p:i.p, c:i.c, f:i.f }));
+                    await DB.addLib(mapped);
+                    
+                    // Rellenar formulario de añadir
+                    window.S.item = mapped[0];
+                    window.UI.setQty(window.S.item);
+                    window.UI.view("v-qty");
+
+                } catch(e) { alert("Error Imagen: " + e.message); } 
+                finally { btn.style.background = '#3b82f6'; }
             }
         };
 
-        /* --- UI & CALC --- */
         const UI = {
             open: (id) => document.getElementById(id).style.display='flex',
             closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
@@ -1013,9 +1456,28 @@
                 document.getElementById('ai-model').value = localStorage.getItem('t_ai_mod')||'gemini-1.5-flash';
             },
             setQty: (item) => {
-                document.getElementById('qty-name').innerText = item.n;
+                document.getElementById('qty-name-in').value = item.n;
                 document.getElementById('qty-in').value = item.q;
                 document.getElementById('unit-in').value = item.u;
+                
+                // Si estamos editando de la biblioteca, mostrar campos de valores nutricionales
+                if(S.editLib && S.editLibItem && S.editLibItem.type === 'food') {
+                    document.getElementById('qty-edit-section').style.display = 'none';
+                    document.getElementById('lib-edit-section').style.display = 'block';
+                    document.getElementById('lib-k').value = item.k;
+                    document.getElementById('lib-p').value = item.p;
+                    document.getElementById('lib-c').value = item.c;
+                    document.getElementById('lib-f').value = item.f;
+                    document.getElementById('calc-kcal').innerText = Math.round(item.k);
+                } else {
+                    document.getElementById('qty-edit-section').style.display = 'flex';
+                    document.getElementById('lib-edit-section').style.display = 'none';
+                    Logic.updateCalories();
+                }
+            },
+            updateLibCalories: () => {
+                const k = parseFloat(document.getElementById('lib-k').value) || 0;
+                document.getElementById('calc-kcal').innerText = Math.round(k);
             },
             openUsers: async () => {
                 const list = document.getElementById('u-list'); list.innerHTML='...';
@@ -1143,6 +1605,7 @@
                                 <span style="color:var(--pro)">P${Math.round(i.p)}</span><span style="color:var(--car)">C${Math.round(i.c)}</span><span style="color:var(--fat)">F${Math.round(i.f)}</span></div>
                             </div>
                             <div class="c-actions">
+                                <button class="act-btn move" onclick="window.Logic.openItemAct('${m.k}', ${idx})" title="Mover/Copiar" style="border-color:#f59e0b; color:#f59e0b"><i class="fas fa-exchange-alt"></i></button>
                                 <button class="act-btn" onclick="window.Logic.editItem('${m.k}', ${idx})"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="act-btn del" onclick="window.Logic.delItem('${m.k}', ${idx})"><i class="fas fa-trash"></i></button>
                             </div>
@@ -1160,6 +1623,9 @@
                                     <span class="mm-item" style="color:var(--fat)"><span class="mm-dot" style="background:var(--fat)"></span>${Math.round(mf)}g</span>
                                 </div>
                                 <span class="k-badge">${Math.round(mk)} kcal</span>
+                                
+                                <button class="tool-btn plate" title="Crear Plato" onclick="window.Logic.openCreatePlate('${m.k}')"><i class="fas fa-utensils"></i></button>
+                                
                                 <button class="tool-btn copy" title="Copiar" onclick="window.Logic.openCopy('${m.k}', 'copy')"><i class="fas fa-copy"></i></button>
                                 <button class="tool-btn move" title="Mover" onclick="window.Logic.openCopy('${m.k}', 'move')"><i class="fas fa-calendar-day"></i></button>
                                 <button class="tool-btn del" title="Vaciar" onclick="window.Logic.wipeMeal('${m.k}')"><i class="fas fa-trash-alt"></i></button>
@@ -1175,16 +1641,23 @@
         const Sys = {
             init: async () => {
                 try {
-                    await DB.lib();
+                    await DB.lib(); 
                     if(S.uid) await Sys.load(S.uid);
                     else { document.getElementById('loading-screen').style.display='none'; UI.openUsers(); }
-                } catch(e) { alert("Error inicio: " + e.message); }
+                } catch(e) { 
+                    console.error(e);
+                    alert("Error inicio: " + e.message); 
+                    document.getElementById('loading-screen').style.display='none';
+                }
             },
             load: async (id) => {
                 S.day = {}; S.uid = id; localStorage.setItem('tid', id);
                 S.u = await DB.getU(id);
                 if(!S.u) { window.UI.openUsers(); return; }
-                S.u = DB.norm(S.u); Calc.bio(); await Sys.sync();
+                S.u = DB.norm(S.u); 
+                Calc.bio(); 
+                await DB.getPlates(); // Cargar platos personalizados
+                await Sys.sync();
                 document.getElementById('loading-screen').style.display='none';
                 window.Logic.checkWeight();
             },
@@ -1192,14 +1665,9 @@
         };
 
         // --- ASIGNACIÓN GLOBAL ---
-        window.DB = DB;
-        window.Logic = Logic;
-        window.UI = UI;
-        window.AI = AI;
-        window.Calc = Calc;
-        window.Render = Render;
-        window.Sys = Sys;
-        window.Stats = Stats;
+        window.DB = DB; window.Logic = Logic; window.UI = UI; window.AI = AI;
+        window.Calc = Calc; window.Render = Render; window.Sys = Sys; window.Stats = Stats;
+        window.S = S; 
 
         // GESTURES
         let ts = 0;
