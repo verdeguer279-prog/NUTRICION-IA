@@ -14,13 +14,14 @@ window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], al
 
 // --- 2. SISTEMA ---
 window.Sys = {
-    init: async () => {
+init: async () => {
         let tX = 0;
-document.addEventListener('touchstart', e => tX = e.changedTouches[0].screenX);
-document.addEventListener('touchend', e => {
-    if (e.changedTouches[0].screenX < tX - 50) window.Logic.day(1); // Deslizar izq -> día siguiente
-    if (e.changedTouches[0].screenX > tX + 50) window.Logic.day(-1); // Deslizar der -> día anterior
-});
+        document.addEventListener('touchstart', e => tX = e.changedTouches[0].screenX);
+        document.addEventListener('touchend', e => {
+            if (e.changedTouches[0].screenX < tX - 50) window.Logic.day(1);
+            if (e.changedTouches[0].screenX > tX + 50) window.Logic.day(-1);
+        });
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 ['v-login'].forEach(x=>document.getElementById(x).style.display='none');
@@ -29,12 +30,27 @@ document.addEventListener('touchend', e => {
                 
                 let dbId = user.uid; 
                 try {
+                    // 1. Buscamos por el ID de Google (UID)
                     const q = fire.query(fire.collection(db, 'usuarios'), fire.where('uid', '==', user.uid));
                     const querySnapshot = await fire.getDocs(q);
-                    if (!querySnapshot.empty) dbId = querySnapshot.docs[0].id; 
+
+                    if (!querySnapshot.empty) {
+                        dbId = querySnapshot.docs[0].id;
+                    } else {
+                        // --- CAMBIO AQUÍ: Si no te encuentra, te busca por tu nombre antiguo ---
+                        const nameRef = fire.doc(db, 'usuarios', user.displayName || "");
+                        const nameSnap = await fire.getDoc(nameRef);
+                        
+                        if (nameSnap.exists() && !nameSnap.data().uid) {
+                            // Vinculamos tu cuenta de Google a la ficha antigua de "RAFA G279"
+                            await fire.updateDoc(nameRef, { uid: user.uid });
+                            dbId = nameSnap.id;
+                        }
+                        // -----------------------------------------------------------------------
+                    }
                 } catch(e) { console.log("Login fallback UID"); }
 
-                window.S.uid = dbId; 
+                window.S.uid = dbId;
                 await window.Sys.load(dbId, user.email, user.displayName);
             } else {
                 ['app-header','feed','fab-btn'].forEach(x=>document.getElementById(x).style.display='none');
@@ -283,24 +299,45 @@ window.Render = {
     }
 };
 
-// --- 7. LOGIC (CON LAS FUNCIONES AÑADIDAS) ---
+// --- 7. LOGIC (PDF, BACKUP COMPLETO Y GESTIÓN) ---
 window.Logic = {
     day: (n) => { window.S.d.setDate(window.S.d.getDate() + n); window.Sys.sync(); },
     autoSave: async () => { await window.DB.setDay(); window.Render.all(); },
-    saveUser: async () => {
-        const n=document.getElementById('e-name').value; if(!n) return alert("Nombre obligatorio");
-        try {
-            const val=(id)=>parseFloat(document.getElementById(id).value);
-            const u={ uid:window.S.uid, name:n, email:auth.currentUser.email, h:val('e-h'), w:val('e-w'), y:val('e-y'), g:document.getElementById('e-g').value, act:val('e-act'), mod:val('e-mod'), customMacros:{p:val('pp'), c:val('pc'), f:val('pf')} };
-            await window.DB.setU(u); alert(`${APP_NAME}: Perfil Guardado`); window.S.u=window.DB.norm(u); window.Calc.bio(); window.UI.closeAll();
-        } catch (e) { alert("Error: "+e.message); }
-    },
     
-    openAdd: (mk) => {
-        window.S.tm = mk; window.S.edit = false; window.S.editLib = false;
-        window.UI.view('v-home'); window.UI.open('m-add');
-        if(window.S.lib.length > 0) window.Logic.search();
-    },
+   saveUser: async () => {
+    const n = document.getElementById('e-name').value; 
+    if (!n) return alert("Nombre obligatorio");
+    try {
+        // Usamos el ID real de Google para "apropiarnos" de la carpeta antigua
+        const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid;
+        const val = (id) => parseFloat(document.getElementById(id).value);
+        
+        const u = { 
+            uid: realUid, 
+            name: n, 
+            email: auth.currentUser ? auth.currentUser.email : "", 
+            h: val('e-h'), w: val('e-w'), y: val('e-y'), 
+            g: document.getElementById('e-g').value, 
+            act: val('e-act'), mod: val('e-mod'), 
+            customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
+        };
+        
+        // Esto escribirá tu ID actual de Google dentro del documento "RAFA G279"
+        await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
+        alert("¡Perfil vinculado con éxito!");
+        
+        window.S.u = window.DB.norm(u);
+        window.S.uid = n; 
+        window.Calc.bio();
+        window.UI.closeAll();
+        if (window.S.u) document.getElementById('h-av').innerText = window.S.u.name.charAt(0).toUpperCase();
+        
+        // Recargamos para que cargue todo el historial de esa carpeta
+        location.reload();
+    } catch (e) { alert("Error: " + e.message); }
+},
+    
+    openAdd: (mk) => { window.S.tm = mk; window.S.edit = false; window.S.editLib = false; window.UI.view('v-home'); window.UI.open('m-add'); if(window.S.lib.length > 0) window.Logic.search(); },
 
     search: () => {
         const q = document.getElementById('src-in').value.toLowerCase();
@@ -320,22 +357,17 @@ window.Logic = {
     },
 
     openEditLib: (i) => {
-        const item = window.S.lastSearch[i];
-        window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
+        const item = window.S.lastSearch[i]; window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
         window.UI.setQty({...item, q:100, u:'g'}); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
     saveLibEdit: async () => {
         const n = document.getElementById('qty-name-in').value;
         if(window.S.editLibItem.isPlate) {
-            const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n);
-            if(idx >= 0) window.S.platos[idx].n = n;
-            await window.DB.savePlates();
+            const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n); if(idx >= 0) window.S.platos[idx].n = n; await window.DB.savePlates();
         } else {
             const k = parseFloat(document.getElementById('lib-k').value), p = parseFloat(document.getElementById('lib-p').value), c = parseFloat(document.getElementById('lib-c').value), f = parseFloat(document.getElementById('lib-f').value);
-            const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n);
-            if(idx >= 0) window.S.lib[idx] = {n, k, p, c, f, u:'g'};
-            await window.DB.saveLib();
+            const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n); if(idx >= 0) window.S.lib[idx] = {n, k, p, c, f, u:'g'}; await window.DB.saveLib();
         }
         window.UI.closeAll(); window.Logic.search();
     },
@@ -349,15 +381,7 @@ window.Logic = {
     },
 
     updateCalories: () => { const q=parseFloat(document.getElementById('qty-in').value)||0; if(window.S.item) document.getElementById('calc-kcal').innerText=Math.round(window.S.item.k*(q/100)); },
-
-    editItem: (mk,i) => {
-        window.S.edit=true; window.S.tm=mk; window.S.eIdx=i;
-        const orig = window.S.day[mk][i];
-        const factor = (orig.q || 100) / 100;
-        window.S.item = { ...orig, k: orig.k/factor, p: (orig.p||0)/factor, c: (orig.c||0)/factor, f: (orig.f||0)/factor };
-        window.S.editLib = false; window.UI.setQty(orig); window.UI.view('v-qty'); window.UI.open('m-add');
-    },
-
+    editItem: (mk,i) => { window.S.edit=true; window.S.tm=mk; window.S.eIdx=i; const orig = window.S.day[mk][i]; const factor = (orig.q || 100) / 100; window.S.item = { ...orig, k: orig.k/factor, p: (orig.p||0)/factor, c: (orig.c||0)/factor, f: (orig.f||0)/factor }; window.S.editLib = false; window.UI.setQty(orig); window.UI.view('v-qty'); window.UI.open('m-add'); },
     delItem: async (mk,i) => { if(confirm("Borrar?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
     wipeMeal: async (mk) => { if(confirm("Vaciar?")){window.S.day[mk]=[]; await window.DB.setDay(); window.Sys.sync();}},
     openCopy: (mk,t) => { window.S.srcMeal=mk; window.S.copyMode=t; document.getElementById('copy-date').valueAsDate=window.S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy'); },
@@ -367,75 +391,138 @@ window.Logic = {
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
     execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); },
 
-    // --- FUNCIONES AÑADIDAS QUE FALTABAN ---
-parse: async () => {
-        try {
-            const txt = document.getElementById('json-in').value;
-            if(!txt) return;
-            const obj = JSON.parse(txt);
-            
-            // Convertimos a array por si pegas uno solo o una lista
-            let rawItems = Array.isArray(obj) ? obj : [obj];
-            let validItems = [];
+    // --- NUEVAS FUNCIONES PEDIDAS ---
 
-            rawItems.forEach(i => {
-                // CASO 1: TU NUEVO FORMATO (Estructura anidada)
-                if (i.producto && i.informacion_nutricional) {
-                    const info = i.informacion_nutricional;
-                    // Extraemos valores usando ?. para evitar errores si falta algún dato
-                    validItems.push({
-                        n: i.producto,
-                        q: 1, // Al venir ya calculado el total, ponemos cantidad 1
-                        u: 'ración',
-                        k: parseFloat(info.calorias || 0),
-                        p: parseFloat(info.proteinas?.cantidad || 0),
-                        c: parseFloat(info.hidratos_de_carbono?.cantidad || 0),
-                        f: parseFloat(info.grasas_totales?.cantidad || 0)
-                    });
-                } 
-                // CASO 2: FORMATO INTERNO (Backup o formato simple)
-                else if (i.n && i.k !== undefined) {
-                    validItems.push(i);
+    // 1. PDF DEL DÍA ACTUAL
+    pdf: () => {
+        const el = document.getElementById('feed');
+        if(!el || el.innerText.trim() === "") return alert("No hay comidas hoy para generar PDF");
+        const opt = { margin: 10, filename: `Diario_${window.S.d.toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        html2pdf().set(opt).from(el).save();
+    },
+
+    // 2. PDF HISTORIAL VISUAL (Tabla resumen)
+    pdfHistory: async () => {
+        if(!confirm("Esto generará un PDF con el resumen de todo tu historial. ¿Continuar?")) return;
+        document.getElementById('loading-screen').style.display='flex';
+        try {
+            const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
+            let html = `<div style="padding:20px; font-family:sans-serif;">
+                <h1 style="color:#0f172a; text-align:center;">Historial Nutricional - ${window.S.u.name}</h1>
+                <table style="width:100%; border-collapse:collapse; margin-top:20px; font-size:12px;">
+                <tr style="background:#0f172a; color:white;"><th style="padding:8px;">Fecha</th><th style="padding:8px;">Kcal</th><th style="padding:8px;">Prot</th><th style="padding:8px;">Carb</th><th style="padding:8px;">Grasa</th><th style="padding:8px;">Peso</th></tr>`;
+            
+            q.forEach(doc => {
+                const d = doc.data(); const date = doc.id;
+                let tk=0, tp=0, tc=0, tf=0;
+                MEALS.forEach(m => { if(d[m.k]) d[m.k].forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; }); });
+                if(tk > 0) {
+                    html += `<tr style="border-bottom:1px solid #e2e8f0; text-align:center;">
+                        <td style="padding:8px; font-weight:bold;">${date}</td>
+                        <td style="padding:8px;">${Math.round(tk)}</td>
+                        <td style="padding:8px; color:#7c3aed;">${Math.round(tp)}</td>
+                        <td style="padding:8px; color:#0284c7;">${Math.round(tc)}</td>
+                        <td style="padding:8px; color:#ea580c;">${Math.round(tf)}</td>
+                        <td style="padding:8px;">${d.weight || '-'}</td>
+                    </tr>`;
                 }
             });
-
-            if(validItems.length === 0) throw new Error("JSON no reconocido. Revisa el formato.");
+            html += `</table></div>`;
             
-            // Añadir al diario
-            validItems.forEach(item => window.S.day[window.S.tm].push(item));
-            await window.DB.setDay(); 
-            window.UI.closeAll(); 
-            window.Sys.sync();
-            alert("Importado correctamente: " + validItems.length + " alimento(s).");
-            
-        } catch (e) { alert("Error al leer el JSON: " + e.message); }
+            // Crear elemento temporal invisible para generar el PDF
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            document.body.appendChild(tempDiv);
+            const opt = { margin: 10, filename: `Historial_Completo_${window.S.u.name}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            await html2pdf().set(opt).from(tempDiv).save();
+            document.body.removeChild(tempDiv);
+        } catch(e) { alert("Error al generar PDF: " + e.message); }
+        document.getElementById('loading-screen').style.display='none';
     },
+
+    // 3. BACKUP JSON COMPLETO (Todo el historial)
+    exportJSON: async () => {
+        document.getElementById('loading-screen').style.display='flex';
+        try {
+            const q = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/diario`));
+            let history = {};
+            q.forEach(doc => { history[doc.id] = doc.data(); });
+            
+            const backup = {
+                user: window.S.u,
+                history: history,
+                exportedAt: new Date().toISOString()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
+            const anchor = document.createElement('a');
+            anchor.setAttribute("href", dataStr);
+            anchor.setAttribute("download", `Backup_${window.S.u.name}_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(anchor); anchor.click(); anchor.remove();
+        } catch(e) { alert("Error exportando: " + e.message); }
+        document.getElementById('loading-screen').style.display='none';
+    },
+
+    // 4. IMPORTAR JSON (Inteligente: Backup completo o día suelto)
     importJSON: (input) => {
-        const file = input.files[0];
-        if(!file) return;
+        const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                window.S.day = json;
-                await window.DB.setDay();
-                window.Sys.sync();
-                alert("Backup restaurado");
-            } catch(err) { alert("Error al leer archivo"); }
+                document.getElementById('loading-screen').style.display='flex';
+
+                // CASO A: Es un Backup Completo (tiene campo 'history')
+                if(json.history) {
+                    if(!confirm("Esto es un Backup Completo. ¿Quieres restaurar todo el historial? (Sobrescribirá días existentes)")) {
+                        document.getElementById('loading-screen').style.display='none'; return;
+                    }
+                    const batch = fire.writeBatch(db);
+                    let count = 0;
+                    for (const [date, data] of Object.entries(json.history)) {
+                        const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, date);
+                        batch.set(ref, data);
+                        count++;
+                        if(count % 400 === 0) { await batch.commit(); } // Firestore limit safety
+                    }
+                    if(count % 400 !== 0) await batch.commit();
+                    alert(`Restaurados ${count} días del historial.`);
+                    location.reload(); // Recargar para ver cambios
+                } 
+                // CASO B: Es un día suelto o archivo antiguo
+                else {
+                    window.S.day = json;
+                    await window.DB.setDay();
+                    window.Sys.sync();
+                    alert("Día importado correctamente");
+                }
+            } catch(err) { alert("Error al leer archivo: " + err.message); }
+            document.getElementById('loading-screen').style.display='none';
         };
         reader.readAsText(file);
     },
-    pdf: () => {
-        const el = document.getElementById('feed');
-        html2pdf().from(el).save(`diario_${window.S.d.toISOString().split('T')[0]}.pdf`);
+
+    parse: async () => {
+        try {
+            const txt = document.getElementById('json-in').value; if(!txt) return;
+            const obj = JSON.parse(txt);
+            let rawItems = Array.isArray(obj) ? obj : [obj];
+            let validItems = [];
+            rawItems.forEach(i => {
+                if (i.producto && i.informacion_nutricional) {
+                    const info = i.informacion_nutricional;
+                    validItems.push({ n: i.producto, q: 1, u: 'ración', k: parseFloat(info.calorias || 0), p: parseFloat(info.proteinas?.cantidad || 0), c: parseFloat(info.hidratos_de_carbono?.cantidad || 0), f: parseFloat(info.grasas_totales?.cantidad || 0) });
+                } else if (i.n && i.k !== undefined) { validItems.push(i); }
+            });
+            if(validItems.length === 0) throw new Error("JSON no reconocido.");
+            validItems.forEach(item => window.S.day[window.S.tm].push(item));
+            await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
+            alert("Importado correctamente.");
+        } catch (e) { alert("Error JSON: " + e.message); }
     },
-    wipe: async () => {
-        if(confirm("¿Borrar TODO el día?")) {
-            MEALS.forEach(m => window.S.day[m.k] = []);
-            await window.DB.setDay();
-            window.Sys.sync();
-        }
-    }
+    
+    pdf: () => { const el = document.getElementById('feed'); html2pdf().from(el).save(`diario_${window.S.d.toISOString().split('T')[0]}.pdf`); },
+    wipe: async () => { if(confirm("¿Borrar TODO el día?")) { MEALS.forEach(m => window.S.day[m.k] = []); await window.DB.setDay(); window.Sys.sync(); } }
 };
 
 // --- 8. STATS ---
