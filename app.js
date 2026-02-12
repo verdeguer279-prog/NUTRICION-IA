@@ -1,5 +1,5 @@
 import { db, fire } from './firebase-config.js';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // --- 1. CONFIGURACIÓN ---
 const auth = getAuth();
@@ -83,12 +83,12 @@ window.DB = {
     savePlates: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`), { items: window.S.platos }); }
 };
 
-// --- SUSTITUIR BLOQUE 4. UI ---
+// --- 4. UI ---
 window.UI = {
     open: (id) => { const el = document.getElementById(id); if(el) el.style.display='flex'; },
     closeAll: () => { 
         document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
-        window.S.edit = false; window.S.editLib = false; // Reset de estados al cerrar
+        window.S.edit = false; window.S.editLib = false; 
     },
     view: (id) => { 
         ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>{
@@ -97,23 +97,34 @@ window.UI = {
         const target = document.getElementById(id); if(target) target.style.display='block';
     },
     checkAI: () => { if(localStorage.getItem('t_ai_key')) document.getElementById('btn-config-ai').classList.add('configured'); },
+    
+    // --- FUNCIÓN ARREGLADA CON TRY/CATCH PARA EVITAR PANTALLA BLANCA ---
     setQty: (i) => { 
-        document.getElementById('qty-name-in').value = i.n || "";
-        document.getElementById('qty-in').value = i.q || 100;
-        document.getElementById('unit-in').value = i.u || "g"; 
-        
-        const libSection = document.getElementById('lib-edit-section');
-        if(window.S.editLib && !i.isPlate) {
-            if(libSection) libSection.style.display='block';
-            document.getElementById('lib-k').value = i.k || 0;
-            document.getElementById('lib-p').value = i.p || 0;
-            document.getElementById('lib-c').value = i.c || 0;
-            document.getElementById('lib-f').value = i.f || 0;
-        } else {
-            if(libSection) libSection.style.display='none';
-            window.Logic.updateCalories();
-        }
+        try {
+            const elN = document.getElementById('qty-name-in');
+            const elQ = document.getElementById('qty-in');
+            const elU = document.getElementById('unit-in');
+            
+            if(elN) elN.value = i.n || "";
+            if(elQ) elQ.value = i.q || 100;
+            if(elU) elU.value = i.u || "g"; 
+            
+            const libSection = document.getElementById('lib-edit-section');
+            if(window.S.editLib && !i.isPlate) {
+                if(libSection) {
+                    libSection.style.display='block';
+                    document.getElementById('lib-k').value = i.k || 0;
+                    document.getElementById('lib-p').value = i.p || 0;
+                    document.getElementById('lib-c').value = i.c || 0;
+                    document.getElementById('lib-f').value = i.f || 0;
+                }
+            } else {
+                if(libSection) libSection.style.display='none';
+                window.Logic.updateCalories();
+            }
+        } catch(e) { console.error("UI Error:", e); }
     },
+
     openProfile: () => {
         if(!window.S.u) return; const u=window.S.u;
         document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-w').value=u.w;
@@ -166,7 +177,7 @@ window.Calc = {
     }
 };
 
-// --- 6. RENDER ---
+// --- 6. RENDER (DISEÑO ORIGINAL RESTAURADO) ---
 window.Render = {
     all: () => {
         document.getElementById('h-day').innerText = window.S.d.toLocaleDateString('es-ES', {weekday:'long'});
@@ -204,12 +215,14 @@ window.Render = {
         MEALS.forEach(m => {
             const arr=window.S.day[m.k]||[]; let mk=0,mp=0,mc=0,mf=0,rows='';
             
+            // ESTILOS ORIGINALES RESTAURADOS
             const btnBase = "width:36px; height:36px; border-radius:10px; border:1px solid transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem; margin-left:5px; transition:0.2s;";
             const sPlate = btnBase + "background:#f3e8ff; border-color:#d8b4fe; color:#9333ea;";
             const sCopy = btnBase + "background:#eff6ff; border-color:#bfdbfe; color:#2563eb;";
             const sMove = btnBase + "background:#fff7ed; border-color:#fde68a; color:#ea580c;";
             const sDel = btnBase + "background:#fef2f2; border-color:#fca5a5; color:#dc2626;";
             const sAdd = btnBase + "background:#ecfdf5; border-color:#86efac; color:#16a34a; font-weight:bold;";
+            
             const pillBase = "padding:4px 10px; border-radius:12px; font-size:0.8rem; font-weight:700; display:flex; align-items:center; gap:5px;";
             const pPro = pillBase + "background:#f3e8ff; color:#7c3aed;";
             const pCar = pillBase + "background:#e0f2fe; color:#0284c7;";
@@ -263,7 +276,7 @@ window.Render = {
     }
 };
 
-// --- 7. LOGIC (REPARADO: BOTONES, EDICIÓN Y LÁPIZ) ---
+// --- 7. LOGIC (CON LAS FUNCIONES AÑADIDAS) ---
 window.Logic = {
     day: (n) => { window.S.d.setDate(window.S.d.getDate() + n); window.Sys.sync(); },
     autoSave: async () => { await window.DB.setDay(); window.Render.all(); },
@@ -276,7 +289,6 @@ window.Logic = {
         } catch (e) { alert("Error: "+e.message); }
     },
     
-    // --- BOTÓN VERDE + (AÑADIR) ---
     openAdd: (mk) => {
         window.S.tm = mk; window.S.edit = false; window.S.editLib = false;
         window.UI.view('v-home'); window.UI.open('m-add');
@@ -346,10 +358,59 @@ window.Logic = {
     openCreatePlate: (mk) => { window.S.srcMeal=mk; const c=document.getElementById('plate-ingredients-list'); c.innerHTML=''; window.S.day[mk].forEach((it,i)=>{c.innerHTML+=`<div class="plate-check-row"><span>${it.n}</span><input type="checkbox" value="${i}" checked></div>`}); window.UI.open('m-create-plate'); },
     savePlateToDb: async () => { const n=document.getElementById('plate-name').value; const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("Plato guardado"); },
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
-    execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); }
+    execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); },
+
+    // --- FUNCIONES AÑADIDAS QUE FALTABAN ---
+    parse: async () => {
+        try {
+            const txt = document.getElementById('json-in').value;
+            if(!txt) return;
+            const obj = JSON.parse(txt);
+            const items = Array.isArray(obj) ? obj : [obj];
+            const validItems = items.filter(i => i.n && i.k !== undefined);
+            if(validItems.length === 0) throw new Error("JSON sin formato de alimento válido");
+            
+            validItems.forEach(i => window.S.day[window.S.tm].push(i));
+            await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
+            alert("Importado correctamente");
+        } catch (e) { alert("Error en el JSON: " + e.message); }
+    },
+    exportJSON: () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.S.day));
+        const anchor = document.createElement('a');
+        anchor.setAttribute("href", dataStr);
+        anchor.setAttribute("download", "diario_" + window.S.d.toISOString().split('T')[0] + ".json");
+        document.body.appendChild(anchor); anchor.click(); anchor.remove();
+    },
+    importJSON: (input) => {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                window.S.day = json;
+                await window.DB.setDay();
+                window.Sys.sync();
+                alert("Backup restaurado");
+            } catch(err) { alert("Error al leer archivo"); }
+        };
+        reader.readAsText(file);
+    },
+    pdf: () => {
+        const el = document.getElementById('feed');
+        html2pdf().from(el).save(`diario_${window.S.d.toISOString().split('T')[0]}.pdf`);
+    },
+    wipe: async () => {
+        if(confirm("¿Borrar TODO el día?")) {
+            MEALS.forEach(m => window.S.day[m.k] = []);
+            await window.DB.setDay();
+            window.Sys.sync();
+        }
+    }
 };
 
-// --- 8. STATS (ANILLO CORRECTO) ---
+// --- 8. STATS ---
 window.Stats = {
     chartDaily: null, chartWeekly: null, chartWeight: null, currentDate: new Date(),
     open: () => { window.S.d = new Date(); window.UI.open('m-stats'); setTimeout(window.Stats.updateView, 150); },
@@ -386,9 +447,8 @@ window.Stats = {
             const diffCal = goal - dayCal;
             const isOver = diffCal < 0;
             
-            // GRÁFICA AZUL/ROJA
             const cData = isOver ? [goal, Math.abs(diffCal)] : [dayCal, diffCal];
-            const cBg = isOver ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#10b981']; // Verde si sobra
+            const cBg = isOver ? ['#3b82f6', '#ef4444'] : ['#3b82f6', '#10b981']; 
             
             const ctxD = document.getElementById('chart-daily');
             if(window.Stats.chartDaily) window.Stats.chartDaily.destroy();
@@ -397,7 +457,6 @@ window.Stats = {
             const diffColor = isOver ? 'text-bad' : 'text-ok';
             document.getElementById('daily-txt').innerHTML=`<span class="srt-val">${Math.round(dayCal)}</span><span class="srt-lbl">de ${goal}</span><br><span class="${diffColor}">${isOver?'+':''}${Math.round(Math.abs(diffCal))}</span>`;
 
-            // SEMANAL
             const dObj = new Date(window.S.d); const dayNum = dObj.getDay()||7; dObj.setDate(dObj.getDate()-dayNum+1);
             let wCal=0, wGoal=goal*7;
             for(let i=0;i<7;i++){ const tD=new Date(dObj); tD.setDate(dObj.getDate()+i); const k=tD.toISOString().split('T')[0]; const h=hist.find(x=>x.id===k); if(h) MEALS.forEach(m=>{if(h[m.k]) h[m.k].forEach(x=>wCal+=x.k)}); }
@@ -405,7 +464,6 @@ window.Stats = {
             window.Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), { type:'doughnut', data:{labels:['S','R'],datasets:[{data:[wCal, Math.max(0, wGoal-wCal)], backgroundColor:['#8b5cf6','#e2e8f0']}]}, options:{cutout:'75%', plugins:{legend:{display:false}}} });
             document.getElementById('weekly-txt').innerHTML=`<span class="srt-val">${Math.round(wCal)}</span><span class="srt-lbl">de ${wGoal}</span>`;
 
-            // PESO
             const cD=[], cW=[]; for(let i=29; i>=0; i--) { const tD=new Date(window.S.d); tD.setDate(tD.getDate()-i); const k=tD.toISOString().split('T')[0]; cD.push(k.slice(5)); const h=hist.find(x=>x.id===k); cW.push(h?h.weight:null); }
             if(window.Stats.chartWeight) window.Stats.chartWeight.destroy();
             window.Stats.chartWeight = new Chart(document.getElementById('chart-weight'), { type:'line', data:{labels:cD, datasets:[{label:'Peso', data:cW, borderColor:'#10b981', tension:0.4, spanGaps:true}]}, options:{plugins:{legend:{display:false}}, maintainAspectRatio:false} });
@@ -413,7 +471,7 @@ window.Stats = {
     }
 };
 
-/// --- 9. AI REPARADA (USANDO GEMINI 2.0 FLASH) ---
+// --- 9. AI ACTUALIZADA A 2.0 (SOLUCIONA 404) ---
 window.AI = {
     saveConfig: () => { localStorage.setItem('t_ai_key', document.getElementById('ai-key').value); window.UI.view('v-home'); window.UI.checkAI(); },
     listen: () => { 
@@ -422,50 +480,67 @@ window.AI = {
         const rec = new Speech(); rec.lang='es-ES'; rec.start(); 
         rec.onresult=(e)=>document.getElementById('ai-text').value+=e.results[0][0].transcript; 
     },
+    cleanAndParse: (txt) => {
+        let clean = txt.replace(/```json/g, '').replace(/```/g, '');
+        const first = clean.indexOf('['); const last = clean.lastIndexOf(']');
+        if (first === -1 || last === -1) throw new Error("IA no devolvió una lista válida.");
+        clean = clean.substring(first, last + 1);
+        return JSON.parse(clean);
+    },
     process: async () => {
         const k = localStorage.getItem('t_ai_key'), t = document.getElementById('ai-text').value; if(!k) return window.UI.view('v-conf');
+        document.getElementById('loading-screen').style.display='flex';
         try {
-            // ACTUALIZADO A GEMINI 2.0 FLASH PARA EVITAR 404
-            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`, {
+            // CAMBIO CLAVE: USAMOS gemini-2.5-flash PARA EVITAR ERRORES
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ contents: [{ parts: [{ text: `Analiza: "${t}". Extrae alimentos y devuelve SOLO un array JSON válido sin markdown ni explicaciones: [{"n":"Nombre","q":100,"u":"g","k":kcal_total,"p":pro,"c":carb,"f":fat}]` }] }] })
+                body: JSON.stringify({ contents: [{ parts: [{ text: `Analiza: "${t}". Extrae alimentos y devuelve SOLO un array JSON válido: [{"n":"Nombre","q":100,"u":"g","k":kcal_total,"p":pro,"c":carb,"f":fat}]` }] }] })
             });
             const d = await r.json(); 
-            if(!d.candidates || !d.candidates[0].content) throw new Error("IA no respondió correctamente. Revisa tu clave API.");
-            const rawText = d.candidates[0].content.parts[0].text;
-            // Limpieza robusta: Extraemos solo lo que esté entre [ ]
-            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-            if(!jsonMatch) throw new Error("No se pudo extraer el JSON de la respuesta.");
-            const items = JSON.parse(jsonMatch[0]);
+            if(!d.candidates) throw new Error("Error API: " + JSON.stringify(d));
+            
+            const items = window.AI.cleanAndParse(d.candidates[0].content.parts[0].text);
             items.forEach(i => window.S.day[window.S.tm].push(i));
             await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
         } catch(e) { alert("Error IA: " + e.message); }
+        document.getElementById('loading-screen').style.display='none';
     },
     processImage: async (file) => {
         const k = localStorage.getItem('t_ai_key'); if(!k) return window.UI.view('v-conf');
+        document.getElementById('loading-screen').style.display='flex';
         const reader = new FileReader(); reader.readAsDataURL(file);
         reader.onload = async () => {
             const base64 = reader.result.split(',')[1];
             try {
-                // ACTUALIZADO A GEMINI 2.0 FLASH
-                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`, {
+                // CAMBIO CLAVE: USAMOS gemini-2.5-flash AQUÍ TAMBIÉN
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ contents: [{ parts: [
-                        { text: "Analiza la tabla nutricional de la imagen. Extrae los valores por cada 100g. Devuelve SOLO un array JSON sin texto extra: [{'n':'Nombre','q':100,'u':'g','k':kcal,'p':pro,'c':carb,'f':fat}]" },
+                        { text: "Analiza la imagen. Devuelve SOLO un array JSON con los macros aproximados por 100g: [{'n':'Nombre','q':100,'u':'g','k':kcal,'p':pro,'c':carb,'f':fat}]" },
                         { inline_data: { mime_type: file.type, data: base64 } }
                     ] }] })
                 });
                 const d = await r.json();
-                if(!d.candidates || !d.candidates[0].content) throw new Error("IA no pudo leer la imagen.");
-                const rawText = d.candidates[0].content.parts[0].text;
-                const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-                if(!jsonMatch) throw new Error("Tabla no detectada. Intenta que se vea más clara.");
-                JSON.parse(jsonMatch[0]).forEach(i => window.S.day[window.S.tm].push(i));
+                if(!d.candidates) throw new Error("Error al leer imagen.");
+                
+                const items = window.AI.cleanAndParse(d.candidates[0].content.parts[0].text);
+                items.forEach(i => window.S.day[window.S.tm].push(i));
                 await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
             } catch(e) { alert("Error Imagen: " + e.message); }
+            document.getElementById('loading-screen').style.display='none';
         };
     }
 };
 
-window.selectFoundItem = (i) => { const s=window.S.lastSearch[i]; if(s.isPlate){if(confirm("Añadir?")){s.items.forEach(it=>window.S.day[window.S.tm].push(it));window.Logic.autoSave();}} else {window.S.item=s;window.UI.setQty(s);window.UI.view('v-qty');} };
+window.selectFoundItem = (i) => { 
+    try {
+        const s=window.S.lastSearch[i]; 
+        if(s.isPlate){
+            if(confirm("Añadir?")){s.items.forEach(it=>window.S.day[window.S.tm].push(it));window.Logic.autoSave();}
+        } else {
+            window.S.item=s; window.UI.setQty(s); window.UI.view('v-qty');
+        }
+    } catch(e) { console.error(e); }
+};
+
 if (document.readyState === 'complete') window.Sys.init(); else window.addEventListener('load', window.Sys.init);
