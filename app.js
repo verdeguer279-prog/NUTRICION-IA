@@ -361,26 +361,47 @@ window.Logic = {
     execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); },
 
     // --- FUNCIONES AÑADIDAS QUE FALTABAN ---
-    parse: async () => {
+parse: async () => {
         try {
             const txt = document.getElementById('json-in').value;
             if(!txt) return;
             const obj = JSON.parse(txt);
-            const items = Array.isArray(obj) ? obj : [obj];
-            const validItems = items.filter(i => i.n && i.k !== undefined);
-            if(validItems.length === 0) throw new Error("JSON sin formato de alimento válido");
             
-            validItems.forEach(i => window.S.day[window.S.tm].push(i));
-            await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
-            alert("Importado correctamente");
-        } catch (e) { alert("Error en el JSON: " + e.message); }
-    },
-    exportJSON: () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.S.day));
-        const anchor = document.createElement('a');
-        anchor.setAttribute("href", dataStr);
-        anchor.setAttribute("download", "diario_" + window.S.d.toISOString().split('T')[0] + ".json");
-        document.body.appendChild(anchor); anchor.click(); anchor.remove();
+            // Convertimos a array por si pegas uno solo o una lista
+            let rawItems = Array.isArray(obj) ? obj : [obj];
+            let validItems = [];
+
+            rawItems.forEach(i => {
+                // CASO 1: TU NUEVO FORMATO (Estructura anidada)
+                if (i.producto && i.informacion_nutricional) {
+                    const info = i.informacion_nutricional;
+                    // Extraemos valores usando ?. para evitar errores si falta algún dato
+                    validItems.push({
+                        n: i.producto,
+                        q: 1, // Al venir ya calculado el total, ponemos cantidad 1
+                        u: 'ración',
+                        k: parseFloat(info.calorias || 0),
+                        p: parseFloat(info.proteinas?.cantidad || 0),
+                        c: parseFloat(info.hidratos_de_carbono?.cantidad || 0),
+                        f: parseFloat(info.grasas_totales?.cantidad || 0)
+                    });
+                } 
+                // CASO 2: FORMATO INTERNO (Backup o formato simple)
+                else if (i.n && i.k !== undefined) {
+                    validItems.push(i);
+                }
+            });
+
+            if(validItems.length === 0) throw new Error("JSON no reconocido. Revisa el formato.");
+            
+            // Añadir al diario
+            validItems.forEach(item => window.S.day[window.S.tm].push(item));
+            await window.DB.setDay(); 
+            window.UI.closeAll(); 
+            window.Sys.sync();
+            alert("Importado correctamente: " + validItems.length + " alimento(s).");
+            
+        } catch (e) { alert("Error al leer el JSON: " + e.message); }
     },
     importJSON: (input) => {
         const file = input.files[0];
