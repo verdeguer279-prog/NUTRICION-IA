@@ -359,10 +359,12 @@ window.Logic = {
         item.isPlate ? await window.DB.savePlates() : await window.DB.saveLib(); window.Logic.search();
     },
 
-    openEditLib: (i) => {
-        const item = window.S.lastSearch[i]; window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
-        window.UI.setQty({...item, q:100, u:'g'}); window.UI.view('v-qty'); window.UI.open('m-add');
-    },
+openEditLib: (i) => {
+    const item = window.S.lastSearch[i]; window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
+    window.UI.setQty({...item, q:100, u:'g'}); 
+    document.getElementById('lib-edit-section').style.display='block';
+    window.UI.view('v-qty'); window.UI.open('m-add');
+},
 
     // MODIFICACIÓN 3: Actualizar saveLibEdit para guardar baseWeight y unitConfigs
     saveLibEdit: async () => {
@@ -384,66 +386,75 @@ window.Logic = {
     },
 
     // MODIFICACIÓN 4: Reemplazar saveItem completo con lógica de unidades convertibles
-    saveItem: async () => {
-        if(window.S.editLib) return window.Logic.saveLibEdit();
-        const q=parseFloat(document.getElementById('qty-in').value);
-        const u=document.getElementById('unit-in').value;
-        const n=document.getElementById('qty-name-in').value;
-        const b=window.S.item;
-        
-        let factor = q/100;
-        if(u !== 'g' && u !== 'ml') {
-            const unitWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
-            factor = (q * unitWeight) / 100;
-        }
-        
-        const ent={n, q, u, k:b.k*factor, p:b.p*factor, c:b.c*factor, f:b.f*factor, baseWeight: b.baseWeight || 100};
-        if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx]=ent; else window.S.day[window.S.tm].push(ent);
-        await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
-    },
+saveItem: async () => {
+    if(window.S.editLib) return window.Logic.saveLibEdit();
+    const q=parseFloat(document.getElementById('qty-in').value);
+    const u=document.getElementById('unit-in').value;
+    const n=document.getElementById('qty-name-in').value;
+    
+    // Tomar las calorías mostradas (que son el resultado final)
+    const displayKcal = parseFloat(document.getElementById('calc-kcal').innerText) || 0;
+    const displayP = parseFloat(document.getElementById('calc-macro-p').innerText) || 0;
+    const displayC = parseFloat(document.getElementById('calc-macro-c').innerText) || 0;
+    const displayF = parseFloat(document.getElementById('calc-macro-f').innerText) || 0;
+    
+    const ent={n, q, u, k: displayKcal, p: displayP, c: displayC, f: displayF, baseWeight: window.S.item.baseWeight || 100};
+    if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx]=ent; else window.S.day[window.S.tm].push(ent);
+    await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
+},
 
     // MODIFICACIÓN 5 y 6: Reemplazar updateCalories y añadir updateUnitDisplay y saveUnitConfig
-    updateCalories: () => { 
-        const q=parseFloat(document.getElementById('qty-in').value)||0;
-        const u=document.getElementById('unit-in').value;
-        if(!window.S.item) return;
-        
-        let factor = q/100;
-        if(u !== 'g' && u !== 'ml') {
-            const unitWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
-            factor = (q * unitWeight) / 100;
-        }
-        
-        const kcal = Math.round(window.S.item.k * factor);
-        const p = Math.round(window.S.item.p * factor);
-        const c = Math.round(window.S.item.c * factor);
-        const f = Math.round(window.S.item.f * factor);
-        
-        document.getElementById('calc-kcal').innerText = kcal;
-        document.getElementById('calc-macro-p').innerText = `P ${p}g`;
-        document.getElementById('calc-macro-c').innerText = `C ${c}g`;
-        document.getElementById('calc-macro-f').innerText = `F ${f}g`;
-    },
+updateCalories: () => { 
+    const q=parseFloat(document.getElementById('qty-in').value)||0;
+    const u=document.getElementById('unit-in').value;
+    if(!window.S.item) return;
+    
+    // Calcular peso real en gramos
+    let pesoEnGramos = q;
+    if(u !== 'g' && u !== 'ml') {
+        const unitWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
+        pesoEnGramos = q * unitWeight;
+    }
+    
+    // Usar los valores POR 100g del alimento original
+    const kcalPor100g = window.S.item.k;
+    const pPor100g = window.S.item.p;
+    const cPor100g = window.S.item.c;
+    const fPor100g = window.S.item.f;
+    
+    // Calcular para el peso actual
+    const kcal = Math.round((kcalPor100g * pesoEnGramos) / 100);
+    const p = Math.round((pPor100g * pesoEnGramos) / 100);
+    const c = Math.round((cPor100g * pesoEnGramos) / 100);
+    const f = Math.round((fPor100g * pesoEnGramos) / 100);
+    
+    document.getElementById('calc-kcal').innerText = kcal;
+    document.getElementById('calc-macro-p').innerText = `P ${p}g`;
+    document.getElementById('calc-macro-c').innerText = `C ${c}g`;
+    document.getElementById('calc-macro-f').innerText = `F ${f}g`;
+},
 
-    updateUnitDisplay: () => {
-        const u = document.getElementById('unit-in').value;
-        const section = document.getElementById('unit-config-section');
-        const label = document.getElementById('unit-label');
-        
-        const unitLabels = { 'g': 'Gramos', 'ml': 'Mililitros', 'oz': 'Onzas', 'lata': 'Lata', 'porción': 'Porción', 'taza': 'Taza', 'cucharada': 'Cucharada', 'pieza': 'Pieza' };
-        const unitDefaults = { 'oz': 28.35, 'lata': 56, 'porción': 100, 'taza': 240, 'cucharada': 15, 'pieza': 50 };
-        
-        if(u === 'g' || u === 'ml') {
-            section.style.display = 'none';
-        } else {
-            section.style.display = 'block';
-            label.innerText = unitLabels[u] || u;
-            const input = document.getElementById('unit-weight');
-            if(!input.value) input.value = unitDefaults[u] || 100;
-        }
-        window.Logic.updateCalories();
-    },
-
+updateUnitDisplay: () => {
+    const u = document.getElementById('unit-in').value;
+    const section = document.getElementById('unit-config-section');
+    const label = document.getElementById('unit-label');
+    
+    const unitLabels = { 'g': 'Gramos', 'ml': 'Mililitros', 'oz': 'Onzas', 'lata': 'Lata', 'porción': 'Porción', 'taza': 'Taza', 'cucharada': 'Cucharada', 'pieza': 'Pieza' };
+    const unitDefaults = { 'oz': 28.35, 'lata': 56, 'porción': 100, 'taza': 240, 'cucharada': 15, 'pieza': 50 };
+    
+    if(u === 'g' || u === 'ml') {
+        section.style.display = 'none';
+        document.getElementById('unit-weight').value = '';
+    } else {
+        section.style.display = 'block';
+        label.innerText = unitLabels[u] || u;
+        const input = document.getElementById('unit-weight');
+        if(!input.value) input.value = unitDefaults[u] || 100;
+    }
+    
+    // IMPORTANTE: Recalcular calorías cuando cambia la unidad
+    setTimeout(() => window.Logic.updateCalories(), 100);
+},
     saveUnitConfig: () => {
         const n = document.getElementById('qty-name-in').value;
         const u = document.getElementById('unit-in').value;

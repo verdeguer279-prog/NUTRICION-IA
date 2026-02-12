@@ -125,9 +125,37 @@
             <div id="v-conf" style="display:none"><h4>Config IA</h4><input type="password" id="ai-key" class="inp" placeholder="API Key"><input type="text" id="ai-model" class="inp" value="gemini-1.5-flash"><button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button><button class="btn sec" onclick="window.UI.view('v-home')">Volver</button></div>
             <div id="v-qty" style="display:none">
                 <input id="qty-name-in" class="inp" style="text-align:center;font-weight:bold" placeholder="Nombre">
-                <div style="display:flex;gap:10px"><input type="number" id="qty-in" class="inp" placeholder="Cant" oninput="window.Logic.updateCalories()"><select id="unit-in" class="unit-selector"><option value="g">g</option><option value="ml">ml</option></select></div>
+                <!-- MODIFICACIÓN 1: Selector de unidades expandido con onchange -->
+                <div style="display:flex;gap:10px; flex:1"><input type="number" id="qty-in" class="inp" placeholder="Cantidad" oninput="window.Logic.updateCalories()"><select id="unit-in" class="unit-selector" onchange="window.Logic.updateUnitDisplay()"><option value="g">g</option><option value="ml">ml</option><option value="oz">oz</option><option value="lata">lata</option><option value="porción">porción</option><option value="taza">taza</option><option value="cucharada">cucharada</option><option value="pieza">pieza</option></select></div>
+                
+                <!-- MODIFICACIÓN 2: Nueva sección de configuración de unidades -->
+                <div id="unit-config-section" style="display:none; margin-top:10px; padding:10px; background:#f0f9ff; border-radius:8px; border-left:3px solid #3b82f6">
+                  <label style="font-size:0.85rem; color:#1e40af; font-weight:600">⚙️ Configurar Unidad: <span id="unit-label"></span></label>
+                  <div style="display:flex; gap:8px; margin-top:8px">
+                    <input type="number" id="unit-weight" class="inp" placeholder="Peso en g" step="0.1" style="flex:1" oninput="window.Logic.updateCalories()">
+                    <button class="btn pri" style="width:auto; padding:8px 12px; font-size:0.9rem" onclick="window.Logic.saveUnitConfig()">Guardar</button>
+                  </div>
+                  <small style="color:#64748b; display:block; margin-top:5px">Ej: 1 lata = 56g</small>
+                </div>
+                
                 <div id="lib-edit-section" style="display:none;margin-top:10px"><label>Kcal/100g</label><input type="number" id="lib-k" class="inp" oninput="window.Logic.updateLibCalories()"><div style="display:flex;gap:5px"><input id="lib-p" class="inp" placeholder="P"><input id="lib-c" class="inp" placeholder="C"><input id="lib-f" class="inp" placeholder="F"></div></div>
-                <div style="margin-top:10px;text-align:center">Total: <span id="calc-kcal">0</span> kcal</div>
+                
+                <!-- MODIFICACIÓN 3: Display mejorado de calorías totales con macros -->
+<div style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0">
+  <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px"><strong>⚡ Editar Calorías (opcional)</strong></div>
+  <input type="number" id="manual-kcal-edit" class="inp" placeholder="Kcal totales (dejar vacío para automático)" oninput="window.Logic.updateCalories()" style="margin-bottom:10px">
+  <small style="color:#94a3b8; display:block; margin-bottom:10px">Si cambias esto, recalcula los macros automáticamente</small>
+  
+  <div style="text-align:center">
+    <div style="font-size:0.85rem; color:#64748b; margin-bottom:5px">Total Nutricional</div>
+    <div style="font-weight:bold; font-size:1.2rem; color:#0f172a"><span id="calc-kcal">0</span> kcal</div>
+    <div style="font-size:0.75rem; color:#94a3b8; margin-top:5px">
+      <span id="calc-macro-p">P 0g</span> • <span id="calc-macro-c">C 0g</span> • <span id="calc-macro-f">F 0g</span>
+    </div>
+  </div>
+  <div id="weight-conversion-info" style="font-size:0.8rem; color:#059669; margin-top:8px; display:none"></div>
+</div>
+                
                 <button class="btn pri" onclick="window.Logic.saveItem()">Guardar</button><button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
             </div>
             <div id="v-json" style="display:none"><textarea id="json-in" class="inp" style="height:100px;font-family:monospace"></textarea><button class="btn pri" onclick="window.Logic.parse()">Procesar</button><button class="btn sec" onclick="window.UI.view('v-home')">Volver</button></div>
