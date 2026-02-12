@@ -15,6 +15,12 @@ window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], al
 // --- 2. SISTEMA ---
 window.Sys = {
     init: async () => {
+        let tX = 0;
+document.addEventListener('touchstart', e => tX = e.changedTouches[0].screenX);
+document.addEventListener('touchend', e => {
+    if (e.changedTouches[0].screenX < tX - 50) window.Logic.day(1); // Deslizar izq -> día siguiente
+    if (e.changedTouches[0].screenX > tX + 50) window.Logic.day(-1); // Deslizar der -> día anterior
+});
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 ['v-login'].forEach(x=>document.getElementById(x).style.display='none');
@@ -182,6 +188,7 @@ window.Render = {
     all: () => {
         document.getElementById('h-day').innerText = window.S.d.toLocaleDateString('es-ES', {weekday:'long'});
         document.getElementById('h-full').innerText = window.S.d.toLocaleDateString('es-ES');
+        if(window.S.u) document.getElementById('h-av').innerText = window.S.u.name.charAt(0).toUpperCase();
         let t={k:0, p:0, c:0, f:0}; Object.values(window.S.day).forEach(arr=>{if(Array.isArray(arr))arr.forEach(i=>{t.k+=i.k;t.p+=i.p;t.c+=i.c;t.f+=i.f;});});
         
         if(!window.S.u||!window.S.u.calc)return;
