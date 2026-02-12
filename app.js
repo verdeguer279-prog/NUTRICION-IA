@@ -1,7 +1,6 @@
 import { db, fire } from './firebase-config.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// --- 1. CONFIGURACIÓN ---
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 const APP_NAME = "Nutr-IA";
@@ -10,23 +9,14 @@ setTimeout(() => { const s = document.getElementById('loading-screen'); if (s &&
 
 const MEALS = [ { k: '01_desayuno', n: 'Desayuno', i: 'fa-coffee' }, { k: '02_almuerzo', n: 'Almuerzo', i: 'fa-bread-slice' }, { k: '03_comida', n: 'Comida', i: 'fa-utensils' }, { k: '04_merienda', n: 'Merienda', i: 'fa-apple-alt' }, { k: '05_cena', n: 'Cena', i: 'fa-moon' } ];
 
-// MAPA DE PESOS PARA UNIDADES PERSONALIZADAS
 const UNIT_WEIGHT_MAP = {
-    'g': 1,
-    'ml': 1,
-    'jarra250ml': 250,
-    'unidad': 100,
-    'lata': 60,
-    'porción': 100,
-    'taza': 240,
-    'cucharada': 15
+    'g': 1, 'ml': 1, 'jarra250ml': 250, 'unidad': 100, 'lata': 60, 'porción': 100, 'taza': 240, 'cucharada': 15
 };
 
-window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', lastSearch: [], plateEditIdx: -1, editLibItem: null, editLib: false, unitConfigs: {}, editingPlate: false, plateMode: 'create' };
+window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], favoritos: [], platos: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', lastSearch: [], plateEditIdx: -1, editLibItem: null, editLib: false, unitConfigs: {}, editingPlate: false, plateMode: 'create' };
 
-// --- 2. SISTEMA ---
 window.Sys = {
-init: async () => {
+    init: async () => {
         let tX = 0;
         document.addEventListener('touchstart', e => tX = e.changedTouches[0].screenX);
         document.addEventListener('touchend', e => {
@@ -44,13 +34,11 @@ init: async () => {
                 try {
                     const q = fire.query(fire.collection(db, 'usuarios'), fire.where('uid', '==', user.uid));
                     const querySnapshot = await fire.getDocs(q);
-
                     if (!querySnapshot.empty) {
                         dbId = querySnapshot.docs[0].id;
                     } else {
                         const nameRef = fire.doc(db, 'usuarios', user.displayName || "");
                         const nameSnap = await fire.getDoc(nameRef);
-                        
                         if (nameSnap.exists() && !nameSnap.data().uid) {
                             await fire.updateDoc(nameRef, { uid: user.uid });
                             dbId = nameSnap.id;
@@ -73,6 +61,7 @@ init: async () => {
     load: async (id, email, name) => {
         try {
             await window.DB.lib();
+            await window.DB.loadFavoritos();
             let uData = await window.DB.getU(id);
             if (!uData) {
                 window.UI.newProfile();
@@ -95,25 +84,22 @@ init: async () => {
     sync: async () => { window.S.day = await window.DB.getDay(window.S.d); window.Render.all(); }
 };
 
-// --- 3. BASE DE DATOS ---
 window.DB = {
     col: (n) => fire.collection(db, n),
     doc: (p, i) => fire.doc(db, p, i),
     norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), w: parseFloat(u.w||70), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),
-    setU: async (u) => {
-        await fire.setDoc(fire.doc(db, 'usuarios', u.name), u);
-        window.S.uid = u.name; 
-    },
+    setU: async (u) => { await fire.setDoc(fire.doc(db, 'usuarios', u.name), u); window.S.uid = u.name; },
     getU: async (id) => { const s = await fire.getDoc(fire.doc(db, 'usuarios', id)); return s.exists() ? s.data() : null; },
     getDay: async (d) => { if(!window.S.uid) return {}; const k = d.toISOString().split('T')[0]; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, k)); let data = s.exists() ? s.data() : {}; MEALS.forEach(m => { if (!data[m.k]) data[m.k] = [] }); return data; },
     setDay: async () => { if(!window.S.uid) return; const k = window.S.d.toISOString().split('T')[0]; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, k), window.S.day); },
     lib: async () => { const s = await fire.getDoc(window.DB.doc('sistema', 'biblioteca')); window.S.lib = s.exists() ? s.data().items : []; },
     saveLib: async () => { await fire.setDoc(window.DB.doc('sistema', 'biblioteca'), { items: window.S.lib }); },
+    loadFavoritos: async () => { if(!window.S.uid) return; try { const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/favoritos`)); window.S.favoritos = s.exists() ? s.data().items : []; } catch (e) { window.S.favoritos = []; } },
+    saveFavoritos: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/favoritos`), { items: window.S.favoritos }); },
     getPlates: async () => { try { if(!window.S.uid) return; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`)); window.S.platos = s.exists() ? s.data().items : []; } catch (e) { window.S.platos = []; } },
     savePlates: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`), { items: window.S.platos }); }
 };
 
-// --- 4. UI ---
 window.UI = {
     open: (id) => { const el = document.getElementById(id); if(el) el.style.display='flex'; },
     closeAll: () => { 
@@ -139,6 +125,7 @@ window.UI = {
             if(elU) elU.value = i.u || "g"; 
             
             const libSection = document.getElementById('lib-edit-section');
+            
             if(window.S.editLib && !i.isPlate) {
                 if(libSection) {
                     libSection.style.display='block';
@@ -165,7 +152,6 @@ window.UI = {
     newProfile: () => { window.S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); window.UI.open('m-prof'); }
 };
 
-// --- 5. CALC ---
 window.Calc = {
     bio: () => { 
         if(!window.S.u)return; 
@@ -207,7 +193,6 @@ window.Calc = {
     }
 };
 
-// --- 6. RENDER (DISEÑO ORIGINAL RESTAURADO) ---
 window.Render = {
     all: () => {
         document.getElementById('h-day').innerText = window.S.d.toLocaleDateString('es-ES', {weekday:'long'});
@@ -221,11 +206,7 @@ window.Render = {
         const diff = tg.goal - t.k;
         const maintenance = tg.maintenance || tg.goal;
         
-        const bioHtml = `
-            <div class="top-stat-bar" style="display:flex; justify-content:center; gap:20px; font-weight:700; font-size:0.9rem; margin-bottom:10px;">
-                <div style="color:#f59e0b; display:flex; align-items:center; gap:5px"><i class="fas fa-fire"></i> Mant: ${maintenance}</div>
-                <div style="color:#ef4444; display:flex; align-items:center; gap:5px"><i class="fas fa-bullseye"></i> Meta: ${tg.goal}</div>
-            </div>`;
+        const bioHtml = `<div class="top-stat-bar" style="display:flex; justify-content:center; gap:20px; font-weight:700; font-size:0.9rem; margin-bottom:10px;"><div style="color:#f59e0b; display:flex; align-items:center; gap:5px"><i class="fas fa-fire"></i> Mant: ${maintenance}</div><div style="color:#ef4444; display:flex; align-items:center; gap:5px"><i class="fas fa-bullseye"></i> Meta: ${tg.goal}</div></div>`;
         document.getElementById('bio-txt').innerHTML = bioHtml;
 
         const ring = document.getElementById('ring-bg'), lbl=document.getElementById('l-restan'), val=document.getElementById('v-rem');
@@ -306,48 +287,48 @@ window.Render = {
     }
 };
 
-// --- 7. LOGIC (PDF, BACKUP Y GESTIÓN) ---
 window.Logic = {
     day: (n) => { window.S.d.setDate(window.S.d.getDate() + n); window.Sys.sync(); },
     autoSave: async () => { await window.DB.setDay(); window.Render.all(); },
     
-   saveUser: async () => {
-    const n = document.getElementById('e-name').value; 
-    if (!n) return alert("Nombre obligatorio");
-    try {
-        const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid;
-        const val = (id) => parseFloat(document.getElementById(id).value);
-        
-        const u = { 
-            uid: realUid, 
-            name: n, 
-            email: auth.currentUser ? auth.currentUser.email : "", 
-            h: val('e-h'), w: val('e-w'), y: val('e-y'), 
-            g: document.getElementById('e-g').value, 
-            act: val('e-act'), mod: val('e-mod'), 
-            customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
-        };
-        
-        await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
-        alert("¡Perfil vinculado con éxito!");
-        
-        window.S.u = window.DB.norm(u);
-        window.S.uid = n; 
-        window.Calc.bio();
-        window.UI.closeAll();
-        if (window.S.u) document.getElementById('h-av').innerText = window.S.u.name.charAt(0).toUpperCase();
-        location.reload();
-    } catch (e) { alert("Error: " + e.message); }
-},
+    saveUser: async () => {
+        const n = document.getElementById('e-name').value; 
+        if (!n) return alert("Nombre obligatorio");
+        try {
+            const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid;
+            const val = (id) => parseFloat(document.getElementById(id).value);
+            const u = { 
+                uid: realUid, 
+                name: n, 
+                email: auth.currentUser ? auth.currentUser.email : "", 
+                h: val('e-h'), w: val('e-w'), y: val('e-y'), 
+                g: document.getElementById('e-g').value, 
+                act: val('e-act'), mod: val('e-mod'), 
+                customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
+            };
+            await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
+            alert("¡Perfil vinculado con éxito!");
+            window.S.u = window.DB.norm(u);
+            window.S.uid = n; 
+            window.Calc.bio();
+            window.UI.closeAll();
+            if (window.S.u) document.getElementById('h-av').innerText = window.S.u.name.charAt(0).toUpperCase();
+            location.reload();
+        } catch (e) { alert("Error: " + e.message); }
+    },
     
-    openAdd: (mk) => { window.S.tm = mk; window.S.edit = false; window.S.editLib = false; window.UI.view('v-home'); window.UI.open('m-add'); if(window.S.lib.length > 0) window.Logic.search(); },
+    openAdd: (mk) => { window.S.tm = mk; window.S.edit = false; window.S.editLib = false; window.UI.view('v-home'); window.UI.open('m-add'); if(window.S.lib.length > 0 || window.S.favoritos.length > 0) window.Logic.search(); },
 
     search: () => {
         const q = document.getElementById('src-in').value.toLowerCase();
         const b = document.getElementById('res-list'); b.innerHTML = '';
-        const res = [...window.S.platos.filter(x => x.n.toLowerCase().includes(q)).map(p => ({...p, isPlate: true})), ...window.S.lib.filter(x => x.n.toLowerCase().includes(q))];
+        const favoritos = window.S.favoritos.map(f => ({...f, isFavorito: true}));
+        const platos = window.S.platos.filter(x => x.n.toLowerCase().includes(q)).map(p => ({...p, isPlate: true}));
+        const biblioteca = window.S.lib.filter(x => x.n.toLowerCase().includes(q));
+        const res = [...favoritos.filter(x => x.n.toLowerCase().includes(q)), ...platos, ...biblioteca];
+        
         res.forEach((f, i) => {
-            const icon = f.isPlate ? '🍽️ ' : '';
+            const icon = f.isFavorito ? '⭐' : f.isPlate ? '🍽️' : '';
             b.innerHTML += `<div class="food-suggestion" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee"><div onclick="window.selectFoundItem(${i})" style="flex:1; cursor:pointer"><b>${icon}${f.n}</b> <small>${Math.round(f.k)} kcal</small></div><div style="display:flex; gap:10px"><button onclick="event.stopPropagation(); window.Logic.openEditLib(${i})" style="border:none; background:none; cursor:pointer; color:#64748b; font-size:1.1rem" title="Editar">✏️</button><button onclick="event.stopPropagation(); window.Logic.delFromDb(${i})" style="border:none; background:none; cursor:pointer; color:#ef4444; font-size:1.1rem" title="Borrar">🗑️</button></div></div>`;
         });
         window.S.lastSearch = res;
@@ -355,51 +336,119 @@ window.Logic = {
 
     delFromDb: async (i) => {
         const item = window.S.lastSearch[i]; if(!confirm(`¿Borrar ${item.n}?`)) return;
-        if(item.isPlate) window.S.platos = window.S.platos.filter(p => p.n !== item.n); else window.S.lib = window.S.lib.filter(l => l.n !== item.n);
-        item.isPlate ? await window.DB.savePlates() : await window.DB.saveLib(); window.Logic.search();
+        if(item.isFavorito) { 
+            window.S.favoritos = window.S.favoritos.filter(p => p.n !== item.n); 
+            await window.DB.saveFavoritos(); 
+        } else if(item.isPlate) { 
+            window.S.platos = window.S.platos.filter(p => p.n !== item.n); 
+            await window.DB.savePlates(); 
+        } else { 
+            window.S.lib = window.S.lib.filter(l => l.n !== item.n); 
+            await window.DB.saveLib(); 
+        }
+        window.Logic.search();
     },
 
-openEditLib: (i) => {
-    const item = window.S.lastSearch[i];
-    if(item.isPlate) {
-        window.S.editingPlate = true;
-        window.S.plateMode = 'edit';
-        window.S.plateEditIdx = window.S.platos.findIndex(p => p.n === item.n);
-        window.Logic.openEditPlate();
-    } else {
-        window.S.editLib = true; 
-        window.S.editLibItem = item; 
-        window.S.item = item;
-        window.UI.setQty({...item, q:100, u:'g'}); 
-        window.UI.view('v-qty'); 
-        window.UI.open('m-add');
-    }
-},
+    openEditLib: (i) => {
+        const item = window.S.lastSearch[i];
+        if(item.isFavorito || item.isPlate) {
+            window.S.editingPlate = true;
+            window.S.plateMode = 'edit';
+            window.S.plateEditIdx = item.isFavorito ? 
+                window.S.favoritos.findIndex(p => p.n === item.n) :
+                window.S.platos.findIndex(p => p.n === item.n);
+            window.Logic.openEditPlate();
+        } else {
+            window.S.editLib = true; 
+            window.S.editLibItem = item; 
+            window.S.item = {...item};
+            window.UI.setQty({...item, q:100, u:'g'}); 
+            window.UI.view('v-qty'); 
+            window.UI.open('m-add');
+        }
+    },
 
     saveLibEdit: async () => {
         const n = document.getElementById('qty-name-in').value;
-        if(window.S.editLibItem.isPlate) {
-            const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n); 
-            if(idx >= 0) window.S.platos[idx].n = n; 
-            await window.DB.savePlates();
-        } else {
-            const k = parseFloat(document.getElementById('calc-kcal').value);
-            const p = parseFloat(document.getElementById('calc-p').value);
-            const c = parseFloat(document.getElementById('calc-c').value);
-            const f = parseFloat(document.getElementById('calc-f').value);
-            const baseWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
-            const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n); 
-            if(idx >= 0) {
-                const item = {n, k, p, c, f, u:'g', baseWeight: baseWeight};
-                window.S.lib[idx] = item;
-                window.S.unitConfigs[n] = { weight: baseWeight };
-            }
+        const k = parseFloat(document.getElementById('calc-kcal').value);
+        const p = parseFloat(document.getElementById('calc-p').value);
+        const c = parseFloat(document.getElementById('calc-c').value);
+        const f = parseFloat(document.getElementById('calc-f').value);
+        const baseWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
+        
+        const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n); 
+        if(idx >= 0) {
+            const item = {n, k, p, c, f, u:'g', baseWeight: baseWeight};
+            window.S.lib[idx] = item;
+            window.S.unitConfigs[n] = { weight: baseWeight };
             await window.DB.saveLib();
         }
-        window.UI.closeAll(); window.Logic.search();
+        window.UI.closeAll(); 
+        window.Logic.search();
     },
 
- saveItem: async () => {
+    isSimilar: (name1, name2) => {
+        const s1 = name1.toLowerCase().trim();
+        const s2 = name2.toLowerCase().trim();
+        if (s1.includes(s2) || s2.includes(s1)) return true;
+        const words1 = s1.split(' ');
+        const words2 = s2.split(' ');
+        const matches = words1.filter(w => words2.includes(w)).length;
+        return matches > 0;
+    },
+
+    isMacroSimilar: (item1, item2, tolerance = 5) => {
+        const diffK = Math.abs(item1.k - item2.k) / Math.max(item1.k, item2.k) * 100;
+        const diffP = Math.abs(item1.p - item2.p) / Math.max(item1.p, item2.p) * 100;
+        const diffC = Math.abs(item1.c - item2.c) / Math.max(item1.c, item2.c) * 100;
+        const diffF = Math.abs(item1.f - item2.f) / Math.max(item1.f, item2.f) * 100;
+        return diffK <= tolerance && diffP <= tolerance && diffC <= tolerance && diffF <= tolerance;
+    },
+
+    checkDuplicates: (newItem) => {
+        const similares = [];
+        window.S.favoritos.forEach(fav => {
+            if (window.Logic.isSimilar(newItem.n, fav.n) && window.Logic.isMacroSimilar(newItem, fav)) {
+                similares.push(fav);
+            }
+        });
+        return similares;
+    },
+
+    saveFavorito: async () => {
+        const n = document.getElementById('qty-name-in').value;
+        const k = parseFloat(document.getElementById('calc-kcal').value);
+        const p = parseFloat(document.getElementById('calc-p').value);
+        const c = parseFloat(document.getElementById('calc-c').value);
+        const f = parseFloat(document.getElementById('calc-f').value);
+        
+        const newItem = {n, k, p, c, f, u:'g', isFavorito: true};
+        const similares = window.Logic.checkDuplicates(newItem);
+        
+        if(similares.length > 0) {
+            const existente = similares[0];
+            const msg = `⚠️ YA EXISTE UN FAVORITO PARECIDO:\n\n"${existente.n}"\n${Math.round(existente.k)} kcal\n\n¿Deseas ACTUALIZAR o CREAR NUEVO?`;
+            
+            if(confirm(msg)) {
+                const idx = window.S.favoritos.findIndex(x => x.n === existente.n);
+                window.S.favoritos[idx] = newItem;
+                await window.DB.saveFavoritos();
+                alert("✅ Favorito ACTUALIZADO");
+            } else {
+                window.S.favoritos.push(newItem);
+                await window.DB.saveFavoritos();
+                alert("✅ NUEVO Favorito guardado");
+            }
+        } else {
+            window.S.favoritos.push(newItem);
+            await window.DB.saveFavoritos();
+            alert("✅ Alimento guardado como FAVORITO");
+        }
+        window.UI.closeAll();
+        window.Logic.search();
+    },
+
+    saveItem: async () => {
         if(window.S.editLib) return window.Logic.saveLibEdit();
         
         const n = document.getElementById('qty-name-in').value;
@@ -407,7 +456,6 @@ openEditLib: (i) => {
         const u = document.getElementById('unit-in').value;
         
         const baseWeight = (u!=='g' && u!=='ml') ? parseFloat(document.getElementById('unit-weight').value) : 100;
-
         const k = parseFloat(document.getElementById('calc-kcal').value)||0;
         const p = parseFloat(document.getElementById('calc-p').value)||0;
         const c = parseFloat(document.getElementById('calc-c').value)||0;
@@ -418,7 +466,9 @@ openEditLib: (i) => {
         if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx]=ent; 
         else window.S.day[window.S.tm].push(ent);
         
-        await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
+        await window.DB.setDay(); 
+        window.UI.closeAll(); 
+        window.Sys.sync();
     },
 
     updateCalories: () => { 
@@ -482,31 +532,21 @@ openEditLib: (i) => {
     },
 
     editItem: (mk,i) => { 
-        window.S.edit=true; window.S.tm=mk; window.S.eIdx=i; 
-        const orig = window.S.day[mk][i]; 
+        window.S.edit = true; 
+        window.S.tm = mk; 
+        window.S.eIdx = i; 
+        const orig = window.S.day[mk][i];
         
-        let unitW = orig.baseWeight || UNIT_WEIGHT_MAP[orig.u] || 100;
+        // CORRECCIÓN CRÍTICA: Usar los valores tal cual están guardados
+        window.S.item = {...orig};
         
-        const isStd = (orig.u === 'g' || orig.u === 'ml');
-        const totalGrams = (orig.q || 0) * unitW;
-
-        const ratio = totalGrams > 0 ? (100 / totalGrams) : 1;
-        
-        window.S.item = { 
-            ...orig, 
-            k: orig.k * ratio, 
-            p: (orig.p||0)*ratio, 
-            c: (orig.c||0)*ratio, 
-            f: (orig.f||0)*ratio,
-            baseWeight: unitW 
-        }; 
-
         window.S.editLib = false; 
-        window.UI.setQty({...orig, baseWeight: unitW}); 
+        window.UI.setQty(orig); 
         window.Logic.updateUnitDisplay(); 
         window.Logic.updateCalories();    
         
-        window.UI.view('v-qty'); window.UI.open('m-add'); 
+        window.UI.view('v-qty'); 
+        window.UI.open('m-add'); 
     },
 
     delItem: async (mk,i) => { if(confirm("¿Borrar este alimento?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
@@ -517,7 +557,8 @@ openEditLib: (i) => {
     savePlateToDb: async () => { const n=document.getElementById('plate-name').value; if(!n) return alert("Nombre del plato requerido"); const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("✅ Plato guardado"); window.Logic.search(); },
     
     openEditPlate: () => {
-        const plate = window.S.platos[window.S.plateEditIdx];
+        const platos = window.S.platos;
+        const plate = platos[window.S.plateEditIdx];
         document.getElementById('plate-edit-name').value = plate.n;
         const list = document.getElementById('plate-edit-ingredients-list');
         list.innerHTML = '';
@@ -540,7 +581,6 @@ openEditLib: (i) => {
         if(!newName) return alert("Nombre requerido");
         const plate = window.S.platos[window.S.plateEditIdx];
         plate.n = newName;
-        // Recalcular totales
         let tk=0, tp=0, tc=0, tf=0;
         plate.items.forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; });
         plate.k = tk; plate.p = tp; plate.c = tc; plate.f = tf;
@@ -548,12 +588,6 @@ openEditLib: (i) => {
         window.UI.closeAll();
         window.Logic.search();
         alert("✅ Plato actualizado");
-    },
-
-    addPlateToDay: (plateIdx) => {
-        const plate = window.S.platos[plateIdx];
-        plate.items.forEach(item => window.S.day[window.S.tm].push({...item}));
-        window.Logic.autoSave();
     },
 
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
@@ -571,28 +605,16 @@ openEditLib: (i) => {
         document.getElementById('loading-screen').style.display='flex';
         try {
             const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
-            let html = `<div style="padding:20px; font-family:sans-serif;">
-                <h1 style="color:#0f172a; text-align:center;">Historial Nutricional - ${window.S.u.name}</h1>
-                <table style="width:100%; border-collapse:collapse; margin-top:20px; font-size:12px;">
-                <tr style="background:#0f172a; color:white;"><th style="padding:8px;">Fecha</th><th style="padding:8px;">Kcal</th><th style="padding:8px;">Prot</th><th style="padding:8px;">Carb</th><th style="padding:8px;">Grasa</th><th style="padding:8px;">Peso</th></tr>`;
-            
+            let html = `<div style="padding:20px; font-family:sans-serif;"><h1 style="color:#0f172a; text-align:center;">Historial Nutricional - ${window.S.u.name}</h1><table style="width:100%; border-collapse:collapse; margin-top:20px; font-size:12px;"><tr style="background:#0f172a; color:white;"><th style="padding:8px;">Fecha</th><th style="padding:8px;">Kcal</th><th style="padding:8px;">Prot</th><th style="padding:8px;">Carb</th><th style="padding:8px;">Grasa</th><th style="padding:8px;">Peso</th></tr>`;
             q.forEach(doc => {
                 const d = doc.data(); const date = doc.id;
                 let tk=0, tp=0, tc=0, tf=0;
                 MEALS.forEach(m => { if(d[m.k]) d[m.k].forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; }); });
                 if(tk > 0) {
-                    html += `<tr style="border-bottom:1px solid #e2e8f0; text-align:center;">
-                        <td style="padding:8px; font-weight:bold;">${date}</td>
-                        <td style="padding:8px;">${Math.round(tk)}</td>
-                        <td style="padding:8px; color:#7c3aed;">${Math.round(tp)}</td>
-                        <td style="padding:8px; color:#0284c7;">${Math.round(tc)}</td>
-                        <td style="padding:8px; color:#ea580c;">${Math.round(tf)}</td>
-                        <td style="padding:8px;">${d.weight || '-'}</td>
-                    </tr>`;
+                    html += `<tr style="border-bottom:1px solid #e2e8f0; text-align:center;"><td style="padding:8px; font-weight:bold;">${date}</td><td style="padding:8px;">${Math.round(tk)}</td><td style="padding:8px; color:#7c3aed;">${Math.round(tp)}</td><td style="padding:8px; color:#0284c7;">${Math.round(tc)}</td><td style="padding:8px; color:#ea580c;">${Math.round(tf)}</td><td style="padding:8px;">${d.weight || '-'}</td></tr>`;
                 }
             });
             html += `</table></div>`;
-            
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             document.body.appendChild(tempDiv);
@@ -609,13 +631,7 @@ openEditLib: (i) => {
             const q = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/diario`));
             let history = {};
             q.forEach(doc => { history[doc.id] = doc.data(); });
-            
-            const backup = {
-                user: window.S.u,
-                history: history,
-                exportedAt: new Date().toISOString()
-            };
-
+            const backup = { user: window.S.u, history: history, exportedAt: new Date().toISOString() };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
             const anchor = document.createElement('a');
             anchor.setAttribute("href", dataStr);
@@ -632,9 +648,8 @@ openEditLib: (i) => {
             try {
                 const json = JSON.parse(e.target.result);
                 document.getElementById('loading-screen').style.display='flex';
-
                 if(json.history) {
-                    if(!confirm("Esto es un Backup Completo. ¿Quieres restaurar todo el historial? (Sobrescribirá días existentes)")) {
+                    if(!confirm("Esto es un Backup Completo. ¿Quieres restaurar todo el historial?")) {
                         document.getElementById('loading-screen').style.display='none'; return;
                     }
                     const batch = fire.writeBatch(db);
@@ -688,15 +703,10 @@ openEditLib: (i) => {
     }
 };
 
-// --- 8. STATS (GRÁFICAS Y PESO) ---
 window.Stats = {
     open: () => { document.getElementById('st-date').valueAsDate = window.S.d; window.Stats.updateView(); window.UI.open('m-stats'); },
     changeDate: (n) => { const d = new Date(document.getElementById('st-date').value); d.setDate(d.getDate() + n); document.getElementById('st-date').valueAsDate = d; window.Stats.load(d.toISOString().split('T')[0]); },
-    load: async (dStr) => { 
-        const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
-        const snap = await fire.getDoc(ref);
-        document.getElementById('w-today').value = snap.exists() && snap.data().weight ? snap.data().weight : '';
-    },
+    load: async (dStr) => { const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr); const snap = await fire.getDoc(ref); document.getElementById('w-today').value = snap.exists() && snap.data().weight ? snap.data().weight : ''; },
     saveWeight: async () => {
         const val = parseFloat(document.getElementById('w-today').value);
         if(!val || val <= 0) return alert("Peso no válido");
@@ -753,7 +763,6 @@ window.Stats = {
     }
 };
 
-// --- 9. AI ACTUALIZADA ---
 window.AI = {
     saveConfig: () => { localStorage.setItem('t_ai_key', document.getElementById('ai-key').value); window.UI.view('v-home'); window.UI.checkAI(); },
     listen: () => { 
@@ -779,7 +788,6 @@ window.AI = {
             });
             const d = await r.json(); 
             if(!d.candidates) throw new Error("Error API: " + JSON.stringify(d));
-            
             const items = window.AI.cleanAndParse(d.candidates[0].content.parts[0].text);
             items.forEach(i => window.S.day[window.S.tm].push(i));
             await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
@@ -795,15 +803,21 @@ window.AI = {
             try {
                 const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [
-                        { text: "Analiza la imagen. Devuelve SOLO un array JSON con los macros aproximados por 100g: [{'n':'Nombre','q':100,'u':'g','k':kcal,'p':pro,'c':carb,'f':fat}]" },
-                        { inline_data: { mime_type: file.type, data: base64 } }
-                    ] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Analiza la imagen. Devuelve SOLO un array JSON con los macros aproximados por 100g: [{'n':'Nombre','q':100,'u':'g','k':kcal,'p':pro,'c':carb,'f':fat}]" }, { inline_data: { mime_type: file.type, data: base64 } }] }] })
                 });
                 const d = await r.json();
                 if(!d.candidates) throw new Error("Error al leer imagen.");
-                
                 const items = window.AI.cleanAndParse(d.candidates[0].content.parts[0].text);
+                
+                // NUEVO: Verificar si cada item ya existe como favorito
+                items.forEach(i => {
+                    const similares = window.Logic.checkDuplicates(i);
+                    if(similares.length > 0) {
+                        const existente = similares[0];
+                        alert(`⚠️ DETECTADO ALIMENTO PARECIDO:\n\n"${existente.n}"\n${Math.round(existente.k)} kcal\n\nYa existe en favoritos.`);
+                    }
+                });
+                
                 items.forEach(i => window.S.day[window.S.tm].push(i));
                 await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
             } catch(e) { alert("Error Imagen: " + e.message); }
@@ -815,13 +829,19 @@ window.AI = {
 window.selectFoundItem = (i) => { 
     try {
         const s=window.S.lastSearch[i]; 
-        if(s.isPlate){
-            if(confirm(`¿Añadir plato "${s.n}"?`)){
-                s.items.forEach(it=>window.S.day[window.S.tm].push(JSON.parse(JSON.stringify(it))));
+        if(s.isPlate || s.isFavorito){
+            if(confirm(`¿Añadir ${s.isPlate ? 'plato' : 'favorito'} "${s.n}"?`)){
+                if(s.isPlate) {
+                    s.items.forEach(it=>window.S.day[window.S.tm].push(JSON.parse(JSON.stringify(it))));
+                } else {
+                    window.S.day[window.S.tm].push({...s, q: 100, u: 'g'});
+                }
                 window.Logic.autoSave();
             }
         } else {
-            window.S.item=s; window.UI.setQty(s); window.UI.view('v-qty');
+            window.S.item=s; 
+            window.UI.setQty(s); 
+            window.UI.view('v-qty');
         }
     } catch(e) { console.error(e); }
 };

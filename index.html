@@ -52,9 +52,11 @@
     </header>
 
     <main class="main" id="feed" style="display:none"></main>
+    
+    <!-- FAB BUTTON -->
     <button class="fab" id="fab-btn" style="display:none" onclick="window.Logic.openAdd('01_desayuno'); document.getElementById('src-in').focus();"><i class="fas fa-plus"></i></button>
 
-    <!-- MODALES -->
+    <!-- MODAL ESTADÍSTICAS -->
     <div class="modal" id="m-stats">
         <div class="sheet" style="max-width:600px">
             <div class="modal-h"><h3>Balance & Peso</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
@@ -78,6 +80,7 @@
         </div>
     </div>
 
+    <!-- MODAL PERFIL -->
     <div class="modal" id="m-prof">
         <div class="sheet">
             <div class="modal-h"><h3>Perfil</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
@@ -104,18 +107,46 @@
         </div>
     </div>
 
-    <!-- MODAL DE AÑADIR ALIMENTO -->
+    <!-- MODAL AÑADIR ALIMENTO - PRINCIPAL -->
     <div class="modal" id="m-add">
-        <div class="sheet"><div class="modal-h"><h3>Añadir Alimento</h3><button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')">Config</button><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+        <div class="sheet">
+            <div class="modal-h">
+                <h3>Añadir Alimento</h3>
+                <button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')">Config</button>
+                <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+            </div>
+            
+            <!-- VISTA PRINCIPAL: BÚSQUEDA Y IA -->
             <div id="v-home">
-                <div class="ai-input-area"><textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos..."></textarea><div class="ai-actions"><button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button><button class="cam-btn" onclick="document.getElementById('cam-in').click()"><i class="fas fa-camera"></i></button><input type="file" id="cam-in" accept="image/*" hidden onchange="window.AI.processImage(this.files[0])"><button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">IA</button></div></div>
+                <div class="ai-input-area">
+                    <textarea class="ai-textarea" id="ai-text" placeholder="Ej: 2 huevos, pan tostado..."></textarea>
+                    <div class="ai-actions">
+                        <button class="mic-btn" onclick="window.AI.listen()"><i class="fas fa-microphone"></i></button>
+                        <button class="cam-btn" onclick="document.getElementById('cam-in').click()"><i class="fas fa-camera"></i></button>
+                        <input type="file" id="cam-in" accept="image/*" hidden onchange="window.AI.processImage(this.files[0])">
+                        <button class="btn pri" style="flex:1; margin:0" onclick="window.AI.process()">IA</button>
+                    </div>
+                </div>
+                
                 <input class="inp" id="src-in" placeholder="🔍 Buscar..." onkeyup="window.Logic.search()">
                 <div id="res-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
-                <div style="display:flex;gap:10px"><button class="link-btn" onclick="window.UI.view('v-json')">JSON</button><button class="link-btn" onclick="window.UI.view('v-import')">Clonar</button></div>
+                
+                <div style="display:flex;gap:10px">
+                    <button class="link-btn" onclick="window.UI.view('v-json')">JSON</button>
+                    <button class="link-btn" onclick="window.UI.view('v-import')">Clonar</button>
+                </div>
             </div>
-            <div id="v-conf" style="display:none"><h4>Config IA</h4><input type="password" id="ai-key" class="inp" placeholder="API Key"><input type="text" id="ai-model" class="inp" value="gemini-1.5-flash"><button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button><button class="btn sec" onclick="window.UI.view('v-home')">Volver</button></div>
-            
-            <!-- MODAL DE CANTIDAD/EDICIÓN -->
+
+            <!-- VISTA CONFIG IA -->
+            <div id="v-conf" style="display:none">
+                <h4>Config IA</h4>
+                <input type="password" id="ai-key" class="inp" placeholder="API Key">
+                <input type="text" id="ai-model" class="inp" value="gemini-1.5-flash">
+                <button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+            </div>
+
+            <!-- VISTA CANTIDAD/EDICIÓN (CORREGIDA) -->
             <div id="v-qty" style="display:none">
                 <input id="qty-name-in" class="inp" style="text-align:center;font-weight:bold" placeholder="Nombre">
                 
@@ -135,57 +166,131 @@
                 
                 <!-- SECCIÓN DE CONFIGURACIÓN DE PESO UNITARIO -->
                 <div id="unit-config-section" style="display:none; margin-bottom:10px; padding:10px; background:#f0f9ff; border-radius:8px; border-left:3px solid #3b82f6">
-                  <label style="font-size:0.85rem; color:#1e40af; font-weight:600">⚙️ Peso de 1 unidad (g):</label>
-                  <div style="display:flex; gap:8px; margin-top:5px">
-                    <input type="number" id="unit-weight" class="inp" placeholder="g" step="0.1" style="flex:1" oninput="window.Logic.updateCalories()">
-                    <button class="btn pri" style="width:auto; padding:0 15px;" onclick="window.Logic.saveUnitConfig()">OK</button>
-                  </div>
+                    <label style="font-size:0.85rem; color:#1e40af; font-weight:600">⚙️ Peso de 1 unidad (g):</label>
+                    <div style="display:flex; gap:8px; margin-top:5px">
+                        <input type="number" id="unit-weight" class="inp" placeholder="g" step="0.1" style="flex:1" oninput="window.Logic.updateCalories()">
+                        <button class="btn pri" style="width:auto; padding:0 15px;" onclick="window.Logic.saveUnitConfig()">OK</button>
+                    </div>
                 </div>
 
-                <!-- PANEL DE NUTRICIÓN TOTAL (EDITABLE BIDIRECCIONAL) -->
+                <!-- PANEL DE NUTRICIÓN TOTAL (EDITABLE - CORREGIDO) -->
                 <div style="padding:15px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; text-align:center">
-                    <div style="font-size:0.8rem; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; font-weight:bold">Total Nutricional (Editable)</div>
+                    <div style="font-size:0.8rem; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; font-weight:bold">Totales por Cantidad</div>
                     <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:15px">
-                        <input type="number" id="calc-kcal" class="inp" style="font-size:1.8rem; font-weight:900; color:#0f172a; text-align:center; width:140px; border:2px solid #e2e8f0" oninput="window.Logic.updateBase()" placeholder="0">
+                        <input type="number" id="calc-kcal" class="inp" style="font-size:1.8rem; font-weight:900; color:#0f172a; text-align:center; width:140px; border:2px solid #0f172a" oninput="window.Logic.updateBase()" placeholder="0">
                         <span style="font-weight:bold; color:#64748b">kcal</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; gap:5px;">
-                        <div style="flex:1"><input type="number" id="calc-p" class="inp" style="text-align:center; color:#7c3aed; font-weight:bold; border:1px solid #ddd" oninput="window.Logic.updateBase()" placeholder="P"><div style="font-size:0.7rem; color:#7c3aed; margin-top:3px">PROT</div></div>
-                        <div style="flex:1"><input type="number" id="calc-c" class="inp" style="text-align:center; color:#0284c7; font-weight:bold; border:1px solid #ddd" oninput="window.Logic.updateBase()" placeholder="C"><div style="font-size:0.7rem; color:#0284c7; margin-top:3px">CARB</div></div>
-                        <div style="flex:1"><input type="number" id="calc-f" class="inp" style="text-align:center; color:#ea580c; font-weight:bold; border:1px solid #ddd" oninput="window.Logic.updateBase()" placeholder="F"><div style="font-size:0.7rem; color:#ea580c; margin-top:3px">GRAS</div></div>
+                        <div style="flex:1"><input type="number" id="calc-p" class="inp" style="text-align:center; color:#7c3aed; font-weight:bold; border:1px solid #ddd" oninput="window.Logic.updateBase()" placeholder="P"><div style="font-size:0.7rem; color:#7c3aed; margin-top:3px">PROT (g)</div></div>
+                        <div style="flex:1"><input type="number" id="calc-c" class="inp" style="text-align:center; color:#0284c7; font-weight:bold; border:1px solid #ddd" oninput="window.Logic.updateBase()" placeholder="C"><div style="font-size:0.7rem; color:#0284c7; margin-top:3px">CARB (g)</div></div>
+                        <div style="flex:1"><input type="number" id="calc-f" class="inp" style="text-align:center; color:#ea580c; font-weight:bold; border:1px solid #ddd" oninput="window.Logic.updateBase()" placeholder="F"><div style="font-size:0.7rem; color:#ea580c; margin-top:3px">GRAS (g)</div></div>
                     </div>
                 </div>
                 
-                <!-- BOTONES: AÑADIR (DIARIO) vs GUARDAR (BIBLIOTECA) -->
-                <div style="margin-top:20px; display:flex; gap:10px">
-                    <button class="btn pri" onclick="window.Logic.saveItem()">AÑADIR</button>
-                    <button class="btn sec" onclick="window.UI.view('v-home')">Cancelar</button>
+                <!-- BOTONES: AÑADIR AL DIARIO + GUARDAR COMO FAVORITO -->
+                <div style="margin-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                    <button class="btn pri" onclick="window.Logic.saveItem()" style="background:#10b981; border-color:#10b981;">AÑADIR<br>DIARIO</button>
+                    <button class="btn pri" onclick="window.Logic.saveFavorito()" style="background:#f59e0b; border-color:#f59e0b; color:white">⭐ GUARDAR<br>FAVORITO</button>
                 </div>
-                <div id="lib-edit-section" style="display:none; margin-top:15px; padding:15px; background:#f3e8ff; border-radius:8px; border:1px solid #d8b4fe">
-                    <p style="color:#6b21a8; font-size:0.9rem; margin-bottom:10px">📚 Editando en Biblioteca Personal</p>
-                    <button class="btn pri" style="background:#9333ea; border-color:#9333ea; width:100%" onclick="window.Logic.saveLibEdit()">💾 GUARDAR</button>
-                </div>
+                <button class="btn sec" onclick="window.UI.closeAll()" style="margin-top:10px; width:100%">Cancelar</button>
+
             </div>
-            
-            <div id="v-json" style="display:none"><textarea id="json-in" class="inp" style="height:100px;font-family:monospace"></textarea><button class="btn pri" onclick="window.Logic.parse()">Procesar</button><button class="btn sec" onclick="window.UI.view('v-home')">Volver</button></div>
-            <div id="v-import" style="display:none"><h4>Clonar</h4><input type="date" id="imp-date" class="inp"><select id="imp-meal" class="inp"><option value="01_desayuno">Desayuno</option><option value="02_almuerzo">Almuerzo</option><option value="03_comida">Comida</option><option value="04_merienda">Merienda</option><option value="05_cena">Cena</option></select><button class="btn pri" onclick="window.Logic.execImport()">Traer</button><button class="btn sec" onclick="window.UI.view('v-home')">Volver</button></div>
+
+            <!-- VISTA JSON -->
+            <div id="v-json" style="display:none">
+                <textarea id="json-in" class="inp" style="height:100px;font-family:monospace"></textarea>
+                <button class="btn pri" onclick="window.Logic.parse()">Procesar</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+            </div>
+
+            <!-- VISTA CLONAR -->
+            <div id="v-import" style="display:none">
+                <h4>Clonar</h4>
+                <input type="date" id="imp-date" class="inp">
+                <select id="imp-meal" class="inp">
+                    <option value="01_desayuno">Desayuno</option>
+                    <option value="02_almuerzo">Almuerzo</option>
+                    <option value="03_comida">Comida</option>
+                    <option value="04_merienda">Merienda</option>
+                    <option value="05_cena">Cena</option>
+                </select>
+                <button class="btn pri" onclick="window.Logic.execImport()">Traer</button>
+                <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+            </div>
         </div>
     </div>
 
-    <!-- MODALES DE GESTIÓN -->
-    <div class="modal" id="m-copy"><div class="sheet"><div class="modal-h"><h3>Gestionar</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div><label>Destino:</label><input type="date" id="copy-date" class="inp"><select id="copy-meal" class="inp"><option value="01_desayuno">Desayuno</option><option value="02_almuerzo">Almuerzo</option><option value="03_comida">Comida</option><option value="04_merienda">Merienda</option><option value="05_cena">Cena</option></select><button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button></div></div>
-    
-    <div class="modal" id="m-item-act"><div class="sheet"><div class="modal-h"><h3>Acciones</h3><button class="close-x" onclick="document.getElementById('m-item-act').style.display='none'">&times;</button></div><h4 id="ia-name" style="text-align:center;color:var(--a)"></h4><input type="date" id="ia-date" class="inp"><select id="ia-meal" class="inp"><option value="01_desayuno">Desayuno</option><option value="02_almuerzo">Almuerzo</option><option value="03_comida">Comida</option><option value="04_merienda">Merienda</option><option value="05_cena">Cena</option></select><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="window.Logic.execItemAct('copy')" class="btn" style="background:#eff6ff;color:var(--a)">Copiar</button><button onclick="window.Logic.execItemAct('move')" class="btn" style="background:#fffbeb;color:var(--warn)">Mover</button></div></div></div>
-    
-    <!-- MODAL CREAR PLATO (Desde comida actual) -->
-    <div class="modal" id="m-create-plate"><div class="sheet" style="max-height:80vh;overflow-y:auto"><div class="modal-h"><h3>Crear Plato</h3><button class="close-x" onclick="document.getElementById('m-create-plate').style.display='none'">&times;</button></div><input type="text" id="plate-name" class="inp" placeholder="Nombre del plato"><div id="plate-ingredients-list" style="margin:10px 0"></div><button class="btn pri" onclick="window.Logic.savePlateToDb()">Guardar Plato</button></div></div>
-    
-    <!-- MODAL EDITAR PLATO (Desde biblioteca) -->
-    <div class="modal" id="m-edit-plate"><div class="sheet" style="max-height:80vh;overflow-y:auto"><div class="modal-h"><h3>Editar Plato</h3><button class="close-x" onclick="document.getElementById('m-edit-plate').style.display='none'">&times;</button></div><input type="text" id="plate-edit-name" class="inp" placeholder="Nombre del plato"><div id="plate-edit-ingredients-list" style="margin:10px 0"></div><button class="btn pri" onclick="window.Logic.saveEditPlate()">Guardar Cambios</button></div></div>
+    <!-- MODAL COPIAR/MOVER -->
+    <div class="modal" id="m-copy">
+        <div class="sheet">
+            <div class="modal-h"><h3>Gestionar</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+            <label>Destino:</label>
+            <input type="date" id="copy-date" class="inp">
+            <select id="copy-meal" class="inp">
+                <option value="01_desayuno">Desayuno</option>
+                <option value="02_almuerzo">Almuerzo</option>
+                <option value="03_comida">Comida</option>
+                <option value="04_merienda">Merienda</option>
+                <option value="05_cena">Cena</option>
+            </select>
+            <button class="btn pri" onclick="window.Logic.execCopy()">Confirmar</button>
+        </div>
+    </div>
 
-    <!-- MENÚ GLOBAL (FAB Opciones) -->
-    <div class="modal" id="m-glob"><div class="sheet"><h3>Opciones</h3><button class="btn sec" onclick="window.Logic.pdf()">📄 PDF Día</button><button class="btn sec" onclick="window.Logic.pdfHistory()">📚 PDF Historial</button><button class="btn sec" onclick="window.Logic.exportJSON()">💾 Backup</button><input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)"><button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar</button><button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button><button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button></div></div>
-    
+    <!-- MODAL ACCIONES DE ITEM -->
+    <div class="modal" id="m-item-act">
+        <div class="sheet">
+            <div class="modal-h"><h3>Acciones</h3><button class="close-x" onclick="document.getElementById('m-item-act').style.display='none'">&times;</button></div>
+            <h4 id="ia-name" style="text-align:center;color:var(--a)"></h4>
+            <input type="date" id="ia-date" class="inp">
+            <select id="ia-meal" class="inp">
+                <option value="01_desayuno">Desayuno</option>
+                <option value="02_almuerzo">Almuerzo</option>
+                <option value="03_comida">Comida</option>
+                <option value="04_merienda">Merienda</option>
+                <option value="05_cena">Cena</option>
+            </select>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <button onclick="window.Logic.execItemAct('copy')" class="btn" style="background:#eff6ff;color:var(--a)">Copiar</button>
+                <button onclick="window.Logic.execItemAct('move')" class="btn" style="background:#fffbeb;color:var(--warn)">Mover</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CREAR PLATO (Desde comida actual) -->
+    <div class="modal" id="m-create-plate">
+        <div class="sheet" style="max-height:80vh;overflow-y:auto">
+            <div class="modal-h"><h3>Crear Plato</h3><button class="close-x" onclick="document.getElementById('m-create-plate').style.display='none'">&times;</button></div>
+            <input type="text" id="plate-name" class="inp" placeholder="Nombre del plato">
+            <div id="plate-ingredients-list" style="margin:10px 0"></div>
+            <button class="btn pri" onclick="window.Logic.savePlateToDb()">Guardar Plato</button>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR PLATO (Desde biblioteca) -->
+    <div class="modal" id="m-edit-plate">
+        <div class="sheet" style="max-height:80vh;overflow-y:auto">
+            <div class="modal-h"><h3>Editar Plato</h3><button class="close-x" onclick="document.getElementById('m-edit-plate').style.display='none'">&times;</button></div>
+            <input type="text" id="plate-edit-name" class="inp" placeholder="Nombre del plato">
+            <div id="plate-edit-ingredients-list" style="margin:10px 0"></div>
+            <button class="btn pri" onclick="window.Logic.saveEditPlate()">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <!-- MODAL OPCIONES GLOBALES (FAB Menu) -->
+    <div class="modal" id="m-glob">
+        <div class="sheet">
+            <h3>Opciones</h3>
+            <button class="btn sec" onclick="window.Logic.pdf()">📄 PDF Día</button>
+            <button class="btn sec" onclick="window.Logic.pdfHistory()">📚 PDF Historial</button>
+            <button class="btn sec" onclick="window.Logic.exportJSON()">💾 Backup</button>
+            <input type="file" id="imp-file" style="display:none" onchange="window.Logic.importJSON(this)">
+            <button class="btn sec" onclick="document.getElementById('imp-file').click()">📥 Importar</button>
+            <button class="btn pri" style="background:#ef4444" onclick="window.Logic.wipe()">Borrar Día</button>
+            <button class="btn sec" onclick="window.UI.closeAll()">Cerrar</button>
+        </div>
+    </div>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
