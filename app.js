@@ -83,37 +83,42 @@ window.DB = {
     savePlates: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`), { items: window.S.platos }); }
 };
 
-// --- 4. UI ---
+// --- SUSTITUIR BLOQUE 4. UI ---
 window.UI = {
-    open: (id) => document.getElementById(id).style.display='flex',
-    closeAll: () => document.querySelectorAll('.modal').forEach(m=>m.style.display='none'),
-    view: (id) => { ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>document.getElementById(x).style.display='none'); document.getElementById(id).style.display='block'; },
-    checkAI: () => { const k=localStorage.getItem('t_ai_key'); if(k)document.getElementById('btn-config-ai').classList.add('configured'); document.getElementById('ai-key').value=k||''; },
+    open: (id) => { const el = document.getElementById(id); if(el) el.style.display='flex'; },
+    closeAll: () => { 
+        document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+        window.S.edit = false; window.S.editLib = false; // Reset de estados al cerrar
+    },
+    view: (id) => { 
+        ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>{
+            const el = document.getElementById(x); if(el) el.style.display='none';
+        });
+        const target = document.getElementById(id); if(target) target.style.display='block';
+    },
+    checkAI: () => { if(localStorage.getItem('t_ai_key')) document.getElementById('btn-config-ai').classList.add('configured'); },
     setQty: (i) => { 
-        document.getElementById('qty-name-in').value=i.n; document.getElementById('qty-in').value=i.q; document.getElementById('unit-in').value=i.u; 
-        // Si estamos editando LIB (base de datos)
-        if(window.S.editLib) {
-            document.getElementById('qty-title').innerText = "Editar Alimento Base";
-            document.getElementById('lib-edit-section').style.display='block';
-            document.getElementById('lib-k').value = i.k || 0; 
-            document.getElementById('lib-p').value = i.p || 0; 
-            document.getElementById('lib-c').value = i.c || 0; 
+        document.getElementById('qty-name-in').value = i.n || "";
+        document.getElementById('qty-in').value = i.q || 100;
+        document.getElementById('unit-in').value = i.u || "g"; 
+        
+        const libSection = document.getElementById('lib-edit-section');
+        if(window.S.editLib && !i.isPlate) {
+            if(libSection) libSection.style.display='block';
+            document.getElementById('lib-k').value = i.k || 0;
+            document.getElementById('lib-p').value = i.p || 0;
+            document.getElementById('lib-c').value = i.c || 0;
             document.getElementById('lib-f').value = i.f || 0;
-        } else { 
-            // Si estamos añadiendo/editando al diario
-            document.getElementById('qty-title').innerText = window.S.edit ? "Editar Cantidad" : "Añadir";
-            document.getElementById('lib-edit-section').style.display='none'; 
-            window.Logic.updateCalories(); 
+        } else {
+            if(libSection) libSection.style.display='none';
+            window.Logic.updateCalories();
         }
     },
     openProfile: () => {
         if(!window.S.u) return; const u=window.S.u;
         document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-w').value=u.w;
-        document.getElementById('e-y').value=u.y; 
-        document.getElementById('e-g').value=u.g; document.getElementById('e-act').value=u.act; document.getElementById('e-mod').value=u.mod;
-        let pp=30, pc=50, pf=20;
-        if(u.mac && u.mac.p) { const goal=u.calc.goal; if(goal>0) { pp=Math.round((u.mac.p*4/goal)*100); pc=Math.round((u.mac.c*4/goal)*100); pf=Math.round((u.mac.f*9/goal)*100); } }
-        document.getElementById('pp').value=pp; document.getElementById('pc').value=pc; document.getElementById('pf').value=pf;
+        document.getElementById('e-y').value=u.y; document.getElementById('e-g').value=u.g; document.getElementById('e-act').value=u.act; document.getElementById('e-mod').value=u.mod;
+        document.getElementById('pp').value=u.mac.p; document.getElementById('pc').value=u.mac.c; document.getElementById('pf').value=u.mac.f;
         window.Calc.live(); window.UI.open('m-prof');
     },
     newProfile: () => { window.S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); window.UI.open('m-prof'); }
@@ -258,7 +263,7 @@ window.Render = {
     }
 };
 
-// --- 7. LOGIC ---
+// --- 7. LOGIC (REPARADO: BOTONES, EDICIÓN Y LÁPIZ) ---
 window.Logic = {
     day: (n) => { window.S.d.setDate(window.S.d.getDate() + n); window.Sys.sync(); },
     autoSave: async () => { await window.DB.setDay(); window.Render.all(); },
@@ -266,171 +271,82 @@ window.Logic = {
         const n=document.getElementById('e-name').value; if(!n) return alert("Nombre obligatorio");
         try {
             const val=(id)=>parseFloat(document.getElementById(id).value);
-            const u={ 
-                uid:window.S.uid, name:n, email:auth.currentUser.email, 
-                h:val('e-h'), w:val('e-w'), y:val('e-y'), 
-                g:document.getElementById('e-g').value, act:val('e-act'), mod:val('e-mod'), 
-                customMacros:{p:val('pp'), c:val('pc'), f:val('pf')} 
-            };
+            const u={ uid:window.S.uid, name:n, email:auth.currentUser.email, h:val('e-h'), w:val('e-w'), y:val('e-y'), g:document.getElementById('e-g').value, act:val('e-act'), mod:val('e-mod'), customMacros:{p:val('pp'), c:val('pc'), f:val('pf')} };
             await window.DB.setU(u); alert(`${APP_NAME}: Perfil Guardado`); window.S.u=window.DB.norm(u); window.Calc.bio(); window.UI.closeAll();
         } catch (e) { alert("Error: "+e.message); }
     },
     
-    // --- BUSCADOR CON EDICIÓN Y BORRADO DE BASE DE DATOS ---
+    // --- BOTÓN VERDE + (AÑADIR) ---
+    openAdd: (mk) => {
+        window.S.tm = mk; window.S.edit = false; window.S.editLib = false;
+        window.UI.view('v-home'); window.UI.open('m-add');
+        if(window.S.lib.length > 0) window.Logic.search();
+    },
+
     search: () => {
         const q = document.getElementById('src-in').value.toLowerCase();
-        const b = document.getElementById('res-list');
-        b.innerHTML = '';
-        
-        const res = [
-            ...window.S.platos.filter(x => x.n.toLowerCase().includes(q)).map(p => ({...p, isPlate: true})), 
-            ...window.S.lib.filter(x => x.n.toLowerCase().includes(q))
-        ];
-        
+        const b = document.getElementById('res-list'); b.innerHTML = '';
+        const res = [...window.S.platos.filter(x => x.n.toLowerCase().includes(q)).map(p => ({...p, isPlate: true})), ...window.S.lib.filter(x => x.n.toLowerCase().includes(q))];
         res.forEach((f, i) => {
-            const icon = f.isPlate ? '<i class="fas fa-utensils" style="color:#9333ea; margin-right:5px"></i> ' : '';
-            // BOTONES: Editar (pencil) y Borrar (trash)
-            const actions = `
-                <div style="display:flex; gap:10px">
-                    <button onclick="event.stopPropagation(); window.Logic.openEditLib(${i})" style="border:none; background:none; color:#64748b; cursor:pointer"><i class="fas fa-pencil-alt"></i></button>
-                    <button onclick="event.stopPropagation(); window.Logic.delFromDb(${i})" style="border:none; background:none; color:#ef4444; cursor:pointer"><i class="fas fa-trash"></i></button>
-                </div>`;
-            
-            b.innerHTML += `
-            <div class="food-suggestion" onclick="window.selectFoundItem(${i})" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; cursor:pointer">
-                <div>${icon}<b>${f.n}</b></div>
-                <div style="display:flex; align-items:center; gap:10px">
-                    <small style="color:#666">${Math.round(f.k)} kcal</small>
-                    ${actions}
-                </div>
-            </div>`;
+            const icon = f.isPlate ? '🍽️ ' : '';
+            b.innerHTML += `<div class="food-suggestion" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee"><div onclick="window.selectFoundItem(${i})" style="flex:1; cursor:pointer"><b>${icon}${f.n}</b> <small>${Math.round(f.k)} kcal</small></div><div style="display:flex; gap:10px"><button onclick="event.stopPropagation(); window.Logic.openEditLib(${i})" style="border:none; background:none; cursor:pointer; color:#64748b; font-size:1.1rem">✏️</button><button onclick="event.stopPropagation(); window.Logic.delFromDb(${i})" style="border:none; background:none; cursor:pointer; color:#ef4444; font-size:1.1rem">🗑️</button></div></div>`;
         });
         window.S.lastSearch = res;
     },
 
-    // BORRAR DE LA BASE DE DATOS (Plato o Alimento)
-    delFromDb: async (idx) => {
-        const item = window.S.lastSearch[idx];
-        if(!confirm(`¿Borrar "${item.n}" de tu base de datos?`)) return;
-        
-        if (item.isPlate) {
-            window.S.platos = window.S.platos.filter(p => p.n !== item.n);
-            await window.DB.savePlates();
-        } else {
-            window.S.lib = window.S.lib.filter(f => f.n !== item.n);
-            await window.DB.saveLib();
-        }
-        window.Logic.search(); // Refrescar lista
+    delFromDb: async (i) => {
+        const item = window.S.lastSearch[i]; if(!confirm(`¿Borrar ${item.n}?`)) return;
+        if(item.isPlate) window.S.platos = window.S.platos.filter(p => p.n !== item.n); else window.S.lib = window.S.lib.filter(l => l.n !== item.n);
+        item.isPlate ? await window.DB.savePlates() : await window.DB.saveLib(); window.Logic.search();
     },
 
-    // ABRIR EDICIÓN DE BASE DE DATOS
-    openEditLib: (idx) => {
-        const item = window.S.lastSearch[idx];
-        window.S.editLibItem = item;
-        window.S.editLibIdx = idx; // Guardamos índice si quisiéramos actualizar directamente
-        
-        if(item.isPlate) {
-            // Edición simple de plato (Solo nombre por ahora, editar ingredientes es complejo)
-            const newName = prompt("Nuevo nombre del plato:", item.n);
-            if(newName && newName !== item.n) {
-                // Buscamos el plato original en el array real (no en la búsqueda)
-                const realIdx = window.S.platos.findIndex(p => p.n === item.n);
-                if(realIdx >= 0) {
-                    window.S.platos[realIdx].n = newName;
-                    window.DB.savePlates().then(() => {
-                        alert("Nombre actualizado");
-                        window.Logic.search();
-                    });
-                }
-            }
-        } else {
-            // Edición completa de alimento
-            window.S.editLib = true; // Flag importante
-            // Rellenamos el modal con los datos del alimento BASE
-            // Asumimos que la cantidad base es 100g para editar macros
-            const editData = { ...item, q: item.q || 100 }; 
-            window.UI.setQty(editData);
-            window.UI.view('v-qty');
-            window.UI.open('m-add');
-        }
+    openEditLib: (i) => {
+        const item = window.S.lastSearch[i];
+        window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
+        window.UI.setQty({...item, q:100, u:'g'}); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
-    // GUARDAR EDICIÓN DE LIBRERÍA
     saveLibEdit: async () => {
         const n = document.getElementById('qty-name-in').value;
-        const k = parseFloat(document.getElementById('lib-k').value) || 0;
-        const p = parseFloat(document.getElementById('lib-p').value) || 0;
-        const c = parseFloat(document.getElementById('lib-c').value) || 0;
-        const f = parseFloat(document.getElementById('lib-f').value) || 0;
-        
-        // Encontrar el item original en window.S.lib
-        const oldName = window.S.editLibItem.n;
-        const libIdx = window.S.lib.findIndex(x => x.n === oldName);
-        
-        if (libIdx >= 0) {
-            window.S.lib[libIdx] = { n, u: 'g', k, p, c, f }; // Actualizamos
-            await window.DB.saveLib();
-            alert("Alimento base actualizado");
-            window.UI.closeAll();
-            window.Logic.search();
+        if(window.S.editLibItem.isPlate) {
+            const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n);
+            if(idx >= 0) window.S.platos[idx].n = n;
+            await window.DB.savePlates();
         } else {
-            alert("Error: No se encontró el alimento original");
+            const k = parseFloat(document.getElementById('lib-k').value), p = parseFloat(document.getElementById('lib-p').value), c = parseFloat(document.getElementById('lib-c').value), f = parseFloat(document.getElementById('lib-f').value);
+            const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n);
+            if(idx >= 0) window.S.lib[idx] = {n, k, p, c, f, u:'g'};
+            await window.DB.saveLib();
         }
+        window.UI.closeAll(); window.Logic.search();
     },
 
-    savePlateToDb: async () => {
-        const n = document.getElementById('plate-name').value;
-        if(!n) return alert("Nombre obligatorio");
-        const chk = document.querySelectorAll('#plate-ingredients-list input:checked');
-        let its = [], tk = 0, tp=0, tc=0, tf=0;
-        chk.forEach(c => {
-            const i = window.S.day[window.S.srcMeal][c.value]; 
-            its.push(i); tk += i.k; tp += i.p; tc += i.c; tf += i.f;
-        });
-        window.S.platos.push({ n: n, k: tk, p: tp, c: tc, f: tf, items: its });
-        await window.DB.savePlates(); 
-        document.getElementById('m-create-plate').style.display = 'none'; 
-        alert("Plato guardado");
-        if(document.getElementById('src-in').value) window.Logic.search();
-    },
-
-    // RESTO FUNCIONES
-    pdf: () => { window.UI.closeAll(); const d=window.S.d.toLocaleDateString(); let h=`<h1>${APP_NAME} - ${d}</h1><p>Usuario: ${window.S.u.name}</p><hr>`; MEALS.forEach(m=>{const a=window.S.day[m.k]||[]; if(a.length){h+=`<h3>${m.n}</h3><ul>`;a.forEach(i=>h+=`<li>${i.n} (${i.q}${i.u}) - ${Math.round(i.k)}kcal</li>`);h+='</ul>';}}); const el=document.createElement('div');el.innerHTML=h;document.body.appendChild(el);html2pdf().from(el).save(`Reporte_${d}.pdf`);setTimeout(()=>el.remove(),1000); },
-    pdfHistory: async () => { const btn=document.querySelector('#m-glob button:nth-child(2)'); btn.innerText="⏳"; try{const s=await fire.getDocs(fire.query(fire.collection(db,`usuarios/${window.S.uid}/diario`))); let h=`<h1>Historial</h1>`; s.forEach(d=>{let dk=0;const da=d.data();MEALS.forEach(m=>{if(da[m.k])da[m.k].forEach(i=>dk+=i.k)});if(dk>0)h+=`<p><b>${d.id}</b>: ${Math.round(dk)} kcal</p>`}); const el=document.createElement('div');el.innerHTML=h;document.body.appendChild(el);html2pdf().from(el).save(`Historial_Completo.pdf`);setTimeout(()=>el.remove(),2000);}catch(e){alert(e);}finally{btn.innerText="📚 PDF Historial";window.UI.closeAll();}},
-    exportJSON: async () => { const s=await fire.getDocs(fire.collection(db,`usuarios/${window.S.uid}/diario`)); const d={perfil:window.S.u, historial:{}}; s.forEach(doc=>d.historial[doc.id]=doc.data()); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})); a.download=`Backup_${window.S.u.name}_${new Date().toISOString().split('T')[0]}.json`; a.click(); },
-    importJSON: async (inp) => { const f=inp.files[0]; if(!f)return; inp.value=''; const r=new FileReader(); r.onload=async(e)=>{ try{const d=JSON.parse(e.target.result); const h=d.historial||d.h||d; if(!confirm(`Restaurar ${Object.keys(h).length} días?`))return; const b=fire.writeBatch(db); Object.entries(h).forEach(([k,v])=>{if(k.match(/^\d{4}-\d{2}-\d{2}$/)) b.set(fire.doc(db,`usuarios/${window.S.uid}/diario`,k),v)}); await b.commit(); alert("✅ Importado"); location.reload(); }catch(err){alert("Error JSON");} }; r.readAsText(f); },
-    delFromLib: async (n)=>{if(confirm("Borrar?")){window.S.lib=window.S.lib.filter(x=>x.n!==n);await fire.setDoc(window.DB.doc('sistema','biblioteca'),{items:window.S.lib});window.Logic.search();}},
-    openAdd: (mk)=>{window.S.tm=mk;window.S.edit=false;window.UI.view('v-home');window.UI.open('m-add');if(window.S.lib.length>0)window.Logic.search();},
-    
-    saveItem: async ()=>{
-        // Si estamos editando un item de librería, usamos la otra función
+    saveItem: async () => {
         if(window.S.editLib) return window.Logic.saveLibEdit();
-        
-        const q=parseFloat(document.getElementById('qty-in').value), u=document.getElementById('unit-in').value, n=document.getElementById('qty-name-in').value; 
-        const b=window.S.item, f=q/100; 
-        // Si es un plato, no recalculamos macros base (ya vienen totales), si es ingrediente sí.
-        // Pero para simplificar, asumimos que b tiene los macros base por 100g si viene de lib.
-        // Si viene de search (plato o lib), b tiene los datos.
-        // Para platos guardados, k suele ser total. Para lib, por 100g.
-        // Ajuste: si es plato, f debe ser 1 (si no se escala).
-        // Simplificación: Guardamos tal cual la lógica de siempre
-        const ent={n:n,q:q,u:u,k:b.k*f,p:b.p*f,c:b.c*f,f:b.f*f}; 
-        if(window.S.edit)window.S.day[window.S.tm][window.S.eIdx]=ent; else window.S.day[window.S.tm].push(ent); 
+        const q=parseFloat(document.getElementById('qty-in').value), u=document.getElementById('unit-in').value, n=document.getElementById('qty-name-in').value, b=window.S.item, f=q/100;
+        const ent={n, q, u, k:b.k*f, p:b.p*f, c:b.c*f, f:b.f*f};
+        if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx]=ent; else window.S.day[window.S.tm].push(ent);
         await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
     },
-    updateCalories: ()=>{const q=parseFloat(document.getElementById('qty-in').value)||0; document.getElementById('calc-kcal').innerText=Math.round(window.S.item.k*(q/100));},
-    updateLibCalories: ()=>{ /* Helper visual si se quisiera */ },
-    
-    editItem: (mk,i)=>{window.S.edit=true;window.S.tm=mk;window.S.eIdx=i;window.S.item=JSON.parse(JSON.stringify(window.S.day[mk][i]));window.S.editLib=false;window.UI.setQty(window.S.item);window.UI.view('v-qty');window.UI.open('m-add');},
-    delItem: async (mk,i)=>{if(confirm("Borrar?")){window.S.day[mk].splice(i,1);await window.DB.setDay();window.Sys.sync();}},
-    wipeMeal: async (mk)=>{if(confirm("Vaciar?")){window.S.day[mk]=[];await window.DB.setDay();window.Sys.sync();}},
-    wipe: async ()=>{if(confirm("Borrar día?")){window.S.day={};await window.DB.setDay();window.Sys.sync();window.UI.closeAll();}},
-    openCopy: (mk,t)=>{window.S.srcMeal=mk;window.S.copyMode=t;document.getElementById('copy-date').valueAsDate=window.S.d;document.getElementById('copy-meal').value=mk;window.UI.open('m-copy');},
-    execCopy: async ()=>{const d=document.getElementById('copy-date').value, tm=document.getElementById('copy-meal').value; const r=fire.doc(db,`usuarios/${window.S.uid}/diario`,d); const s=await fire.getDoc(r); let da=s.exists()?s.data():{}; if(!da[tm])da[tm]=[]; da[tm]=da[tm].concat(window.S.day[window.S.srcMeal]); await fire.setDoc(r,da); if(window.S.copyMode=='move'){window.S.day[window.S.srcMeal]=[];await window.DB.setDay();} window.UI.closeAll(); if(d===window.S.d.toISOString().split('T')[0]) window.Sys.sync(); alert("Hecho");},
-    openCreatePlate: (mk)=>{window.S.srcMeal=mk;const c=document.getElementById('plate-ingredients-list');c.innerHTML='';window.S.day[mk].forEach((it,i)=>{c.innerHTML+=`<div class="plate-check-row"><span>${it.n}</span><input type="checkbox" value="${i}" checked></div>`});document.getElementById('m-create-plate').style.display='flex';},
-    openItemAct: (mk,i)=>{window.S.tm=mk;window.S.eIdx=i;window.S.item=window.S.day[mk][i];document.getElementById('ia-name').innerText=window.S.item.n;document.getElementById('ia-date').valueAsDate=window.S.d;document.getElementById('ia-meal').value=mk;window.UI.open('m-item-act');},
-    execItemAct: async (mode)=>{const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(mode=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();},
-    syncHistory: async () => { const btn=document.querySelector('#m-glob button:nth-child(6)'); btn.innerText="⏳"; try{const s=await fire.getDocs(fire.collection(db,`usuarios/${window.S.uid}/diario`)); let c=0; s.forEach(d=>{Object.values(d.data()).forEach(m=>{if(Array.isArray(m)) m.forEach(i=>{if(!window.S.lib.find(x=>x.n===i.n)){let f=i.q/100||1; window.S.lib.push({n:i.n,u:i.u,q:100,k:i.k/f,p:i.p/f,c:i.c/f,f:i.f/f}); c++;}})})}); if(c>0)await fire.setDoc(window.DB.doc('sistema','biblioteca'),{items:window.S.lib}); alert(`Recuperados ${c}`);}catch(e){alert(e);}finally{btn.innerText="🔄 Sincronizar";} }
+
+    updateCalories: () => { const q=parseFloat(document.getElementById('qty-in').value)||0; if(window.S.item) document.getElementById('calc-kcal').innerText=Math.round(window.S.item.k*(q/100)); },
+
+    editItem: (mk,i) => {
+        window.S.edit=true; window.S.tm=mk; window.S.eIdx=i;
+        const orig = window.S.day[mk][i];
+        const factor = (orig.q || 100) / 100;
+        window.S.item = { ...orig, k: orig.k/factor, p: (orig.p||0)/factor, c: (orig.c||0)/factor, f: (orig.f||0)/factor };
+        window.S.editLib = false; window.UI.setQty(orig); window.UI.view('v-qty'); window.UI.open('m-add');
+    },
+
+    delItem: async (mk,i) => { if(confirm("Borrar?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
+    wipeMeal: async (mk) => { if(confirm("Vaciar?")){window.S.day[mk]=[]; await window.DB.setDay(); window.Sys.sync();}},
+    openCopy: (mk,t) => { window.S.srcMeal=mk; window.S.copyMode=t; document.getElementById('copy-date').valueAsDate=window.S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy'); },
+    execCopy: async () => { const d=document.getElementById('copy-date').value, tm=document.getElementById('copy-meal').value, r=fire.doc(db,`usuarios/${window.S.uid}/diario`,d), s=await fire.getDoc(r); let da=s.exists()?s.data():{}; if(!da[tm])da[tm]=[]; da[tm]=da[tm].concat(window.S.day[window.S.srcMeal]); await fire.setDoc(r,da); if(window.S.copyMode=='move'){window.S.day[window.S.srcMeal]=[]; await window.DB.setDay();} window.UI.closeAll(); if(d===window.S.d.toISOString().split('T')[0]) window.Sys.sync(); },
+    openCreatePlate: (mk) => { window.S.srcMeal=mk; const c=document.getElementById('plate-ingredients-list'); c.innerHTML=''; window.S.day[mk].forEach((it,i)=>{c.innerHTML+=`<div class="plate-check-row"><span>${it.n}</span><input type="checkbox" value="${i}" checked></div>`}); window.UI.open('m-create-plate'); },
+    savePlateToDb: async () => { const n=document.getElementById('plate-name').value; const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("Plato guardado"); },
+    openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
+    execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); }
 };
 
 // --- 8. STATS (ANILLO CORRECTO) ---
@@ -497,77 +413,56 @@ window.Stats = {
     }
 };
 
-// --- 9. AI REPARADA (GEMINI VISION & TEXT) ---
+/// --- 9. AI REPARADA (USANDO GEMINI 2.0 FLASH) ---
 window.AI = {
     saveConfig: () => { localStorage.setItem('t_ai_key', document.getElementById('ai-key').value); window.UI.view('v-home'); window.UI.checkAI(); },
-    toggleEye: () => { const x = document.getElementById('ai-key'); x.type = x.type==='password'?'text':'password'; },
     listen: () => { 
-        if(!('webkitSpeechRecognition' in window)) return alert("Voz no soportada en este navegador");
-        const rec = new webkitSpeechRecognition(); 
-        rec.lang='es-ES'; rec.start(); 
-        rec.onresult=(e)=>{document.getElementById('ai-text').value += " " + e.results[0][0].transcript;}; 
+        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if(!Speech) return alert("Voz no soportada");
+        const rec = new Speech(); rec.lang='es-ES'; rec.start(); 
+        rec.onresult=(e)=>document.getElementById('ai-text').value+=e.results[0][0].transcript; 
     },
-    
-    // PROCESAR TEXTO
-    process: async () => { 
-        const k=localStorage.getItem('t_ai_key'); if(!k)return window.UI.view('v-conf'); 
-        const t=document.getElementById('ai-text').value; 
-        if(!t) return alert("Escribe o dicta algo");
-        
-        const prompt = `Analiza este texto y extrae alimentos. Responde SOLO con un array JSON válido sin markdown: [{"n":"Nombre","q":cantidad_numero,"u":"g/ml/ud","k":kcal_total,"p":prot,"c":carb,"f":grasa}]. Base 100g si no se especifica cantidad. Texto: ${t}`;
-        
-        try{
-            const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`,{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({contents:[{parts:[{text: prompt}]}]})
-            }); 
-            const d=await r.json(); 
-            const txt = d.candidates[0].content.parts[0].text;
-            const j=JSON.parse(txt.replace(/```json|```/g, '').trim()); 
-            
-            j.forEach(i=>{ window.S.day[window.S.tm].push({...i,q:i.q,k:i.k,p:i.p,c:i.c,f:i.f}) }); 
-            await window.DB.setDay(); 
-            window.UI.closeAll(); 
-            window.Sys.sync(); 
-        }catch(e){alert("Error AI: " + e.message);} 
+    process: async () => {
+        const k = localStorage.getItem('t_ai_key'), t = document.getElementById('ai-text').value; if(!k) return window.UI.view('v-conf');
+        try {
+            // ACTUALIZADO A GEMINI 2.0 FLASH PARA EVITAR 404
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: `Analiza: "${t}". Extrae alimentos y devuelve SOLO un array JSON válido sin markdown ni explicaciones: [{"n":"Nombre","q":100,"u":"g","k":kcal_total,"p":pro,"c":carb,"f":fat}]` }] }] })
+            });
+            const d = await r.json(); 
+            if(!d.candidates || !d.candidates[0].content) throw new Error("IA no respondió correctamente. Revisa tu clave API.");
+            const rawText = d.candidates[0].content.parts[0].text;
+            // Limpieza robusta: Extraemos solo lo que esté entre [ ]
+            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+            if(!jsonMatch) throw new Error("No se pudo extraer el JSON de la respuesta.");
+            const items = JSON.parse(jsonMatch[0]);
+            items.forEach(i => window.S.day[window.S.tm].push(i));
+            await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
+        } catch(e) { alert("Error IA: " + e.message); }
     },
-    
-    // PROCESAR IMAGEN (TABLA NUTRICIONAL)
     processImage: async (file) => {
-        const k=localStorage.getItem('t_ai_key'); if(!k)return window.UI.view('v-conf');
-        if(!file) return;
-        
-        // Convertir a Base64
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
+        const k = localStorage.getItem('t_ai_key'); if(!k) return window.UI.view('v-conf');
+        const reader = new FileReader(); reader.readAsDataURL(file);
         reader.onload = async () => {
-            const base64Data = reader.result.split(',')[1];
-            
-            const prompt = `Analiza esta imagen de tabla nutricional o comida. Extrae los datos y devuelve SOLO un array JSON válido: [{"n":"Nombre aproximado","q":100,"u":"g","k":kcal_100g,"p":prot_100g,"c":carb_100g,"f":fat_100g}]. Si es comida, estima.`;
-            
+            const base64 = reader.result.split(',')[1];
             try {
-                const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`,{
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({
-                        contents:[{
-                            parts:[
-                                {text: prompt},
-                                {inline_data: {mime_type: file.type, data: base64Data}}
-                            ]
-                        }]
-                    })
+                // ACTUALIZADO A GEMINI 2.0 FLASH
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [
+                        { text: "Analiza la tabla nutricional de la imagen. Extrae los valores por cada 100g. Devuelve SOLO un array JSON sin texto extra: [{'n':'Nombre','q':100,'u':'g','k':kcal,'p':pro,'c':carb,'f':fat}]" },
+                        { inline_data: { mime_type: file.type, data: base64 } }
+                    ] }] })
                 });
-                const d=await r.json();
-                const txt = d.candidates[0].content.parts[0].text;
-                const j=JSON.parse(txt.replace(/```json|```/g, '').trim());
-                
-                j.forEach(i=>{ window.S.day[window.S.tm].push({...i,q:i.q,k:i.k,p:i.p,c:i.c,f:i.f}) });
-                await window.DB.setDay();
-                window.UI.closeAll();
-                window.Sys.sync();
-            } catch(e) { alert("Error Imagen AI: " + e.message); }
+                const d = await r.json();
+                if(!d.candidates || !d.candidates[0].content) throw new Error("IA no pudo leer la imagen.");
+                const rawText = d.candidates[0].content.parts[0].text;
+                const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+                if(!jsonMatch) throw new Error("Tabla no detectada. Intenta que se vea más clara.");
+                JSON.parse(jsonMatch[0]).forEach(i => window.S.day[window.S.tm].push(i));
+                await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
+            } catch(e) { alert("Error Imagen: " + e.message); }
         };
     }
 };
