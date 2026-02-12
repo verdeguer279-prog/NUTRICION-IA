@@ -10,7 +10,8 @@ setTimeout(() => { const s = document.getElementById('loading-screen'); if (s &&
 
 const MEALS = [ { k: '01_desayuno', n: 'Desayuno', i: 'fa-coffee' }, { k: '02_almuerzo', n: 'Almuerzo', i: 'fa-bread-slice' }, { k: '03_comida', n: 'Comida', i: 'fa-utensils' }, { k: '04_merienda', n: 'Merienda', i: 'fa-apple-alt' }, { k: '05_cena', n: 'Cena', i: 'fa-moon' } ];
 
-window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', lastSearch: [], plateEditIdx: -1, editLibItem: null, editLib: false };
+// MODIFICACIÓN 1: Añadir unitConfigs al estado global
+window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', lastSearch: [], plateEditIdx: -1, editLibItem: null, editLib: false, unitConfigs: {} };
 
 // --- 2. SISTEMA ---
 window.Sys = {
@@ -121,6 +122,7 @@ window.UI = {
     checkAI: () => { if(localStorage.getItem('t_ai_key')) document.getElementById('btn-config-ai').classList.add('configured'); },
     
     // --- FUNCIÓN ARREGLADA CON TRY/CATCH PARA EVITAR PANTALLA BLANCA ---
+    // MODIFICACIÓN 2: Añadir llamada a updateUnitDisplay
     setQty: (i) => { 
         try {
             const elN = document.getElementById('qty-name-in');
@@ -142,6 +144,7 @@ window.UI = {
                 }
             } else {
                 if(libSection) libSection.style.display='none';
+                window.Logic.updateUnitDisplay();
                 window.Logic.updateCalories();
             }
         } catch(e) { console.error("UI Error:", e); }
@@ -361,27 +364,114 @@ window.Logic = {
         window.UI.setQty({...item, q:100, u:'g'}); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
+    // MODIFICACIÓN 3: Actualizar saveLibEdit para guardar baseWeight y unitConfigs
     saveLibEdit: async () => {
         const n = document.getElementById('qty-name-in').value;
         if(window.S.editLibItem.isPlate) {
             const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n); if(idx >= 0) window.S.platos[idx].n = n; await window.DB.savePlates();
         } else {
             const k = parseFloat(document.getElementById('lib-k').value), p = parseFloat(document.getElementById('lib-p').value), c = parseFloat(document.getElementById('lib-c').value), f = parseFloat(document.getElementById('lib-f').value);
-            const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n); if(idx >= 0) window.S.lib[idx] = {n, k, p, c, f, u:'g'}; await window.DB.saveLib();
+            const baseWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
+            const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n); 
+            if(idx >= 0) {
+                const item = {n, k, p, c, f, u:'g', baseWeight: baseWeight};
+                window.S.lib[idx] = item;
+                window.S.unitConfigs[n] = { weight: baseWeight };
+            }
+            await window.DB.saveLib();
         }
         window.UI.closeAll(); window.Logic.search();
     },
 
+    // MODIFICACIÓN 4: Reemplazar saveItem completo con lógica de unidades convertibles
     saveItem: async () => {
         if(window.S.editLib) return window.Logic.saveLibEdit();
-        const q=parseFloat(document.getElementById('qty-in').value), u=document.getElementById('unit-in').value, n=document.getElementById('qty-name-in').value, b=window.S.item, f=q/100;
-        const ent={n, q, u, k:b.k*f, p:b.p*f, c:b.c*f, f:b.f*f};
+        const q=parseFloat(document.getElementById('qty-in').value);
+        const u=document.getElementById('unit-in').value;
+        const n=document.getElementById('qty-name-in').value;
+        const b=window.S.item;
+        
+        let factor = q/100;
+        if(u !== 'g' && u !== 'ml') {
+            const unitWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
+            factor = (q * unitWeight) / 100;
+        }
+        
+        const ent={n, q, u, k:b.k*factor, p:b.p*factor, c:b.c*factor, f:b.f*factor, baseWeight: b.baseWeight || 100};
         if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx]=ent; else window.S.day[window.S.tm].push(ent);
         await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
     },
 
-    updateCalories: () => { const q=parseFloat(document.getElementById('qty-in').value)||0; if(window.S.item) document.getElementById('calc-kcal').innerText=Math.round(window.S.item.k*(q/100)); },
-    editItem: (mk,i) => { window.S.edit=true; window.S.tm=mk; window.S.eIdx=i; const orig = window.S.day[mk][i]; const factor = (orig.q || 100) / 100; window.S.item = { ...orig, k: orig.k/factor, p: (orig.p||0)/factor, c: (orig.c||0)/factor, f: (orig.f||0)/factor }; window.S.editLib = false; window.UI.setQty(orig); window.UI.view('v-qty'); window.UI.open('m-add'); },
+    // MODIFICACIÓN 5 y 6: Reemplazar updateCalories y añadir updateUnitDisplay y saveUnitConfig
+    updateCalories: () => { 
+        const q=parseFloat(document.getElementById('qty-in').value)||0;
+        const u=document.getElementById('unit-in').value;
+        if(!window.S.item) return;
+        
+        let factor = q/100;
+        if(u !== 'g' && u !== 'ml') {
+            const unitWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
+            factor = (q * unitWeight) / 100;
+        }
+        
+        const kcal = Math.round(window.S.item.k * factor);
+        const p = Math.round(window.S.item.p * factor);
+        const c = Math.round(window.S.item.c * factor);
+        const f = Math.round(window.S.item.f * factor);
+        
+        document.getElementById('calc-kcal').innerText = kcal;
+        document.getElementById('calc-macro-p').innerText = `P ${p}g`;
+        document.getElementById('calc-macro-c').innerText = `C ${c}g`;
+        document.getElementById('calc-macro-f').innerText = `F ${f}g`;
+    },
+
+    updateUnitDisplay: () => {
+        const u = document.getElementById('unit-in').value;
+        const section = document.getElementById('unit-config-section');
+        const label = document.getElementById('unit-label');
+        
+        const unitLabels = { 'g': 'Gramos', 'ml': 'Mililitros', 'oz': 'Onzas', 'lata': 'Lata', 'porción': 'Porción', 'taza': 'Taza', 'cucharada': 'Cucharada', 'pieza': 'Pieza' };
+        const unitDefaults = { 'oz': 28.35, 'lata': 56, 'porción': 100, 'taza': 240, 'cucharada': 15, 'pieza': 50 };
+        
+        if(u === 'g' || u === 'ml') {
+            section.style.display = 'none';
+        } else {
+            section.style.display = 'block';
+            label.innerText = unitLabels[u] || u;
+            const input = document.getElementById('unit-weight');
+            if(!input.value) input.value = unitDefaults[u] || 100;
+        }
+        window.Logic.updateCalories();
+    },
+
+    saveUnitConfig: () => {
+        const n = document.getElementById('qty-name-in').value;
+        const u = document.getElementById('unit-in').value;
+        const w = parseFloat(document.getElementById('unit-weight').value);
+        if(n && u && w) {
+            window.S.unitConfigs[`${n}_${u}`] = w;
+            alert(`${u} configurada: ${w}g`);
+            window.Logic.updateCalories();
+        }
+    },
+
+    // MODIFICACIÓN 7: Actualizar editItem para mantener unidad y baseWeight
+    editItem: (mk,i) => { 
+        window.S.edit=true; window.S.tm=mk; window.S.eIdx=i; 
+        const orig = window.S.day[mk][i]; 
+        const baseW = orig.baseWeight || 100;
+        let divisor = 100;
+        if(orig.u && orig.u !== 'g' && orig.u !== 'ml') {
+            divisor = baseW;
+        }
+        const factor = (orig.q || 100) / divisor;
+        window.S.item = { ...orig, k: orig.k/factor, p: (orig.p||0)/factor, c: (orig.c||0)/factor, f: (orig.f||0)/factor, baseWeight: baseW }; 
+        window.S.editLib = false; 
+        window.UI.setQty(orig); 
+        window.UI.view('v-qty'); 
+        window.UI.open('m-add'); 
+    },
+
     delItem: async (mk,i) => { if(confirm("Borrar?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
     wipeMeal: async (mk) => { if(confirm("Vaciar?")){window.S.day[mk]=[]; await window.DB.setDay(); window.Sys.sync();}},
     openCopy: (mk,t) => { window.S.srcMeal=mk; window.S.copyMode=t; document.getElementById('copy-date').valueAsDate=window.S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy'); },
@@ -478,61 +568,70 @@ window.Logic = {
                         document.getElementById('loading-screen').style.display='none'; return;
                     }
                     const batch = fire.writeBatch(db);
-                    let count = 0;
-                    for (const [date, data] of Object.entries(json.history)) {
+                    Object.entries(json.history).forEach(([date, dayData]) => {
                         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, date);
-                        batch.set(ref, data);
-                        count++;
-                        if(count % 400 === 0) { await batch.commit(); } // Firestore limit safety
-                    }
-                    if(count % 400 !== 0) await batch.commit();
-                    alert(`Restaurados ${count} días del historial.`);
-                    location.reload(); // Recargar para ver cambios
-                } 
-                // CASO B: Es un día suelto o archivo antiguo
-                else {
-                    window.S.day = json;
-                    await window.DB.setDay();
+                        batch.set(ref, dayData);
+                    });
+                    await batch.commit();
+                    alert("¡Historial restaurado!");
                     window.Sys.sync();
-                    alert("Día importado correctamente");
+                } else {
+                    // CASO B: Es un día suelto (parsea como dia normal)
+                    const date = new Date().toISOString().split('T')[0];
+                    await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, date), json);
+                    alert("Día importado para hoy!");
+                    window.Sys.sync();
                 }
-            } catch(err) { alert("Error al leer archivo: " + err.message); }
+            } catch(e) { alert("Error importando: " + e.message); }
             document.getElementById('loading-screen').style.display='none';
         };
         reader.readAsText(file);
     },
 
-    parse: async () => {
+    // 5. LIMPIAR UN DÍA
+    wipe: async () => {
+        if(!confirm("¿Borrar TODOS los datos de hoy?")) return;
+        document.getElementById('loading-screen').style.display='flex';
         try {
-            const txt = document.getElementById('json-in').value; if(!txt) return;
-            const obj = JSON.parse(txt);
-            let rawItems = Array.isArray(obj) ? obj : [obj];
-            let validItems = [];
-            rawItems.forEach(i => {
-                if (i.producto && i.informacion_nutricional) {
-                    const info = i.informacion_nutricional;
-                    validItems.push({ n: i.producto, q: 1, u: 'ración', k: parseFloat(info.calorias || 0), p: parseFloat(info.proteinas?.cantidad || 0), c: parseFloat(info.hidratos_de_carbono?.cantidad || 0), f: parseFloat(info.grasas_totales?.cantidad || 0) });
-                } else if (i.n && i.k !== undefined) { validItems.push(i); }
-            });
-            if(validItems.length === 0) throw new Error("JSON no reconocido.");
-            validItems.forEach(item => window.S.day[window.S.tm].push(item));
-            await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
-            alert("Importado correctamente.");
-        } catch (e) { alert("Error JSON: " + e.message); }
+            const dStr = window.S.d.toISOString().split('T')[0];
+            await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr), {});
+            window.Sys.sync();
+            window.UI.closeAll();
+            alert("Día borrado");
+        } catch(e) { alert("Error: " + e.message); }
+        document.getElementById('loading-screen').style.display='none';
     },
-    
-    pdf: () => { const el = document.getElementById('feed'); html2pdf().from(el).save(`diario_${window.S.d.toISOString().split('T')[0]}.pdf`); },
-    wipe: async () => { if(confirm("¿Borrar TODO el día?")) { MEALS.forEach(m => window.S.day[m.k] = []); await window.DB.setDay(); window.Sys.sync(); } }
+
+    parse: () => {
+        try {
+            const json = JSON.parse(document.getElementById('json-in').value);
+            if(!Array.isArray(json)) return alert("Debe ser un array JSON");
+            json.forEach(item => window.S.day[window.S.tm].push(item));
+            window.Logic.autoSave(); window.UI.closeAll();
+        } catch(e) { alert("JSON inválido: " + e.message); }
+    },
+    execImport: async () => {
+        const date = document.getElementById('imp-date').value, meal = document.getElementById('imp-meal').value;
+        const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, date), snap = await fire.getDoc(ref);
+        if(!snap.exists()) return alert("Sin datos ese día");
+        const data = snap.data(); if(!data[meal]) return alert("Sin esa comida");
+        window.S.day[meal] = [...(window.S.day[meal] || []), ...data[meal]];
+        await window.DB.setDay(); window.UI.closeAll(); window.Render.all();
+    }
 };
 
-// --- 8. STATS ---
+// --- 8. STATS (GRÁFICAS Y PESO) ---
 window.Stats = {
-    chartDaily: null, chartWeekly: null, chartWeight: null, currentDate: new Date(),
-    open: () => { window.S.d = new Date(); window.UI.open('m-stats'); setTimeout(window.Stats.updateView, 150); },
-    changeDate: (d) => { window.S.d.setDate(window.S.d.getDate()+d); window.Stats.updateView(); },
-    load: (d) => { if(d) window.S.d=new Date(d); window.Stats.updateView(); },
-    saveWeight: async () => { 
-        let val = parseFloat(document.getElementById('w-today').value); if(!val) return alert("Pon un peso");
+    open: () => { document.getElementById('st-date').valueAsDate = window.S.d; window.Stats.updateView(); window.UI.open('m-stats'); },
+    changeDate: (n) => { const d = new Date(document.getElementById('st-date').value); d.setDate(d.getDate() + n); document.getElementById('st-date').valueAsDate = d; window.Stats.load(d.toISOString().split('T')[0]); },
+    load: async (dStr) => { 
+        const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
+        const snap = await fire.getDoc(ref);
+        document.getElementById('w-today').value = snap.exists() && snap.data().weight ? snap.data().weight : '';
+    },
+    saveWeight: async () => {
+        const val = parseFloat(document.getElementById('w-today').value);
+        if(!val || val <= 0) return alert("Peso no válido");
         const dStr = window.S.d.toISOString().split('T')[0];
         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
         const snap = await fire.getDoc(ref); let data = snap.exists() ? snap.data() : {}; data.weight = val;
