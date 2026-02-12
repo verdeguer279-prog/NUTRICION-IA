@@ -10,8 +10,19 @@ setTimeout(() => { const s = document.getElementById('loading-screen'); if (s &&
 
 const MEALS = [ { k: '01_desayuno', n: 'Desayuno', i: 'fa-coffee' }, { k: '02_almuerzo', n: 'Almuerzo', i: 'fa-bread-slice' }, { k: '03_comida', n: 'Comida', i: 'fa-utensils' }, { k: '04_merienda', n: 'Merienda', i: 'fa-apple-alt' }, { k: '05_cena', n: 'Cena', i: 'fa-moon' } ];
 
-// MODIFICACIÓN 1: Añadir unitConfigs al estado global
-window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', lastSearch: [], plateEditIdx: -1, editLibItem: null, editLib: false, unitConfigs: {} };
+// MAPA DE PESOS PARA UNIDADES PERSONALIZADAS
+const UNIT_WEIGHT_MAP = {
+    'g': 1,
+    'ml': 1,
+    'jarra250ml': 250,
+    'unidad': 100,
+    'lata': 60,
+    'porción': 100,
+    'taza': 240,
+    'cucharada': 15
+};
+
+window.S = { d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], allUsers: [], tm: null, item: null, edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', lastSearch: [], plateEditIdx: -1, editLibItem: null, editLib: false, unitConfigs: {}, editingPlate: false, plateMode: 'create' };
 
 // --- 2. SISTEMA ---
 window.Sys = {
@@ -31,23 +42,19 @@ init: async () => {
                 
                 let dbId = user.uid; 
                 try {
-                    // 1. Buscamos por el ID de Google (UID)
                     const q = fire.query(fire.collection(db, 'usuarios'), fire.where('uid', '==', user.uid));
                     const querySnapshot = await fire.getDocs(q);
 
                     if (!querySnapshot.empty) {
                         dbId = querySnapshot.docs[0].id;
                     } else {
-                        // --- CAMBIO AQUÍ: Si no te encuentra, te busca por tu nombre antiguo ---
                         const nameRef = fire.doc(db, 'usuarios', user.displayName || "");
                         const nameSnap = await fire.getDoc(nameRef);
                         
                         if (nameSnap.exists() && !nameSnap.data().uid) {
-                            // Vinculamos tu cuenta de Google a la ficha antigua de "RAFA G279"
                             await fire.updateDoc(nameRef, { uid: user.uid });
                             dbId = nameSnap.id;
                         }
-                        // -----------------------------------------------------------------------
                     }
                 } catch(e) { console.log("Login fallback UID"); }
 
@@ -111,7 +118,7 @@ window.UI = {
     open: (id) => { const el = document.getElementById(id); if(el) el.style.display='flex'; },
     closeAll: () => { 
         document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
-        window.S.edit = false; window.S.editLib = false; 
+        window.S.edit = false; window.S.editLib = false; window.S.editingPlate = false;
     },
     view: (id) => { 
         ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>{
@@ -121,8 +128,6 @@ window.UI = {
     },
     checkAI: () => { if(localStorage.getItem('t_ai_key')) document.getElementById('btn-config-ai').classList.add('configured'); },
     
-    // --- FUNCIÓN ARREGLADA CON TRY/CATCH PARA EVITAR PANTALLA BLANCA ---
-    // MODIFICACIÓN 2: Añadir llamada a updateUnitDisplay
     setQty: (i) => { 
         try {
             const elN = document.getElementById('qty-name-in');
@@ -137,10 +142,10 @@ window.UI = {
             if(window.S.editLib && !i.isPlate) {
                 if(libSection) {
                     libSection.style.display='block';
-                    document.getElementById('lib-k').value = i.k || 0;
-                    document.getElementById('lib-p').value = i.p || 0;
-                    document.getElementById('lib-c').value = i.c || 0;
-                    document.getElementById('lib-f').value = i.f || 0;
+                    document.getElementById('calc-kcal').value = i.k || 0;
+                    document.getElementById('calc-p').value = i.p || 0;
+                    document.getElementById('calc-c').value = i.c || 0;
+                    document.getElementById('calc-f').value = i.f || 0;
                 }
             } else {
                 if(libSection) libSection.style.display='none';
@@ -241,7 +246,6 @@ window.Render = {
         MEALS.forEach(m => {
             const arr=window.S.day[m.k]||[]; let mk=0,mp=0,mc=0,mf=0,rows='';
             
-            // ESTILOS ORIGINALES RESTAURADOS
             const btnBase = "width:36px; height:36px; border-radius:10px; border:1px solid transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem; margin-left:5px; transition:0.2s;";
             const sPlate = btnBase + "background:#f3e8ff; border-color:#d8b4fe; color:#9333ea;";
             const sCopy = btnBase + "background:#eff6ff; border-color:#bfdbfe; color:#2563eb;";
@@ -269,9 +273,9 @@ window.Render = {
                         </div>
                     </div>
                     <div class="c-actions" style="display:flex; gap:5px;">
-                        <button style="width:32px; height:32px; border:1px solid #e2e8f0; background:white; border-radius:8px; color:#f59e0b; cursor:pointer;" onclick="window.Logic.openItemAct('${m.k}',${idx})">⇄</button>
-                        <button style="width:32px; height:32px; border:1px solid #e2e8f0; background:white; border-radius:8px; color:#64748b; cursor:pointer;" onclick="window.Logic.editItem('${m.k}',${idx})">✏️</button>
-                        <button style="width:32px; height:32px; border:1px solid #fee2e2; background:white; border-radius:8px; color:#ef4444; cursor:pointer;" onclick="window.Logic.delItem('${m.k}',${idx})">🗑️</button>
+                        <button style="width:32px; height:32px; border:1px solid #e2e8f0; background:white; border-radius:8px; color:#f59e0b; cursor:pointer;" onclick="window.Logic.openItemAct('${m.k}',${idx})" title="Mover/Copiar">⇄</button>
+                        <button style="width:32px; height:32px; border:1px solid #e2e8f0; background:white; border-radius:8px; color:#64748b; cursor:pointer;" onclick="window.Logic.editItem('${m.k}',${idx})" title="Editar">✏️</button>
+                        <button style="width:32px; height:32px; border:1px solid #fee2e2; background:white; border-radius:8px; color:#ef4444; cursor:pointer;" onclick="window.Logic.delItem('${m.k}',${idx})" title="Borrar">🗑️</button>
                     </div>
                 </div>`; 
             });
@@ -293,7 +297,7 @@ window.Render = {
                             <button style="${sCopy}" onclick="window.Logic.openCopy('${m.k}','copy')" title="Copiar"><i class="fas fa-copy"></i></button>
                             <button style="${sMove}" onclick="window.Logic.openCopy('${m.k}','move')" title="Mover"><i class="fas fa-calendar-alt"></i></button>
                             <button style="${sDel}" onclick="window.Logic.wipeMeal('${m.k}')" title="Vaciar"><i class="fas fa-trash-alt"></i></button>
-                            <button style="${sAdd}" onclick="window.Logic.openAdd('${m.k}')"><i class="fas fa-plus"></i></button>
+                            <button style="${sAdd}" onclick="window.Logic.openAdd('${m.k}')" title="Agregar"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
                 </div>`;
@@ -302,7 +306,7 @@ window.Render = {
     }
 };
 
-// --- 7. LOGIC (PDF, BACKUP COMPLETO Y GESTIÓN) ---
+// --- 7. LOGIC (PDF, BACKUP Y GESTIÓN) ---
 window.Logic = {
     day: (n) => { window.S.d.setDate(window.S.d.getDate() + n); window.Sys.sync(); },
     autoSave: async () => { await window.DB.setDay(); window.Render.all(); },
@@ -311,7 +315,6 @@ window.Logic = {
     const n = document.getElementById('e-name').value; 
     if (!n) return alert("Nombre obligatorio");
     try {
-        // Usamos el ID real de Google para "apropiarnos" de la carpeta antigua
         const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid;
         const val = (id) => parseFloat(document.getElementById(id).value);
         
@@ -325,7 +328,6 @@ window.Logic = {
             customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
         };
         
-        // Esto escribirá tu ID actual de Google dentro del documento "RAFA G279"
         await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
         alert("¡Perfil vinculado con éxito!");
         
@@ -334,8 +336,6 @@ window.Logic = {
         window.Calc.bio();
         window.UI.closeAll();
         if (window.S.u) document.getElementById('h-av').innerText = window.S.u.name.charAt(0).toUpperCase();
-        
-        // Recargamos para que cargue todo el historial de esa carpeta
         location.reload();
     } catch (e) { alert("Error: " + e.message); }
 },
@@ -348,7 +348,7 @@ window.Logic = {
         const res = [...window.S.platos.filter(x => x.n.toLowerCase().includes(q)).map(p => ({...p, isPlate: true})), ...window.S.lib.filter(x => x.n.toLowerCase().includes(q))];
         res.forEach((f, i) => {
             const icon = f.isPlate ? '🍽️ ' : '';
-            b.innerHTML += `<div class="food-suggestion" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee"><div onclick="window.selectFoundItem(${i})" style="flex:1; cursor:pointer"><b>${icon}${f.n}</b> <small>${Math.round(f.k)} kcal</small></div><div style="display:flex; gap:10px"><button onclick="event.stopPropagation(); window.Logic.openEditLib(${i})" style="border:none; background:none; cursor:pointer; color:#64748b; font-size:1.1rem">✏️</button><button onclick="event.stopPropagation(); window.Logic.delFromDb(${i})" style="border:none; background:none; cursor:pointer; color:#ef4444; font-size:1.1rem">🗑️</button></div></div>`;
+            b.innerHTML += `<div class="food-suggestion" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee"><div onclick="window.selectFoundItem(${i})" style="flex:1; cursor:pointer"><b>${icon}${f.n}</b> <small>${Math.round(f.k)} kcal</small></div><div style="display:flex; gap:10px"><button onclick="event.stopPropagation(); window.Logic.openEditLib(${i})" style="border:none; background:none; cursor:pointer; color:#64748b; font-size:1.1rem" title="Editar">✏️</button><button onclick="event.stopPropagation(); window.Logic.delFromDb(${i})" style="border:none; background:none; cursor:pointer; color:#ef4444; font-size:1.1rem" title="Borrar">🗑️</button></div></div>`;
         });
         window.S.lastSearch = res;
     },
@@ -360,19 +360,33 @@ window.Logic = {
     },
 
 openEditLib: (i) => {
-    const item = window.S.lastSearch[i]; window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
-    window.UI.setQty({...item, q:100, u:'g'}); 
-    document.getElementById('lib-edit-section').style.display='block';
-    window.UI.view('v-qty'); window.UI.open('m-add');
+    const item = window.S.lastSearch[i];
+    if(item.isPlate) {
+        window.S.editingPlate = true;
+        window.S.plateMode = 'edit';
+        window.S.plateEditIdx = window.S.platos.findIndex(p => p.n === item.n);
+        window.Logic.openEditPlate();
+    } else {
+        window.S.editLib = true; 
+        window.S.editLibItem = item; 
+        window.S.item = item;
+        window.UI.setQty({...item, q:100, u:'g'}); 
+        window.UI.view('v-qty'); 
+        window.UI.open('m-add');
+    }
 },
 
-    // MODIFICACIÓN 3: Actualizar saveLibEdit para guardar baseWeight y unitConfigs
     saveLibEdit: async () => {
         const n = document.getElementById('qty-name-in').value;
         if(window.S.editLibItem.isPlate) {
-            const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n); if(idx >= 0) window.S.platos[idx].n = n; await window.DB.savePlates();
+            const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n); 
+            if(idx >= 0) window.S.platos[idx].n = n; 
+            await window.DB.savePlates();
         } else {
-            const k = parseFloat(document.getElementById('lib-k').value), p = parseFloat(document.getElementById('lib-p').value), c = parseFloat(document.getElementById('lib-c').value), f = parseFloat(document.getElementById('lib-f').value);
+            const k = parseFloat(document.getElementById('calc-kcal').value);
+            const p = parseFloat(document.getElementById('calc-p').value);
+            const c = parseFloat(document.getElementById('calc-c').value);
+            const f = parseFloat(document.getElementById('calc-f').value);
             const baseWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
             const idx = window.S.lib.findIndex(x=>x.n===window.S.editLibItem.n); 
             if(idx >= 0) {
@@ -385,116 +399,166 @@ openEditLib: (i) => {
         window.UI.closeAll(); window.Logic.search();
     },
 
-    // MODIFICACIÓN 4: Reemplazar saveItem completo con lógica de unidades convertibles
-saveItem: async () => {
-    if(window.S.editLib) return window.Logic.saveLibEdit();
-    const q=parseFloat(document.getElementById('qty-in').value);
-    const u=document.getElementById('unit-in').value;
-    const n=document.getElementById('qty-name-in').value;
-    
-    // Tomar las calorías mostradas (que son el resultado final)
-    const displayKcal = parseFloat(document.getElementById('calc-kcal').innerText) || 0;
-    const displayP = parseFloat(document.getElementById('calc-macro-p').innerText) || 0;
-    const displayC = parseFloat(document.getElementById('calc-macro-c').innerText) || 0;
-    const displayF = parseFloat(document.getElementById('calc-macro-f').innerText) || 0;
-    
-    const ent={n, q, u, k: displayKcal, p: displayP, c: displayC, f: displayF, baseWeight: window.S.item.baseWeight || 100};
-    if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx]=ent; else window.S.day[window.S.tm].push(ent);
-    await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
-},
+ saveItem: async () => {
+        if(window.S.editLib) return window.Logic.saveLibEdit();
+        
+        const n = document.getElementById('qty-name-in').value;
+        const q = parseFloat(document.getElementById('qty-in').value);
+        const u = document.getElementById('unit-in').value;
+        
+        const baseWeight = (u!=='g' && u!=='ml') ? parseFloat(document.getElementById('unit-weight').value) : 100;
 
-    // MODIFICACIÓN 5 y 6: Reemplazar updateCalories y añadir updateUnitDisplay y saveUnitConfig
-updateCalories: () => { 
-    const q=parseFloat(document.getElementById('qty-in').value)||0;
-    const u=document.getElementById('unit-in').value;
-    if(!window.S.item) return;
-    
-    // Calcular peso real en gramos
-    let pesoEnGramos = q;
-    if(u !== 'g' && u !== 'ml') {
-        const unitWeight = parseFloat(document.getElementById('unit-weight').value) || 100;
-        pesoEnGramos = q * unitWeight;
-    }
-    
-    // Usar los valores POR 100g del alimento original
-    const kcalPor100g = window.S.item.k;
-    const pPor100g = window.S.item.p;
-    const cPor100g = window.S.item.c;
-    const fPor100g = window.S.item.f;
-    
-    // Calcular para el peso actual
-    const kcal = Math.round((kcalPor100g * pesoEnGramos) / 100);
-    const p = Math.round((pPor100g * pesoEnGramos) / 100);
-    const c = Math.round((cPor100g * pesoEnGramos) / 100);
-    const f = Math.round((fPor100g * pesoEnGramos) / 100);
-    
-    document.getElementById('calc-kcal').innerText = kcal;
-    document.getElementById('calc-macro-p').innerText = `P ${p}g`;
-    document.getElementById('calc-macro-c').innerText = `C ${c}g`;
-    document.getElementById('calc-macro-f').innerText = `F ${f}g`;
-},
+        const k = parseFloat(document.getElementById('calc-kcal').value)||0;
+        const p = parseFloat(document.getElementById('calc-p').value)||0;
+        const c = parseFloat(document.getElementById('calc-c').value)||0;
+        const f = parseFloat(document.getElementById('calc-f').value)||0;
 
-updateUnitDisplay: () => {
-    const u = document.getElementById('unit-in').value;
-    const section = document.getElementById('unit-config-section');
-    const label = document.getElementById('unit-label');
-    
-    const unitLabels = { 'g': 'Gramos', 'ml': 'Mililitros', 'oz': 'Onzas', 'lata': 'Lata', 'porción': 'Porción', 'taza': 'Taza', 'cucharada': 'Cucharada', 'pieza': 'Pieza' };
-    const unitDefaults = { 'oz': 28.35, 'lata': 56, 'porción': 100, 'taza': 240, 'cucharada': 15, 'pieza': 50 };
-    
-    if(u === 'g' || u === 'ml') {
-        section.style.display = 'none';
-        document.getElementById('unit-weight').value = '';
-    } else {
-        section.style.display = 'block';
-        label.innerText = unitLabels[u] || u;
-        const input = document.getElementById('unit-weight');
-        if(!input.value) input.value = unitDefaults[u] || 100;
-    }
-    
-    // IMPORTANTE: Recalcular calorías cuando cambia la unidad
-    setTimeout(() => window.Logic.updateCalories(), 100);
-},
+        const ent = {n, q, u, k, p, c, f, baseWeight: baseWeight};
+        
+        if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx]=ent; 
+        else window.S.day[window.S.tm].push(ent);
+        
+        await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
+    },
+
+    updateCalories: () => { 
+        if(!window.S.item) return;
+        const q = parseFloat(document.getElementById('qty-in').value) || 0;
+        const u = document.getElementById('unit-in').value;
+        
+        let w = UNIT_WEIGHT_MAP[u] || 100;
+        const totalGrams = q * w;
+        
+        const calc = (val100) => Math.round(((val100||0) * totalGrams) / 100);
+
+        document.getElementById('calc-kcal').value = calc(window.S.item.k);
+        document.getElementById('calc-p').value = calc(window.S.item.p);
+        document.getElementById('calc-c').value = calc(window.S.item.c);
+        document.getElementById('calc-f').value = calc(window.S.item.f);
+    },
+
+    updateBase: () => {
+        const q = parseFloat(document.getElementById('qty-in').value) || 0;
+        const u = document.getElementById('unit-in').value;
+        let w = UNIT_WEIGHT_MAP[u] || 100;
+        
+        const totalGrams = q * w;
+        if(totalGrams <= 0) return;
+
+        const toBase = (val) => (parseFloat(val)||0) * 100 / totalGrams;
+
+        window.S.item.k = toBase(document.getElementById('calc-kcal').value);
+        window.S.item.p = toBase(document.getElementById('calc-p').value);
+        window.S.item.c = toBase(document.getElementById('calc-c').value);
+        window.S.item.f = toBase(document.getElementById('calc-f').value);
+    },
+
+    updateUnitDisplay: () => {
+        const u = document.getElementById('unit-in').value;
+        const section = document.getElementById('unit-config-section');
+        const isStd = (u === 'g' || u === 'ml');
+        
+        section.style.display = isStd ? 'none' : 'block';
+        if(!isStd) {
+            const currentW = window.S.item.baseWeight || UNIT_WEIGHT_MAP[u] || 100;
+            if(!document.getElementById('unit-weight').value || window.S.item.u !== u) {
+                document.getElementById('unit-weight').value = currentW;
+            }
+        }
+        window.Logic.updateCalories();
+    },
+
     saveUnitConfig: () => {
         const n = document.getElementById('qty-name-in').value;
         const u = document.getElementById('unit-in').value;
         const w = parseFloat(document.getElementById('unit-weight').value);
         if(n && u && w) {
+            window.S.unitConfigs = window.S.unitConfigs || {};
             window.S.unitConfigs[`${n}_${u}`] = w;
-            alert(`${u} configurada: ${w}g`);
+            window.S.item.baseWeight = w;
+            alert(`✅ Configurado: 1 ${u} = ${w}g`);
             window.Logic.updateCalories();
         }
     },
 
-    // MODIFICACIÓN 7: Actualizar editItem para mantener unidad y baseWeight
     editItem: (mk,i) => { 
         window.S.edit=true; window.S.tm=mk; window.S.eIdx=i; 
         const orig = window.S.day[mk][i]; 
-        const baseW = orig.baseWeight || 100;
-        let divisor = 100;
-        if(orig.u && orig.u !== 'g' && orig.u !== 'ml') {
-            divisor = baseW;
-        }
-        const factor = (orig.q || 100) / divisor;
-        window.S.item = { ...orig, k: orig.k/factor, p: (orig.p||0)/factor, c: (orig.c||0)/factor, f: (orig.f||0)/factor, baseWeight: baseW }; 
+        
+        let unitW = orig.baseWeight || UNIT_WEIGHT_MAP[orig.u] || 100;
+        
+        const isStd = (orig.u === 'g' || orig.u === 'ml');
+        const totalGrams = (orig.q || 0) * unitW;
+
+        const ratio = totalGrams > 0 ? (100 / totalGrams) : 1;
+        
+        window.S.item = { 
+            ...orig, 
+            k: orig.k * ratio, 
+            p: (orig.p||0)*ratio, 
+            c: (orig.c||0)*ratio, 
+            f: (orig.f||0)*ratio,
+            baseWeight: unitW 
+        }; 
+
         window.S.editLib = false; 
-        window.UI.setQty(orig); 
-        window.UI.view('v-qty'); 
-        window.UI.open('m-add'); 
+        window.UI.setQty({...orig, baseWeight: unitW}); 
+        window.Logic.updateUnitDisplay(); 
+        window.Logic.updateCalories();    
+        
+        window.UI.view('v-qty'); window.UI.open('m-add'); 
     },
 
-    delItem: async (mk,i) => { if(confirm("Borrar?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
-    wipeMeal: async (mk) => { if(confirm("Vaciar?")){window.S.day[mk]=[]; await window.DB.setDay(); window.Sys.sync();}},
+    delItem: async (mk,i) => { if(confirm("¿Borrar este alimento?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
+    wipeMeal: async (mk) => { if(confirm("¿Vaciar esta comida?")){window.S.day[mk]=[]; await window.DB.setDay(); window.Sys.sync();}},
     openCopy: (mk,t) => { window.S.srcMeal=mk; window.S.copyMode=t; document.getElementById('copy-date').valueAsDate=window.S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy'); },
     execCopy: async () => { const d=document.getElementById('copy-date').value, tm=document.getElementById('copy-meal').value, r=fire.doc(db,`usuarios/${window.S.uid}/diario`,d), s=await fire.getDoc(r); let da=s.exists()?s.data():{}; if(!da[tm])da[tm]=[]; da[tm]=da[tm].concat(window.S.day[window.S.srcMeal]); await fire.setDoc(r,da); if(window.S.copyMode=='move'){window.S.day[window.S.srcMeal]=[]; await window.DB.setDay();} window.UI.closeAll(); if(d===window.S.d.toISOString().split('T')[0]) window.Sys.sync(); },
-    openCreatePlate: (mk) => { window.S.srcMeal=mk; const c=document.getElementById('plate-ingredients-list'); c.innerHTML=''; window.S.day[mk].forEach((it,i)=>{c.innerHTML+=`<div class="plate-check-row"><span>${it.n}</span><input type="checkbox" value="${i}" checked></div>`}); window.UI.open('m-create-plate'); },
-    savePlateToDb: async () => { const n=document.getElementById('plate-name').value; const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("Plato guardado"); },
+    openCreatePlate: (mk) => { window.S.srcMeal=mk; window.S.plateMode='create'; const c=document.getElementById('plate-ingredients-list'); c.innerHTML=''; window.S.day[mk].forEach((it,i)=>{c.innerHTML+=`<div class="plate-check-row"><span>${it.n}</span><input type="checkbox" value="${i}" checked></div>`}); window.UI.open('m-create-plate'); },
+    savePlateToDb: async () => { const n=document.getElementById('plate-name').value; if(!n) return alert("Nombre del plato requerido"); const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("✅ Plato guardado"); window.Logic.search(); },
+    
+    openEditPlate: () => {
+        const plate = window.S.platos[window.S.plateEditIdx];
+        document.getElementById('plate-edit-name').value = plate.n;
+        const list = document.getElementById('plate-edit-ingredients-list');
+        list.innerHTML = '';
+        plate.items.forEach((it, i) => {
+            list.innerHTML += `<div class="plate-ingredient-item" style="padding:8px; background:#f1f5f9; border-radius:8px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                <span>${it.n} (${it.q}${it.u})</span>
+                <button onclick="window.Logic.removeIngredient(${i})" style="border:none; background:none; color:#ef4444; cursor:pointer;">✕</button>
+            </div>`;
+        });
+        window.UI.open('m-edit-plate');
+    },
+
+    removeIngredient: (i) => {
+        window.S.platos[window.S.plateEditIdx].items.splice(i, 1);
+        window.Logic.openEditPlate();
+    },
+
+    saveEditPlate: async () => {
+        const newName = document.getElementById('plate-edit-name').value;
+        if(!newName) return alert("Nombre requerido");
+        const plate = window.S.platos[window.S.plateEditIdx];
+        plate.n = newName;
+        // Recalcular totales
+        let tk=0, tp=0, tc=0, tf=0;
+        plate.items.forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; });
+        plate.k = tk; plate.p = tp; plate.c = tc; plate.f = tf;
+        await window.DB.savePlates();
+        window.UI.closeAll();
+        window.Logic.search();
+        alert("✅ Plato actualizado");
+    },
+
+    addPlateToDay: (plateIdx) => {
+        const plate = window.S.platos[plateIdx];
+        plate.items.forEach(item => window.S.day[window.S.tm].push({...item}));
+        window.Logic.autoSave();
+    },
+
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
     execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); },
 
-    // --- NUEVAS FUNCIONES PEDIDAS ---
-
-    // 1. PDF DEL DÍA ACTUAL
     pdf: () => {
         const el = document.getElementById('feed');
         if(!el || el.innerText.trim() === "") return alert("No hay comidas hoy para generar PDF");
@@ -502,7 +566,6 @@ updateUnitDisplay: () => {
         html2pdf().set(opt).from(el).save();
     },
 
-    // 2. PDF HISTORIAL VISUAL (Tabla resumen)
     pdfHistory: async () => {
         if(!confirm("Esto generará un PDF con el resumen de todo tu historial. ¿Continuar?")) return;
         document.getElementById('loading-screen').style.display='flex';
@@ -530,7 +593,6 @@ updateUnitDisplay: () => {
             });
             html += `</table></div>`;
             
-            // Crear elemento temporal invisible para generar el PDF
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             document.body.appendChild(tempDiv);
@@ -541,7 +603,6 @@ updateUnitDisplay: () => {
         document.getElementById('loading-screen').style.display='none';
     },
 
-    // 3. BACKUP JSON COMPLETO (Todo el historial)
     exportJSON: async () => {
         document.getElementById('loading-screen').style.display='flex';
         try {
@@ -564,7 +625,6 @@ updateUnitDisplay: () => {
         document.getElementById('loading-screen').style.display='none';
     },
 
-    // 4. IMPORTAR JSON (Inteligente: Backup completo o día suelto)
     importJSON: (input) => {
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
@@ -573,7 +633,6 @@ updateUnitDisplay: () => {
                 const json = JSON.parse(e.target.result);
                 document.getElementById('loading-screen').style.display='flex';
 
-                // CASO A: Es un Backup Completo (tiene campo 'history')
                 if(json.history) {
                     if(!confirm("Esto es un Backup Completo. ¿Quieres restaurar todo el historial? (Sobrescribirá días existentes)")) {
                         document.getElementById('loading-screen').style.display='none'; return;
@@ -587,7 +646,6 @@ updateUnitDisplay: () => {
                     alert("¡Historial restaurado!");
                     window.Sys.sync();
                 } else {
-                    // CASO B: Es un día suelto (parsea como dia normal)
                     const date = new Date().toISOString().split('T')[0];
                     await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, date), json);
                     alert("Día importado para hoy!");
@@ -599,7 +657,6 @@ updateUnitDisplay: () => {
         reader.readAsText(file);
     },
 
-    // 5. LIMPIAR UN DÍA
     wipe: async () => {
         if(!confirm("¿Borrar TODOS los datos de hoy?")) return;
         document.getElementById('loading-screen').style.display='flex';
@@ -696,7 +753,7 @@ window.Stats = {
     }
 };
 
-// --- 9. AI ACTUALIZADA A 2.0 (SOLUCIONA 404) ---
+// --- 9. AI ACTUALIZADA ---
 window.AI = {
     saveConfig: () => { localStorage.setItem('t_ai_key', document.getElementById('ai-key').value); window.UI.view('v-home'); window.UI.checkAI(); },
     listen: () => { 
@@ -716,7 +773,6 @@ window.AI = {
         const k = localStorage.getItem('t_ai_key'), t = document.getElementById('ai-text').value; if(!k) return window.UI.view('v-conf');
         document.getElementById('loading-screen').style.display='flex';
         try {
-            // CAMBIO CLAVE: USAMOS gemini-2.5-flash PARA EVITAR ERRORES
             const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: `Analiza: "${t}". Extrae alimentos y devuelve SOLO un array JSON válido: [{"n":"Nombre","q":100,"u":"g","k":kcal_total,"p":pro,"c":carb,"f":fat}]` }] }] })
@@ -737,7 +793,6 @@ window.AI = {
         reader.onload = async () => {
             const base64 = reader.result.split(',')[1];
             try {
-                // CAMBIO CLAVE: USAMOS gemini-2.5-flash AQUÍ TAMBIÉN
                 const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ contents: [{ parts: [
@@ -761,7 +816,10 @@ window.selectFoundItem = (i) => {
     try {
         const s=window.S.lastSearch[i]; 
         if(s.isPlate){
-            if(confirm("Añadir?")){s.items.forEach(it=>window.S.day[window.S.tm].push(it));window.Logic.autoSave();}
+            if(confirm(`¿Añadir plato "${s.n}"?`)){
+                s.items.forEach(it=>window.S.day[window.S.tm].push(JSON.parse(JSON.stringify(it))));
+                window.Logic.autoSave();
+            }
         } else {
             window.S.item=s; window.UI.setQty(s); window.UI.view('v-qty');
         }
