@@ -148,7 +148,14 @@
         <button class="link-btn" onclick="window.UI.view('v-import')">Clonar</button>
     </div>
 </div>
-            <div id="v-conf" style="display:none"><h4>Config IA</h4><input type="password" id="ai-key" class="inp" placeholder="API Key"><input type="text" id="ai-model" class="inp" value="gemini-1.5-flash"><button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button><button class="btn sec" onclick="window.UI.view('v-home')">Volver</button></div>
+            <div id="v-conf" style="display:none">
+    <h4>Config IA</h4>
+    <input type="password" id="ai-key" class="inp" placeholder="API Key">
+    <input type="text" id="ai-model" class="inp" value="gemini-2.5-flash">
+    <a href="CLAVES API.html" class="btn sec" style="display:block; text-align:center; text-decoration:none; margin-bottom:10px; background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe;">🔑 Obtener / Gestionar Claves API</a>
+    <button class="btn pri" onclick="window.AI.saveConfig()">Guardar</button>
+    <button class="btn sec" onclick="window.UI.view('v-home')">Volver</button>
+</div>
 <div id="v-qty" style="display:none">
     <input id="qty-name-in" class="inp" style="text-align:center;font-weight:bold" placeholder="Nombre">
     

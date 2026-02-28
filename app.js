@@ -22,6 +22,7 @@ window.S = {
 // --- 2. SISTEMA ---
 window.Sys = {
     init: async () => {
+        window.UI.checkAI();
         let tX = 0;
         document.addEventListener('touchstart', e => tX = e.changedTouches[0].screenX);
         document.addEventListener('touchend', e => {
@@ -138,7 +139,14 @@ window.UI = {
         });
         const target = document.getElementById(id); if(target) target.style.display='block';
     },
-    checkAI: () => { if(localStorage.getItem('t_ai_key')) document.getElementById('btn-config-ai').classList.add('configured'); },
+    checkAI: () => { 
+        const k = localStorage.getItem('t_ai_key');
+        if(k) {
+            document.getElementById('btn-config-ai').classList.add('configured');
+            const input = document.getElementById('ai-key');
+            if(input) input.value = k;
+        }
+    },
     
     // --- LÓGICA DE POBLADO DE INPUTS (Hydration) ---
     populateInputs: (item) => {
