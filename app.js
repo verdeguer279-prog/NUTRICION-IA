@@ -92,7 +92,7 @@ window.DB = {
     doc: (p, i) => fire.doc(db, p, i),
     
     // Normalizar
-norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), w: parseFloat(u.w||70), tw: parseFloat(u.tw||75), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),    
+norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), iw: parseFloat(u.iw||u.w||70), w: parseFloat(u.w||70), tw: parseFloat(u.tw||75), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),    
     // Usuarios y Diario
     setU: async (u) => { await fire.setDoc(fire.doc(db, 'usuarios', u.name), u); window.S.uid = u.name; },
     getU: async (id) => { const s = await fire.getDoc(fire.doc(db, 'usuarios', id)); return s.exists() ? s.data() : null; },
@@ -175,7 +175,7 @@ window.UI = {
 
   openProfile: () => {
         if(!window.S.u) return; const u=window.S.u;
-        document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-w').value=u.w; document.getElementById('e-tw').value=u.tw||75;
+        document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-iw').value=u.iw||u.w; document.getElementById('e-w').value=u.w; document.getElementById('e-tw').value=u.tw||75;
         document.getElementById('e-y').value=u.y; document.getElementById('e-g').value=u.g; document.getElementById('e-act').value=u.act; document.getElementById('e-mod').value=u.mod;
         document.getElementById('pp').value=u.mac.p; document.getElementById('pc').value=u.mac.c; document.getElementById('pf').value=u.mac.f;
         window.Calc.live(); window.UI.open('m-prof');
@@ -369,7 +369,34 @@ window.Logic = {
     showGlobal: false,      
 
    saveUser: async () => {
-        const n = document.getElementById('e-name').value; if (!n) return alert("Nombre obligatorio"); try { const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid; const val = (id) => parseFloat(document.getElementById(id).value); const u = { uid: realUid, name: n, email: auth.currentUser ? auth.currentUser.email : "", h: val('e-h'), w: val('e-w'), tw: val('e-tw'), y: val('e-y'), g: document.getElementById('e-g').value, act: val('e-act'), mod: val('e-mod'), customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } }; await fire.setDoc(fire.doc(db, 'usuarios', n), u); window.S.u = window.DB.norm(u); window.S.uid = n; window.Calc.bio(); window.UI.closeAll(); location.reload(); } catch (e) { alert("Error: " + e.message); }
+        const n = document.getElementById('e-name').value; 
+        if (!n) return alert("Nombre obligatorio"); 
+        try { 
+            const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid; 
+            const val = (id) => parseFloat(document.getElementById(id).value); 
+            const u = { 
+                uid: realUid, 
+                name: n, 
+                email: auth.currentUser ? auth.currentUser.email : "", 
+                h: val('e-h'), 
+                iw: val('e-iw'), 
+                w: val('e-w'), 
+                tw: val('e-tw'), 
+                y: val('e-y'), 
+                g: document.getElementById('e-g').value, 
+                act: val('e-act'), 
+                mod: val('e-mod'), 
+                customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
+            }; 
+            await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
+            window.S.u = window.DB.norm(u); 
+            window.S.uid = n; 
+            window.Calc.bio(); 
+            window.UI.closeAll(); 
+            location.reload(); 
+        } catch (e) { 
+            alert("Error: " + e.message); 
+        }
     },
 
     openAdd: (mk) => { 
@@ -673,10 +700,30 @@ window.Stats = {
         const val = parseFloat(document.getElementById('w-today').value);
         if(!val || val <= 0) return alert("Peso no válido");
         const dStr = document.getElementById('st-date').value;
+        
+        // 1. Guardar en el diario histórico
         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
-        const snap = await fire.getDoc(ref); let data = snap.exists() ? snap.data() : {}; data.weight = val;
-        await fire.setDoc(ref, data); if (dStr === window.S.d.toISOString().split('T')[0]) window.S.day.weight = val;
-        alert(`${APP_NAME}: Peso guardado`); window.Stats.updateView();
+        const snap = await fire.getDoc(ref); 
+        let data = snap.exists() ? snap.data() : {}; 
+        data.weight = val;
+        await fire.setDoc(ref, data); 
+        if (dStr === window.S.d.toISOString().split('T')[0]) window.S.day.weight = val;
+        
+        // 2. MAGIA: Auto-actualizar el perfil y recalcular metabolismo
+        if (window.S.u) {
+            window.S.u.w = val; // Actualiza tu peso actual
+            if (!window.S.u.iw) window.S.u.iw = val; // Si no tenías peso inicial, usa este
+            
+            // Guarda silenciosamente el nuevo perfil en la base de datos
+            await fire.setDoc(fire.doc(db, 'usuarios', window.S.uid), window.S.u); 
+            
+            // ¡Recalcula TMB, Calorías y Macros instantáneamente!
+            window.Calc.bio(); 
+        }
+
+        // Usamos nuestro Toast elegante
+        window.UI.showToast('⚖️ Peso guardado y calorías ajustadas'); 
+        window.Stats.updateView();
     },
     updateView: async () => {
         try {
