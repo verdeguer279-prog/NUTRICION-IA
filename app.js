@@ -329,10 +329,16 @@ window.Render = {
                 </div>`; 
             });
             
-           const mealHeader = `
+           // 1. Creamos la fecha en formato corto (ej: "lun 10")
+            const shortDate = window.S.d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+
+            const mealHeader = `
                 <div class="c-head" style="padding:15px; background:white; border-bottom:1px solid #f1f5f9;">
                     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                        <div style="font-size:1.1rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;"><i class="fas ${m.i}"></i> ${m.n}</div>
+                        <div style="font-size:1.1rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                            <i class="fas ${m.i}"></i> ${m.n}
+                            <span style="font-size:0.8rem; font-weight:700; color:#64748b; background:#f1f5f9; border:1px solid #e2e8f0; padding:2px 8px; border-radius:12px; margin-left:4px; text-transform:capitalize;">${shortDate}</span>
+                        </div>
                         <span style="background:#0f172a; color:white; padding:6px 12px; border-radius:8px; font-weight:800; font-size:0.9rem;">${Math.round(mk)} kcal</span>
                     </div>
                     <div style="display:flex; gap:6px; width:100%; flex-wrap:nowrap;">
@@ -619,6 +625,18 @@ window.Logic = {
         window.S.srcMeal=mk; window.S.copyMode=t; 
         document.getElementById('copy-date').valueAsDate=window.S.d; 
         document.getElementById('copy-meal').value=mk; 
+        
+        // NUEVO: Textos dinámicos y amigables
+        const nombresComidas = { '01_desayuno': 'desayuno', '02_almuerzo': 'almuerzo', '03_comida': 'comida', '04_merienda': 'merienda', '05_cena': 'cena' };
+        const nombre = nombresComidas[mk] || 'comida';
+        const modal = document.getElementById('m-copy');
+        
+        const accion = t === 'move' ? 'Mover ' : 'Copiar ';
+        const accionDesc = t === 'move' ? 'mover tu ' : 'copiar tu ';
+        
+        modal.querySelector('h3').innerText = accion + nombre.charAt(0).toUpperCase() + nombre.slice(1);
+        modal.querySelector('label').innerText = 'Elige un día al que quieres ' + accionDesc + nombre + ':';
+
         window.UI.open('m-copy'); 
     },
     execCopy: async () => { 
@@ -655,7 +673,8 @@ window.Stats = {
     saveWeight: async () => {
         const val = parseFloat(document.getElementById('w-today').value);
         if(!val || val <= 0) return alert("Peso no válido");
-        const dStr = window.S.d.toISOString().split('T')[0];
+        // AHORA COGE LA FECHA DEL SELECTOR DEL MODAL, NO LA DE HOY
+        const dStr = document.getElementById('st-date').value;
         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
         const snap = await fire.getDoc(ref); let data = snap.exists() ? snap.data() : {}; data.weight = val;
         await fire.setDoc(ref, data); if (dStr === window.S.d.toISOString().split('T')[0]) window.S.day.weight = val;
@@ -765,7 +784,7 @@ window.AI = {
             try {
                 const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Analiza la imagen. Devuelve array JSON: [{'n':'Nombre','q':100,'u':'g','k':kcal,'p':pro,'c':carb,'f':fat}]" }, { inline_data: { mime_type: file.type, data: reader.result.split(',')[1] } }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Analiza la etiqueta nutricional y resume TODO en un ÚNICO alimento. NO listes nutrientes sueltos (como grasa o sodio) como elementos separados. Devuelve un array JSON con 1 solo objeto: [{'n':'Nombre del producto','q':100,'u':'g','k':calorias_totales,'p':proteinas_totales,'c':carbohidratos_totales,'f':grasas_totales}]" }, { inline_data: { mime_type: file.type, data: reader.result.split(',')[1] } }] }] })
                 });
                 const d = await r.json();
                 if(!d.candidates) throw new Error("Error Imagen");
