@@ -92,8 +92,7 @@ window.DB = {
     doc: (p, i) => fire.doc(db, p, i),
     
     // Normalizar
-    norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), w: parseFloat(u.w||70), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),
-    
+norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), w: parseFloat(u.w||70), tw: parseFloat(u.tw||75), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),    
     // Usuarios y Diario
     setU: async (u) => { await fire.setDoc(fire.doc(db, 'usuarios', u.name), u); window.S.uid = u.name; },
     getU: async (id) => { const s = await fire.getDoc(fire.doc(db, 'usuarios', id)); return s.exists() ? s.data() : null; },
@@ -174,9 +173,9 @@ window.UI = {
         } catch(e) { console.error("UI Populate Error:", e); }
     },
 
-    openProfile: () => {
+  openProfile: () => {
         if(!window.S.u) return; const u=window.S.u;
-        document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-w').value=u.w;
+        document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-w').value=u.w; document.getElementById('e-tw').value=u.tw||75;
         document.getElementById('e-y').value=u.y; document.getElementById('e-g').value=u.g; document.getElementById('e-act').value=u.act; document.getElementById('e-mod').value=u.mod;
         document.getElementById('pp').value=u.mac.p; document.getElementById('pc').value=u.mac.c; document.getElementById('pf').value=u.mac.f;
         window.Calc.live(); window.UI.open('m-prof');
@@ -369,8 +368,8 @@ window.Logic = {
     filterType: 'all',      
     showGlobal: false,      
 
-    saveUser: async () => {
-        const n = document.getElementById('e-name').value; if (!n) return alert("Nombre obligatorio"); try { const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid; const val = (id) => parseFloat(document.getElementById(id).value); const u = { uid: realUid, name: n, email: auth.currentUser ? auth.currentUser.email : "", h: val('e-h'), w: val('e-w'), y: val('e-y'), g: document.getElementById('e-g').value, act: val('e-act'), mod: val('e-mod'), customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } }; await fire.setDoc(fire.doc(db, 'usuarios', n), u); window.S.u = window.DB.norm(u); window.S.uid = n; window.Calc.bio(); window.UI.closeAll(); location.reload(); } catch (e) { alert("Error: " + e.message); }
+   saveUser: async () => {
+        const n = document.getElementById('e-name').value; if (!n) return alert("Nombre obligatorio"); try { const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid; const val = (id) => parseFloat(document.getElementById(id).value); const u = { uid: realUid, name: n, email: auth.currentUser ? auth.currentUser.email : "", h: val('e-h'), w: val('e-w'), tw: val('e-tw'), y: val('e-y'), g: document.getElementById('e-g').value, act: val('e-act'), mod: val('e-mod'), customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } }; await fire.setDoc(fire.doc(db, 'usuarios', n), u); window.S.u = window.DB.norm(u); window.S.uid = n; window.Calc.bio(); window.UI.closeAll(); location.reload(); } catch (e) { alert("Error: " + e.message); }
     },
 
     openAdd: (mk) => { 
@@ -664,16 +663,15 @@ window.Logic = {
 // --- 8. STATS ---
 window.Stats = {
     open: () => { document.getElementById('st-date').valueAsDate = window.S.d; window.Stats.updateView(); window.UI.open('m-stats'); },
-    changeDate: (n) => { const d = new Date(document.getElementById('st-date').value); d.setDate(d.getDate() + n); document.getElementById('st-date').valueAsDate = d; window.Stats.load(d.toISOString().split('T')[0]); },
-    load: async (dStr) => { 
-        const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
-        const snap = await fire.getDoc(ref);
-        document.getElementById('w-today').value = snap.exists() && snap.data().weight ? snap.data().weight : '';
+    changeDate: (n) => { 
+        const d = new Date(document.getElementById('st-date').value); 
+        d.setDate(d.getDate() + n); 
+        document.getElementById('st-date').valueAsDate = d; 
+        window.Stats.updateView(); 
     },
     saveWeight: async () => {
         const val = parseFloat(document.getElementById('w-today').value);
         if(!val || val <= 0) return alert("Peso no válido");
-        // AHORA COGE LA FECHA DEL SELECTOR DEL MODAL, NO LA DE HOY
         const dStr = document.getElementById('st-date').value;
         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
         const snap = await fire.getDoc(ref); let data = snap.exists() ? snap.data() : {}; data.weight = val;
@@ -682,7 +680,11 @@ window.Stats = {
     },
     updateView: async () => {
         try {
-            const dStr = window.S.d.toISOString().split('T')[0]; document.getElementById('st-date').value = dStr;
+            // LEE LA FECHA DEL SELECTOR (MÁQUINA DEL TIEMPO)
+            const dateInput = document.getElementById('st-date').value;
+            const dStr = dateInput || window.S.d.toISOString().split('T')[0];
+            if (!dateInput) document.getElementById('st-date').value = dStr;
+
             const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
             const hist = []; q.forEach(x=>hist.push({id:x.id, ...x.data()}));
             const cur = hist.find(x=>x.id===dStr); document.getElementById('w-today').value = cur?cur.weight:'';
@@ -698,6 +700,7 @@ window.Stats = {
             }
             fb.innerHTML = html;
 
+            // DONUT DIARIO (VIAJA EN EL TIEMPO)
             let dayCal=0; if(cur) MEALS.forEach(m=>{ if(cur[m.k]) cur[m.k].forEach(i=>dayCal+=i.k); });
             const goal = window.S.u.calc.goal;
             const diffCal = goal - dayCal;
@@ -708,40 +711,118 @@ window.Stats = {
             window.Stats.chartDaily = new Chart(ctxD, { type:'doughnut', data:{labels:['Base','Resto/Exc'],datasets:[{data:isOver?[goal, Math.abs(diffCal)]:[dayCal, diffCal], backgroundColor:isOver?['#3b82f6', '#ef4444']:['#3b82f6', '#10b981'], borderWidth:0}]}, options:{cutout:'75%', plugins:{legend:{display:false}}} });
             document.getElementById('daily-txt').innerHTML=`<span class="srt-val">${Math.round(dayCal)}</span><span class="srt-lbl">de ${goal}</span>`;
 
-            const dObj = new Date(window.S.d); const dayNum = dObj.getDay()||7; dObj.setDate(dObj.getDate()-dayNum+1);
+            // DONUT SEMANAL (SEMANA DE LA FECHA ELEGIDA)
+            const dObj = new Date(dStr); const dayNum = dObj.getDay()||7; dObj.setDate(dObj.getDate()-dayNum+1);
             let wCal=0, wGoal=goal*7;
             for(let i=0;i<7;i++){ const tD=new Date(dObj); tD.setDate(dObj.getDate()+i); const k=tD.toISOString().split('T')[0]; const h=hist.find(x=>x.id===k); if(h) MEALS.forEach(m=>{if(h[m.k]) h[m.k].forEach(x=>wCal+=x.k)}); }
             if(window.Stats.chartWeekly) window.Stats.chartWeekly.destroy();
             window.Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), { type:'doughnut', data:{labels:['S','R'],datasets:[{data:[wCal, Math.max(0, wGoal-wCal)], backgroundColor:['#8b5cf6','#e2e8f0']}]}, options:{cutout:'75%', plugins:{legend:{display:false}}} });
             document.getElementById('weekly-txt').innerHTML=`<span class="srt-val">${Math.round(wCal)}</span><span class="srt-lbl">de ${wGoal}</span>`;
 
-            const cD=[], cW=[]; for(let i=29; i>=0; i--) { const tD=new Date(window.S.d); tD.setDate(tD.getDate()-i); const k=tD.toISOString().split('T')[0]; cD.push(k.slice(5)); const h=hist.find(x=>x.id===k); cW.push(h?h.weight:null); }
+            // LÍNEA DE PESO (30 DÍAS HACIA ATRÁS DESDE LA FECHA ELEGIDA)
+            const cD=[], cW=[]; for(let i=29; i>=0; i--) { const tD=new Date(dStr); tD.setDate(tD.getDate()-i); const k=tD.toISOString().split('T')[0]; cD.push(k.slice(5)); const h=hist.find(x=>x.id===k); cW.push(h?h.weight:null); }
             if(window.Stats.chartWeight) window.Stats.chartWeight.destroy();
-            
-            const canvasW = document.getElementById('chart-weight');
-            const ctxW = canvasW.getContext('2d');
+            const canvasW = document.getElementById('chart-weight'); const ctxW = canvasW.getContext('2d');
             let gradient = ctxW.createLinearGradient(0, 0, 0, canvasW.parentElement.clientHeight || 200);
-            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-            gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)'); gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
 
             window.Stats.chartWeight = new Chart(ctxW, { 
-                type:'line', 
-                data:{
-                    labels:cD, 
-                    datasets:[{
-                        label:'Peso (kg)', data:cW, borderColor:'#10b981', backgroundColor: gradient, fill: true, tension:0.4, spanGaps:true, borderWidth: 3, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 15
-                    }]
-                }, 
-                options:{
-                    plugins:{
-                        legend:{display:false},
-                        tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', titleFont: { size: 13 }, bodyFont: { size: 14, weight: 'bold' }, padding: 10, cornerRadius: 8, displayColors: false }
-                    }, 
-                    interaction: { mode: 'index', intersect: false },
-                    maintainAspectRatio:false
+                type:'line', data:{ labels:cD, datasets:[{ label:'Peso (kg)', data:cW, borderColor:'#10b981', backgroundColor: gradient, fill: true, tension:0.4, spanGaps:true, borderWidth: 3, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 15 }] }, 
+                options:{ plugins:{ legend:{display:false}, tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', titleFont: { size: 13 }, bodyFont: { size: 14, weight: 'bold' }, padding: 10, cornerRadius: 8, displayColors: false } }, interaction: { mode: 'index', intersect: false }, maintainAspectRatio:false,
+                    onHover: (event) => { event.native.target.style.cursor = 'pointer'; },
+                    onClick: () => { window.Stats.openWeightDetail(); }
                 } 
             });
         } catch(e) { console.error("Stats:", e); }
+    },
+    
+    openWeightDetail: async () => {
+        document.getElementById('loading-screen').style.display = 'flex';
+        try {
+            const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
+            const hist = []; q.forEach(x => { if(x.data().weight) hist.push({ id: x.id, w: x.data().weight }); });
+            
+            if(hist.length < 2) {
+                alert("Registra al menos 2 pesos en días distintos para ver el análisis avanzado.");
+                document.getElementById('loading-screen').style.display = 'none'; return;
+            }
+
+            const first = hist[0]; const last = hist[hist.length - 1];
+            const d1 = new Date(first.id); const today = new Date();
+            const daysTotal = Math.max(1, Math.floor((today - d1) / (1000 * 60 * 60 * 24)));
+            const diffTotal = last.w - first.w;
+            
+            const d7 = new Date(); d7.setDate(d7.getDate() - 7); const d7Str = d7.toISOString().split('T')[0];
+            let w7 = first.w; for(let i = hist.length - 1; i >= 0; i--) { if(hist[i].id <= d7Str) { w7 = hist[i].w; break; } }
+            const diff7 = last.w - w7;
+            const avgW = (daysTotal >= 7) ? (diffTotal / (daysTotal / 7)) : diffTotal;
+            
+            let maxW = hist[0].w, minW = hist[0].w; hist.forEach(x => { if(x.w > maxW) maxW = x.w; if(x.w < minW) minW = x.w; });
+
+          // CÁLCULOS DE IMC Y VARIACIÓN
+            const h_m = window.S.u.h / 100;
+            const firstIMC = first.w / (h_m * h_m);
+            const currentIMC = last.w / (h_m * h_m);
+            const w7IMC = w7 / (h_m * h_m);
+            
+            const diffIMCTotal = currentIMC - firstIMC;
+            const diffIMC7 = currentIMC - w7IMC;
+
+            // PREDICCIÓN ARITMÉTICA EXACTA
+            const targetW = window.S.u.tw || 75;
+            document.getElementById('wf-target-w').innerText = targetW;
+            let targetText = "--";
+            
+            // Tasa de pérdida diaria (kilos perdidos por día)
+            const dailyRate = diffTotal / daysTotal;
+
+            // Si hay tendencia de bajada (al menos 5 gramos al día de media) y aún no llegaste
+            if (dailyRate < -0.005 && last.w > targetW) { 
+                // ¿Cuántos kilos faltan?
+                const kilosFaltan = targetW - last.w; // Ej: 75 - 82 = -7
+                // ¿Cuántos días tardaré a este ritmo?
+                const daysLeft = kilosFaltan / dailyRate; // Ej: -7 / -0.1 = 70 días
+                
+                // Sumamos esos días a la fecha actual
+                const projDate = new Date(); 
+                projDate.setDate(projDate.getDate() + daysLeft);
+                
+                // Formato exacto: "15 de mayo de 2026"
+                targetText = projDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+            } else if (last.w <= targetW) { 
+                targetText = "¡Logrado! 🎉"; 
+            } else { 
+                targetText = "Estancado o subiendo"; 
+            }
+
+            const fd = (d) => `<span style="color:${d > 0 ? '#ef4444' : '#10b981'}; font-weight:900;">${d > 0 ? '+' : ''}${d.toFixed(1)}</span>`;
+
+            // Rellenar UI
+            document.getElementById('wf-total-lbl').innerText = `Total (${daysTotal} días)`;
+            document.getElementById('wf-total-val').innerHTML = fd(diffTotal) + 'kg';
+            document.getElementById('wf-7d-val').innerHTML = fd(diff7) + 'kg';
+            document.getElementById('wf-avg-val').innerHTML = fd(avgW) + 'kg';
+            
+            document.getElementById('wf-imc-ini').innerText = firstIMC.toFixed(1);
+            document.getElementById('wf-imc-val').innerText = currentIMC.toFixed(1);
+            document.getElementById('wf-imc-total').innerHTML = fd(diffIMCTotal);
+            document.getElementById('wf-imc-7d').innerHTML = fd(diffIMC7);
+            document.getElementById('wf-target').innerText = targetText;
+
+            // Gráfica
+            if(window.Stats.chartFull) window.Stats.chartFull.destroy();
+            const canvasCtx = document.getElementById('chart-weight-full').getContext('2d');
+            let grad = canvasCtx.createLinearGradient(0, 0, 0, 300);
+            grad.addColorStop(0, 'rgba(37, 99, 235, 0.3)'); grad.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
+            window.Stats.chartFull = new Chart(canvasCtx, {
+                type: 'line', data: { labels: hist.map(x => { const parts = x.id.split('-'); return `${parts[2]}/${parts[1]}`; }), datasets: [{ label: 'Peso (kg)', data: hist.map(x => x.w), borderColor: '#2563eb', backgroundColor: grad, fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: 'white', pointBorderWidth: 2, pointHoverRadius: 7 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', padding: 12, titleFont: { size: 14 }, bodyFont: { size: 15, weight: 'bold' } } }, interaction: { mode: 'index', intersect: false }, scales: { y: { min: Math.floor(minW - 2), max: Math.ceil(maxW + 2) } } }
+            });
+
+            window.UI.open('m-weight-full');
+        } catch(e) { console.error(e); }
+        document.getElementById('loading-screen').style.display = 'none';
     }
 };
 
