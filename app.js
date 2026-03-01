@@ -181,7 +181,18 @@ window.UI = {
         document.getElementById('pp').value=u.mac.p; document.getElementById('pc').value=u.mac.c; document.getElementById('pf').value=u.mac.f;
         window.Calc.live(); window.UI.open('m-prof');
     },
-    newProfile: () => { window.S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); window.UI.open('m-prof'); }
+    newProfile: () => { window.S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); window.UI.open('m-prof'); },
+    
+    showToast: (msg, isWarn = false) => {
+        const t = document.getElementById('toast');
+        if(!t) return;
+        t.innerText = msg;
+        t.style.background = isWarn ? '#f59e0b' : '#10b981';
+        t.style.boxShadow = isWarn ? '0 10px 25px rgba(245, 158, 11, 0.4)' : '0 10px 25px rgba(16, 185, 129, 0.4)';
+        t.style.bottom = '100px'; 
+        t.style.opacity = '1';
+        setTimeout(() => { t.style.bottom = '-50px'; t.style.opacity = '0'; }, 3000);
+    }
 };
 
 // --- 5. CALC ---
@@ -318,22 +329,22 @@ window.Render = {
                 </div>`; 
             });
             
-            const mealHeader = `
+           const mealHeader = `
                 <div class="c-head" style="padding:15px; background:white; border-bottom:1px solid #f1f5f9;">
-                    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                         <div style="font-size:1.1rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;"><i class="fas ${m.i}"></i> ${m.n}</div>
-                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                            <span style="${pPro}">Prot ${Math.round(mp)}g</span>
-                            <span style="${pCar}">Carb ${Math.round(mc)}g</span>
-                            <span style="${pFat}">Gras ${Math.round(mf)}g</span>
-                        </div>
-                    </div>
-                    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px;">
                         <span style="background:#0f172a; color:white; padding:6px 12px; border-radius:8px; font-weight:800; font-size:0.9rem;">${Math.round(mk)} kcal</span>
+                    </div>
+                    <div style="display:flex; gap:6px; width:100%; flex-wrap:nowrap;">
+                        <span style="${pPro} flex:1; justify-content:center;">P: ${Math.round(mp)}g</span>
+                        <span style="${pCar} flex:1; justify-content:center;">C: ${Math.round(mc)}g</span>
+                        <span style="${pFat} flex:1; justify-content:center;">G: ${Math.round(mf)}g</span>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; width:100%;">
                         <div style="display:flex;">
                             <button style="${sPlate}" onclick="window.Logic.openCreatePlate('${m.k}')" title="Crear Plato"><i class="fas fa-utensils"></i></button>
-                            <button style="${sCopy}" onclick="window.Logic.openCopy('${m.k}','copy')" title="Copiar"><i class="fas fa-copy"></i></button>
-                            <button style="${sMove}" onclick="window.Logic.openCopy('${m.k}','move')" title="Mover"><i class="fas fa-calendar-alt"></i></button>
+                            <button style="${sCopy}" onclick="window.Logic.openCopy('${m.k}','copy', this)" title="Copiar"><i class="fas fa-copy"></i></button>
+                            <button style="${sMove}" onclick="window.Logic.openCopy('${m.k}','move', this)" title="Mover"><i class="fas fa-calendar-alt"></i></button>
                             <button style="${sDel}" onclick="window.Logic.wipeMeal('${m.k}')" title="Vaciar"><i class="fas fa-trash-alt"></i></button>
                             <button style="${sAdd}" onclick="window.Logic.openAdd('${m.k}')"><i class="fas fa-plus"></i></button>
                         </div>
@@ -598,8 +609,29 @@ window.Logic = {
     saveUnitConfig: () => { alert("Configuración lista."); },
     delItem: async (mk,i) => { if(confirm("Borrar?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
     wipeMeal: async (mk) => { if(confirm("Vaciar?")){window.S.day[mk]=[]; await window.DB.setDay(); window.Sys.sync();}},
-    openCopy: (mk,t) => { window.S.srcMeal=mk; window.S.copyMode=t; document.getElementById('copy-date').valueAsDate=window.S.d; document.getElementById('copy-meal').value=mk; window.UI.open('m-copy'); },
-    execCopy: async () => { const d=document.getElementById('copy-date').value, tm=document.getElementById('copy-meal').value, r=fire.doc(db,`usuarios/${window.S.uid}/diario`,d), s=await fire.getDoc(r); let da=s.exists()?s.data():{}; if(!da[tm])da[tm]=[]; da[tm]=da[tm].concat(window.S.day[window.S.srcMeal]); await fire.setDoc(r,da); if(window.S.copyMode=='move'){window.S.day[window.S.srcMeal]=[]; await window.DB.setDay();} window.UI.closeAll(); if(d===window.S.d.toISOString().split('T')[0]) window.Sys.sync(); },
+    openCopy: (mk, t, btnEl) => { 
+        if(btnEl) {
+            const originalHTML = btnEl.innerHTML;
+            btnEl.innerHTML = '<i class="fas fa-check"></i>';
+            btnEl.style.transform = 'scale(0.8)';
+            setTimeout(() => { btnEl.innerHTML = originalHTML; btnEl.style.transform = 'scale(1)'; }, 600);
+        }
+        window.S.srcMeal=mk; window.S.copyMode=t; 
+        document.getElementById('copy-date').valueAsDate=window.S.d; 
+        document.getElementById('copy-meal').value=mk; 
+        window.UI.open('m-copy'); 
+    },
+    execCopy: async () => { 
+        const d=document.getElementById('copy-date').value, tm=document.getElementById('copy-meal').value, r=fire.doc(db,`usuarios/${window.S.uid}/diario`,d), s=await fire.getDoc(r); 
+        let da=s.exists()?s.data():{}; 
+        if(!da[tm])da[tm]=[]; 
+        da[tm]=da[tm].concat(window.S.day[window.S.srcMeal]); 
+        await fire.setDoc(r,da); 
+        if(window.S.copyMode=='move'){window.S.day[window.S.srcMeal]=[]; await window.DB.setDay();} 
+        window.UI.closeAll(); 
+        if(d===window.S.d.toISOString().split('T')[0]) window.Sys.sync(); 
+        window.UI.showToast(window.S.copyMode === 'move' ? '🚀 Movido correctamente' : '📋 Copiado correctamente');
+    },
     openCreatePlate: (mk) => { window.S.srcMeal=mk; const c=document.getElementById('plate-ingredients-list'); c.innerHTML=''; window.S.day[mk].forEach((it,i)=>{c.innerHTML+=`<div class="plate-check-row"><span>${it.n}</span><input type="checkbox" value="${i}" checked></div>`}); window.UI.open('m-create-plate'); },
     savePlateToDb: async () => { const n=document.getElementById('plate-name').value; const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("Plato guardado"); },
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
@@ -666,7 +698,30 @@ window.Stats = {
 
             const cD=[], cW=[]; for(let i=29; i>=0; i--) { const tD=new Date(window.S.d); tD.setDate(tD.getDate()-i); const k=tD.toISOString().split('T')[0]; cD.push(k.slice(5)); const h=hist.find(x=>x.id===k); cW.push(h?h.weight:null); }
             if(window.Stats.chartWeight) window.Stats.chartWeight.destroy();
-            window.Stats.chartWeight = new Chart(document.getElementById('chart-weight'), { type:'line', data:{labels:cD, datasets:[{label:'Peso', data:cW, borderColor:'#10b981', tension:0.4, spanGaps:true}]}, options:{plugins:{legend:{display:false}}, maintainAspectRatio:false} });
+            
+            const canvasW = document.getElementById('chart-weight');
+            const ctxW = canvasW.getContext('2d');
+            let gradient = ctxW.createLinearGradient(0, 0, 0, canvasW.parentElement.clientHeight || 200);
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+            gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+            window.Stats.chartWeight = new Chart(ctxW, { 
+                type:'line', 
+                data:{
+                    labels:cD, 
+                    datasets:[{
+                        label:'Peso (kg)', data:cW, borderColor:'#10b981', backgroundColor: gradient, fill: true, tension:0.4, spanGaps:true, borderWidth: 3, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 15
+                    }]
+                }, 
+                options:{
+                    plugins:{
+                        legend:{display:false},
+                        tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', titleFont: { size: 13 }, bodyFont: { size: 14, weight: 'bold' }, padding: 10, cornerRadius: 8, displayColors: false }
+                    }, 
+                    interaction: { mode: 'index', intersect: false },
+                    maintainAspectRatio:false
+                } 
+            });
         } catch(e) { console.error("Stats:", e); }
     }
 };
