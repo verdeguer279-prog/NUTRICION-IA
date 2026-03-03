@@ -10,11 +10,9 @@ setTimeout(() => { const s = document.getElementById('loading-screen'); if (s &&
 
 const MEALS = [ { k: '01_desayuno', n: 'Desayuno', i: 'fa-coffee' }, { k: '02_almuerzo', n: 'Almuerzo', i: 'fa-bread-slice' }, { k: '03_comida', n: 'Comida', i: 'fa-utensils' }, { k: '04_merienda', n: 'Merienda', i: 'fa-apple-alt' }, { k: '05_cena', n: 'Cena', i: 'fa-moon' } ];
 
-// ESTADO GLOBAL MEJORADO
-// ref: Almacena la "Base de Verdad" del ítem actual para cálculos (ej: 1 Lata = 140kcal)
 window.S = { 
     d: new Date(), uid: null, u: null, day: {}, lib: [], platos: [], allUsers: [], 
-    tm: null, item: null, ref: null, // <--- NUEVA REFERENCIA LÓGICA
+    tm: null, item: null, ref: null, 
     edit: false, eIdx: null, srcMeal: null, copyMode: 'copy', lastSearch: [], 
     plateEditIdx: -1, editLibItem: null, editLib: false, unitConfigs: {} 
 };
@@ -36,21 +34,30 @@ window.Sys = {
                 ['app-header','feed','fab-btn'].forEach(x=>document.getElementById(x).style.display='block');
                 document.getElementById('fab-btn').style.display='flex';
                 
-                let dbId = user.uid; 
+                // --- NOVEDAD: Memoria infalible del navegador ---
+                let dbId = localStorage.getItem('nutria_saved_user') || user.uid; 
+                
                 try {
                     const q = fire.query(fire.collection(db, 'usuarios'), fire.where('uid', '==', user.uid));
                     const querySnapshot = await fire.getDocs(q);
                     if (!querySnapshot.empty) {
                         dbId = querySnapshot.docs[0].id;
+                        localStorage.setItem('nutria_saved_user', dbId); // Guardar en memoria
                     } else {
-                        const nameRef = fire.doc(db, 'usuarios', user.displayName || "");
-                        const nameSnap = await fire.getDoc(nameRef);
-                        if (nameSnap.exists() && !nameSnap.data().uid) {
-                            await fire.updateDoc(nameRef, { uid: user.uid });
-                            dbId = nameSnap.id;
+                        // Si falla la búsqueda, comprobar si la memoria del navegador es correcta
+                        const cacheRef = fire.doc(db, 'usuarios', dbId);
+                        const cacheSnap = await fire.getDoc(cacheRef);
+                        if (!cacheSnap.exists()) {
+                            const nameRef = fire.doc(db, 'usuarios', user.displayName || "");
+                            const nameSnap = await fire.getDoc(nameRef);
+                            if (nameSnap.exists()) {
+                                await fire.updateDoc(nameRef, { uid: user.uid });
+                                dbId = nameSnap.id;
+                                localStorage.setItem('nutria_saved_user', dbId);
+                            }
                         }
                     }
-                } catch(e) { console.log("Login fallback UID"); }
+                } catch(e) { console.log("Login usando memoria local"); }
 
                 window.S.uid = dbId;
                 await window.Sys.load(dbId, user.email, user.displayName);
@@ -62,7 +69,9 @@ window.Sys = {
         });
     },
     login: async () => { try { await signInWithPopup(auth, provider); } catch (e) { alert(`Error login: ${e.message}`); } },
-    logout: async () => { await signOut(auth); location.reload(); },
+    
+    // Novedad: Al cerrar sesión borramos la memoria para que otro usuario pueda entrar
+    logout: async () => { localStorage.removeItem('nutria_saved_user'); await signOut(auth); location.reload(); },
     
     load: async (id, email, name) => {
         try {
@@ -86,28 +95,24 @@ window.Sys = {
     sync: async () => { window.S.day = await window.DB.getDay(window.S.d); window.Render.all(); }
 };
 
-// --- 3. BASE DE DATOS (HÍBRIDA: SISTEMA + PRIVADA) ---
+// --- 3. BASE DE DATOS ---
 window.DB = {
     col: (n) => fire.collection(db, n),
     doc: (p, i) => fire.doc(db, p, i),
     
-    // Normalizar
-norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), iw: parseFloat(u.iw||u.w||70), w: parseFloat(u.w||70), tw: parseFloat(u.tw||75), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),    
-    // Usuarios y Diario
+    norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), iw: parseFloat(u.iw||u.w||70), w: parseFloat(u.w||70), tw: parseFloat(u.tw||75), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),
+    
     setU: async (u) => { await fire.setDoc(fire.doc(db, 'usuarios', u.name), u); window.S.uid = u.name; },
     getU: async (id) => { const s = await fire.getDoc(fire.doc(db, 'usuarios', id)); return s.exists() ? s.data() : null; },
     getDay: async (d) => { if(!window.S.uid) return {}; const k = d.toISOString().split('T')[0]; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, k)); let data = s.exists() ? s.data() : {}; MEALS.forEach(m => { if (!data[m.k]) data[m.k] = [] }); return data; },
     setDay: async () => { if(!window.S.uid) return; const k = window.S.d.toISOString().split('T')[0]; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, k), window.S.day); },
     
-    // --- CARGA DOBLE SEPARADA ---
     lib: async () => { 
-        // 1. Cargar lista GLOBAL (Sistema) en variable separada
         try {
             const sys = await fire.getDoc(fire.doc(db, 'sistema', 'biblioteca'));
             window.S.sysLib = sys.exists() ? sys.data().items : [];
         } catch(e) { window.S.sysLib = []; }
 
-        // 2. Cargar lista PRIVADA (Usuario) en variable principal
         if(!window.S.uid) { window.S.lib = []; return; }
         try {
             const priv = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`)); 
@@ -115,12 +120,7 @@ norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: p
         } catch(e) { window.S.lib = []; }
     },
     
-    // AL GUARDAR, SIEMPRE VA A TU CARPETA PRIVADA
-    saveLib: async () => { 
-        if(!window.S.uid) return;
-        await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`), { items: window.S.lib }); 
-    },
-
+    saveLib: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`), { items: window.S.lib }); },
     getPlates: async () => { try { if(!window.S.uid) return; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`)); window.S.platos = s.exists() ? s.data().items : []; } catch (e) { window.S.platos = []; } },
     savePlates: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`), { items: window.S.platos }); }
 };
@@ -128,52 +128,21 @@ norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: p
 // --- 4. UI ---
 window.UI = {
     open: (id) => { const el = document.getElementById(id); if(el) el.style.display='flex'; },
-    closeAll: () => { 
-        document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
-        window.S.edit = false; window.S.editLib = false; window.S.item = null; window.S.ref = null;
-    },
-    view: (id) => { 
-        ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>{
-            const el = document.getElementById(x); if(el) el.style.display='none';
-        });
-        const target = document.getElementById(id); if(target) target.style.display='block';
-    },
-    checkAI: () => { 
-        const k = localStorage.getItem('t_ai_key');
-        if(k) {
-            document.getElementById('btn-config-ai').classList.add('configured');
-            const input = document.getElementById('ai-key');
-            if(input) input.value = k;
-        }
-    },
+    closeAll: () => { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); window.S.edit = false; window.S.editLib = false; window.S.item = null; window.S.ref = null; },
+    view: (id) => { ['v-home','v-conf','v-qty','v-json','v-import'].forEach(x=>{ const el = document.getElementById(x); if(el) el.style.display='none'; }); const target = document.getElementById(id); if(target) target.style.display='block'; },
+    checkAI: () => { const k = localStorage.getItem('t_ai_key'); if(k) { document.getElementById('btn-config-ai').classList.add('configured'); const input = document.getElementById('ai-key'); if(input) input.value = k; } },
     
-    // --- LÓGICA DE POBLADO DE INPUTS (Hydration) ---
     populateInputs: (item) => {
         try {
             const val = (id, v) => { const el = document.getElementById(id); if(el) el.value = (v === undefined || v === null) ? '' : v; };
-            
-            // Datos básicos
-            val('qty-name-in', item.n);
-            val('qty-in', item.q);
-            val('unit-in', item.u || 'g');
-            
-            // Macros
-            val('calc-kcal', Math.round(item.k));
-            val('calc-p', Math.round(item.p));
-            val('calc-c', Math.round(item.c));
-            val('calc-f', Math.round(item.f));
-
-            // Configuración de unidad si existe
-            if(item.baseWeight && item.u !== 'g' && item.u !== 'ml') {
-                document.getElementById('unit-config-section').style.display = 'block';
-                val('unit-weight', item.baseWeight);
-            } else {
-                document.getElementById('unit-config-section').style.display = 'none';
-            }
+            val('qty-name-in', item.n); val('qty-in', item.q); val('unit-in', item.u || 'g');
+            val('calc-kcal', Math.round(item.k)); val('calc-p', Math.round(item.p)); val('calc-c', Math.round(item.c)); val('calc-f', Math.round(item.f));
+            if(item.baseWeight && item.u !== 'g' && item.u !== 'ml') { document.getElementById('unit-config-section').style.display = 'block'; val('unit-weight', item.baseWeight); } 
+            else { document.getElementById('unit-config-section').style.display = 'none'; }
         } catch(e) { console.error("UI Populate Error:", e); }
     },
 
-  openProfile: () => {
+    openProfile: () => {
         if(!window.S.u) return; const u=window.S.u;
         document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-iw').value=u.iw||u.w; document.getElementById('e-w').value=u.w; document.getElementById('e-tw').value=u.tw||75;
         document.getElementById('e-y').value=u.y; document.getElementById('e-g').value=u.g; document.getElementById('e-act').value=u.act; document.getElementById('e-mod').value=u.mod;
@@ -183,19 +152,15 @@ window.UI = {
     newProfile: () => { window.S.u=null; document.querySelectorAll('#m-prof input').forEach(i=>i.value=''); window.UI.open('m-prof'); },
     
     showToast: (msg, isWarn = false) => {
-        const t = document.getElementById('toast');
-        if(!t) return;
-        t.innerText = msg;
-        t.style.background = isWarn ? '#f59e0b' : '#10b981';
+        const t = document.getElementById('toast'); if(!t) return;
+        t.innerText = msg; t.style.background = isWarn ? '#f59e0b' : '#10b981';
         t.style.boxShadow = isWarn ? '0 10px 25px rgba(245, 158, 11, 0.4)' : '0 10px 25px rgba(16, 185, 129, 0.4)';
-        t.style.bottom = '100px'; 
-        t.style.opacity = '1';
+        t.style.bottom = '100px'; t.style.opacity = '1';
         setTimeout(() => { t.style.bottom = '-50px'; t.style.opacity = '0'; }, 3000);
     }
 };
 
 // --- 5. CALC ---
-// --- 5. CALC (CONVERTIR % A GRAMOS) ---
 window.Calc = {
     bio: () => { 
         if(!window.S.u) return; 
@@ -203,29 +168,21 @@ window.Calc = {
         const year = window.S.u.y || 1990; 
         const age = new Date().getFullYear() - year;
         
-        // Calcular Calorías Base (TMB y Meta)
         let bmr = (10*w) + (6.25*h) - (5*age) + (window.S.u.g=='male'?5:-161);
         const maintenance = Math.round(bmr * parseFloat(window.S.u.act));
         const goal = maintenance + parseInt(window.S.u.mod);
         
         window.S.u.calc = { goal: goal, maintenance: maintenance }; 
 
-        // --- AQUÍ ESTÁ EL ARREGLO ---
-        // Si el usuario tiene macros configurados (son porcentajes), los convertimos a GRAMOS
         if(window.S.u.mac && window.S.u.mac.p){
-            // Proteína: (MetaCalorias * Porcentaje / 100) / 4
             window.S.u.calc.p = Math.round((goal * (window.S.u.mac.p / 100)) / 4);
-            // Carbohidrato: (MetaCalorias * Porcentaje / 100) / 4
             window.S.u.calc.c = Math.round((goal * (window.S.u.mac.c / 100)) / 4);
-            // Grasa: (MetaCalorias * Porcentaje / 100) / 9 (La grasa tiene 9kcal/g)
             window.S.u.calc.f = Math.round((goal * (window.S.u.mac.f / 100)) / 9);
         } else {
-            // Si no hay config, usamos la estimación por defecto basada en peso
             window.S.u.calc.p = Math.round(w*2); 
             window.S.u.calc.f = Math.round(w*0.9); 
             window.S.u.calc.c = Math.round((goal-(window.S.u.calc.p*4)-(window.S.u.calc.f*9))/4);
         }
-        
         window.Render.all();
     },
     
@@ -253,7 +210,6 @@ window.Calc = {
 };
 
 // --- 6. RENDER ---
-// --- 6. RENDER (DISEÑO ORIGINAL RESTAURADO) ---
 window.Render = {
     all: () => {
         document.getElementById('h-day').innerText = window.S.d.toLocaleDateString('es-ES', {weekday:'long'});
@@ -267,7 +223,6 @@ window.Render = {
         const diff = tg.goal - t.k;
         const maintenance = tg.maintenance || tg.goal;
         
-        // Barra superior de estado (Tu diseño)
         const bioHtml = `
             <div class="top-stat-bar" style="display:flex; justify-content:center; gap:20px; font-weight:700; font-size:0.9rem; margin-bottom:10px;">
                 <div style="color:#f59e0b; display:flex; align-items:center; gap:5px"><i class="fas fa-fire"></i> Mant: ${maintenance}</div>
@@ -290,10 +245,11 @@ window.Render = {
         document.getElementById('v-f').innerText=`${Math.round(t.f)}/${Math.round(tg.f)}`; document.getElementById('b-f').style.width=Math.min((t.f/tg.f)*100,100)+'%';
         
         const feed=document.getElementById('feed'); feed.innerHTML='';
+        const shortDate = window.S.d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+
         MEALS.forEach(m => {
             const arr=window.S.day[m.k]||[]; let mk=0,mp=0,mc=0,mf=0,rows='';
             
-            // TUS ESTILOS ORIGINALES (NO TOCADOS)
             const btnBase = "width:36px; height:36px; border-radius:10px; border:1px solid transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem; margin-left:5px; transition:0.2s;";
             const sPlate = btnBase + "background:#f3e8ff; border-color:#d8b4fe; color:#9333ea;";
             const sCopy = btnBase + "background:#eff6ff; border-color:#bfdbfe; color:#2563eb;";
@@ -328,9 +284,6 @@ window.Render = {
                 </div>`; 
             });
             
-           // 1. Creamos la fecha en formato corto (ej: "lun 10")
-            const shortDate = window.S.d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
-
             const mealHeader = `
                 <div class="c-head" style="padding:15px; background:white; border-bottom:1px solid #f1f5f9;">
                     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
@@ -360,7 +313,7 @@ window.Render = {
     }
 };
 
-// --- 7. LOGIC (COMPLETO: BORRADO GLOBAL ACTIVADO) ---
+// --- 7. LOGIC ---
 window.Logic = {
     day: (n) => { window.S.d.setDate(window.S.d.getDate() + n); window.Sys.sync(); },
     autoSave: async () => { await window.DB.setDay(); window.Render.all(); },
@@ -368,43 +321,31 @@ window.Logic = {
     filterType: 'all',      
     showGlobal: false,      
 
-   saveUser: async () => {
+  saveUser: async () => {
         const n = document.getElementById('e-name').value; 
         if (!n) return alert("Nombre obligatorio"); 
         try { 
             const realUid = auth.currentUser ? auth.currentUser.uid : window.S.uid; 
             const val = (id) => parseFloat(document.getElementById(id).value); 
             const u = { 
-                uid: realUid, 
-                name: n, 
-                email: auth.currentUser ? auth.currentUser.email : "", 
-                h: val('e-h'), 
-                iw: val('e-iw'), 
-                w: val('e-w'), 
-                tw: val('e-tw'), 
-                y: val('e-y'), 
-                g: document.getElementById('e-g').value, 
-                act: val('e-act'), 
-                mod: val('e-mod'), 
+                uid: realUid, name: n, email: auth.currentUser ? auth.currentUser.email : "", 
+                h: val('e-h'), iw: val('e-iw'), w: val('e-w'), tw: val('e-tw'), y: val('e-y'), 
+                g: document.getElementById('e-g').value, act: val('e-act'), mod: val('e-mod'), 
                 customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
             }; 
             await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
-            window.S.u = window.DB.norm(u); 
-            window.S.uid = n; 
-            window.Calc.bio(); 
-            window.UI.closeAll(); 
-            location.reload(); 
-        } catch (e) { 
-            alert("Error: " + e.message); 
-        }
-    },
+            
+            // --- NOVEDAD: Le grabamos a fuego al navegador quién eres ---
+            localStorage.setItem('nutria_saved_user', n);
 
+            window.S.u = window.DB.norm(u); window.S.uid = n; window.Calc.bio(); window.UI.closeAll(); location.reload(); 
+        } catch (e) { alert("Error: " + e.message); }
+    },
     openAdd: (mk) => { 
         window.S.tm = mk; window.S.edit = false; window.S.editLib = false; window.S.ref = null;
         window.UI.view('v-home'); window.UI.open('m-add'); 
         document.getElementById('src-in').value = '';
-        window.S.showGlobal = false; 
-        window.Logic.setFilter('all'); 
+        window.S.showGlobal = false; window.Logic.setFilter('all'); 
     },
 
     setFilter: (type) => {
@@ -416,52 +357,32 @@ window.Logic = {
         window.Logic.search(); 
     },
 
-    toggleGlobalSearch: () => {
-        window.S.showGlobal = !window.S.showGlobal;
-        window.Logic.search();
-    },
+    toggleGlobalSearch: () => { window.S.showGlobal = !window.S.showGlobal; window.Logic.search(); },
 
     search: () => {
         const q = document.getElementById('src-in').value.toLowerCase();
         const b = document.getElementById('res-list'); b.innerHTML = '';
-        
-        const misPlatos = window.S.platos || [];
-        const misAlimentos = window.S.lib || [];      
-        const globalAlimentos = window.S.sysLib || []; 
-
+        const misPlatos = window.S.platos || []; const misAlimentos = window.S.lib || []; const globalAlimentos = window.S.sysLib || []; 
         let results = [];
 
-        if(window.Logic.filterType === 'all' || window.Logic.filterType === 'plate') {
-            results.push(...misPlatos.map(p => ({...p, isPlate: true, isMine: true})));
-        }
-        if(window.Logic.filterType === 'all' || window.Logic.filterType === 'food') {
-            results.push(...misAlimentos.map(f => ({...f, isMine: true})));
-        }
-
-        if (window.S.showGlobal && (window.Logic.filterType === 'all' || window.Logic.filterType === 'food')) {
-            results.push(...globalAlimentos.map(f => ({...f, isMine: false})));
-        }
+        if(window.Logic.filterType === 'all' || window.Logic.filterType === 'plate') results.push(...misPlatos.map(p => ({...p, isPlate: true, isMine: true})));
+        if(window.Logic.filterType === 'all' || window.Logic.filterType === 'food') results.push(...misAlimentos.map(f => ({...f, isMine: true})));
+        if(window.S.showGlobal && (window.Logic.filterType === 'all' || window.Logic.filterType === 'food')) results.push(...globalAlimentos.map(f => ({...f, isMine: false})));
 
         results = results.filter(x => x.n.toLowerCase().includes(q));
         results.sort((a,b) => a.n.localeCompare(b.n));
 
-        if(results.length === 0) {
-            b.innerHTML = '<div style="padding:30px; text-align:center; color:#94a3b8; font-style:italic">No se encontraron resultados.</div>';
-        }
+        if(results.length === 0) b.innerHTML = '<div style="padding:30px; text-align:center; color:#94a3b8; font-style:italic">No se encontraron resultados.</div>';
 
         results.forEach((f, i) => {
             let icon = f.isPlate ? '<span style="color:#d97706">🍽️ Plato</span>' : (f.isMine ? '<span style="color:#f59e0b">⭐ Favorito</span>' : '<span style="color:#94a3b8">☁️ Global</span>');
             const bgStyle = f.isMine ? 'background:#fffbeb;' : ''; 
-
-            // CAMBIO: El botón de borrar (🗑️) ahora aparece SIEMPRE, sea tuyo o global
             b.innerHTML += `
             <div class="food-suggestion" style="display:flex; justify-content:space-between; align-items:center; ${bgStyle}">
                 <div onclick="window.Logic.selectFoundItem(${i})" style="flex:1; cursor:pointer">
                     <div style="font-size:0.75rem; margin-bottom:2px">${icon}</div>
                     <b style="font-size:1.1rem; color:#0f172a">${f.n}</b> 
-                    <div style="color:#64748b; font-size:0.9rem; margin-top:2px">
-                        ${f.q} ${f.u} · <b>${Math.round(f.k)} kcal</b> · P${Math.round(f.p)}
-                    </div>
+                    <div style="color:#64748b; font-size:0.9rem; margin-top:2px">${f.q} ${f.u} · <b>${Math.round(f.k)} kcal</b> · P${Math.round(f.p)}</div>
                 </div>
                 <div style="display:flex; gap:10px; padding-left:15px; align-items:center">
                     <button onclick="event.stopPropagation(); window.Logic.openEditLib(${i})" style="border:none; background:rgba(0,0,0,0.05); width:40px; height:40px; border-radius:10px; cursor:pointer; color:#64748b; font-size:1.1rem; display:flex; align-items:center; justify-content:center">✏️</button>
@@ -470,54 +391,34 @@ window.Logic = {
             </div>`;
         });
         window.S.lastSearch = results;
-
         const toggleText = window.S.showGlobal ? "Ocultar catálogo global" : "🌐 Buscar en catálogo global";
-        b.innerHTML += `
-            <div style="margin-top:20px; text-align:center;">
-                <button onclick="window.Logic.toggleGlobalSearch()" style="background:none; border:1px solid #cbd5e1; padding:10px 20px; border-radius:20px; color:#64748b; cursor:pointer; font-size:0.9rem">
-                    ${toggleText}
-                </button>
-            </div>
-        `;
+        b.innerHTML += `<div style="margin-top:20px; text-align:center;"><button onclick="window.Logic.toggleGlobalSearch()" style="background:none; border:1px solid #cbd5e1; padding:10px 20px; border-radius:20px; color:#64748b; cursor:pointer; font-size:0.9rem">${toggleText}</button></div>`;
     },
 
     selectFoundItem: (i) => {
         const item = window.S.lastSearch[i];
         if (item.isPlate) {
-            if(confirm(`¿Añadir plato "${item.n}" completo?`)){
-                item.items.forEach(it => window.S.day[window.S.tm].push(it));
-                window.Logic.autoSave(); window.UI.closeAll();
-            }
+            if(confirm(`¿Añadir plato "${item.n}" completo?`)){ item.items.forEach(it => window.S.day[window.S.tm].push(it)); window.Logic.autoSave(); window.UI.closeAll(); }
         } else {
-            window.S.item = { ...item };
-            window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f };
-            window.UI.populateInputs(window.S.item);
-            window.UI.view('v-qty');
+            window.S.item = { ...item }; window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f };
+            window.UI.populateInputs(window.S.item); window.UI.view('v-qty');
         }
     },
 
     smartCalc: () => {
-        const u = document.getElementById('unit-in').value;
-        const isStd = (u === 'g' || u === 'ml');
+        const u = document.getElementById('unit-in').value; const isStd = (u === 'g' || u === 'ml');
         const configSection = document.getElementById('unit-config-section');
-        
         if (configSection) {
             if (!isStd && configSection.style.display === 'none') document.getElementById('qty-in').value = 1;
             configSection.style.display = isStd ? 'none' : 'block';
         }
-
         if (!window.S.ref) return;
-
         const qty = parseFloat(document.getElementById('qty-in').value) || 0;
         const weight = parseFloat(document.getElementById('unit-weight').value) || 0;
         const baseQ = window.S.ref.q || 100;
-
         let totalGrams = 0;
-        if (isStd) totalGrams = qty; 
-        else if (weight > 0) totalGrams = weight * qty;
-
+        if (isStd) totalGrams = qty; else if (weight > 0) totalGrams = weight * qty;
         if (totalGrams === 0 && qty !== 0) return;
-
         const ratio = totalGrams / baseQ;
         document.getElementById('calc-kcal').value = Math.round(window.S.ref.k * ratio);
         document.getElementById('calc-p').value = Math.round(window.S.ref.p * ratio);
@@ -531,140 +432,67 @@ window.Logic = {
 
     saveItem: async () => {
         if(window.S.editLib) return window.Logic.saveLibEdit();
-        const n = document.getElementById('qty-name-in').value;
-        const q = parseFloat(document.getElementById('qty-in').value);
-        const u = document.getElementById('unit-in').value;
-        const k = parseFloat(document.getElementById('calc-kcal').value)||0;
-        const p = parseFloat(document.getElementById('calc-p').value)||0;
-        const c = parseFloat(document.getElementById('calc-c').value)||0;
-        const f = parseFloat(document.getElementById('calc-f').value)||0;
-        const bw = parseFloat(document.getElementById('unit-weight').value) || null;
+        const n = document.getElementById('qty-name-in').value, q = parseFloat(document.getElementById('qty-in').value), u = document.getElementById('unit-in').value, k = parseFloat(document.getElementById('calc-kcal').value)||0, p = parseFloat(document.getElementById('calc-p').value)||0, c = parseFloat(document.getElementById('calc-c').value)||0, f = parseFloat(document.getElementById('calc-f').value)||0, bw = parseFloat(document.getElementById('unit-weight').value) || null;
         const entry = { n, q, u, k, p, c, f, baseWeight: bw };
-
-        if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx] = entry; 
-        else window.S.day[window.S.tm].push(entry);
-        
+        if(window.S.edit) window.S.day[window.S.tm][window.S.eIdx] = entry; else window.S.day[window.S.tm].push(entry);
         await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync();
     },
 
     saveCurrentToLib: async () => {
-        const n = document.getElementById('qty-name-in').value;
-        if(!n) return alert("Ponle nombre");
-        
-        const q = parseFloat(document.getElementById('qty-in').value);
-        const u = document.getElementById('unit-in').value;
-        const k = parseFloat(document.getElementById('calc-kcal').value);
-        const p = parseFloat(document.getElementById('calc-p').value);
-        const c = parseFloat(document.getElementById('calc-c').value);
-        const f = parseFloat(document.getElementById('calc-f').value);
-        const bw = parseFloat(document.getElementById('unit-weight').value); 
-
+        const n = document.getElementById('qty-name-in').value; if(!n) return alert("Ponle nombre");
+        const q = parseFloat(document.getElementById('qty-in').value), u = document.getElementById('unit-in').value, k = parseFloat(document.getElementById('calc-kcal').value), p = parseFloat(document.getElementById('calc-p').value), c = parseFloat(document.getElementById('calc-c').value), f = parseFloat(document.getElementById('calc-f').value), bw = parseFloat(document.getElementById('unit-weight').value); 
         const newItem = { n, q, u, k, p, c, f, baseWeight: bw };
         const idx = window.S.lib.findIndex(x => x.n.toLowerCase() === n.toLowerCase());
-        
-        if(idx >= 0) {
-            if(confirm("Ya existe en TUS favoritos. ¿Sobrescribir?")) window.S.lib[idx] = newItem; else return;
-        } else {
-            window.S.lib.push(newItem);
-        }
-        await window.DB.saveLib();
-        alert("¡Guardado en TU lista privada!");
-        window.UI.view('v-home');
-        window.Logic.search(); 
+        if(idx >= 0) { if(confirm("Ya existe en TUS favoritos. ¿Sobrescribir?")) window.S.lib[idx] = newItem; else return; } else { window.S.lib.push(newItem); }
+        await window.DB.saveLib(); alert("¡Guardado en TU lista privada!"); window.UI.view('v-home'); window.Logic.search(); 
     },
 
     editItem: (mk, i) => {
-        window.S.edit = true; window.S.tm = mk; window.S.eIdx = i;
-        const item = window.S.day[mk][i];
-        window.S.item = { ...item };
+        window.S.edit = true; window.S.tm = mk; window.S.eIdx = i; const item = window.S.day[mk][i]; window.S.item = { ...item };
         window.S.ref = { q: item.q || 1, u: item.u, k: item.k, p: item.p, c: item.c, f: item.f };
-        window.UI.populateInputs(item);
-        window.UI.view('v-qty'); window.UI.open('m-add');
+        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
-    // --- MODIFICADO: PERMITE BORRAR DE GLOBAL ---
     delFromDb: async (i) => {
         const item = window.S.lastSearch[i]; 
-        
         if(!confirm(`¿Borrar "${item.n}" permanentemente de la base de datos?`)) return;
-        
-        if(item.isPlate) {
-            window.S.platos = window.S.platos.filter(p => p.n !== item.n); 
-            await window.DB.savePlates();
-        } else if (item.isMine) {
-            // Borrar de mi lista privada
-            window.S.lib = window.S.lib.filter(l => l.n !== item.n); 
-            await window.DB.saveLib();
-        } else {
-            // Borrar de la lista GLOBAL (Sistema)
-            window.S.sysLib = window.S.sysLib.filter(l => l.n !== item.n);
-            // Guardamos directamente en la colección del sistema
-            await fire.setDoc(fire.doc(db, 'sistema', 'biblioteca'), { items: window.S.sysLib });
-        }
+        if(item.isPlate) { window.S.platos = window.S.platos.filter(p => p.n !== item.n); await window.DB.savePlates(); } 
+        else if (item.isMine) { window.S.lib = window.S.lib.filter(l => l.n !== item.n); await window.DB.saveLib(); } 
+        else { window.S.sysLib = window.S.sysLib.filter(l => l.n !== item.n); await fire.setDoc(fire.doc(db, 'sistema', 'biblioteca'), { items: window.S.sysLib }); }
         window.Logic.search();
     },
 
     openEditLib: (i) => {
-        const item = window.S.lastSearch[i]; 
-        window.S.editLib = true; 
-        window.S.editLibItem = item; 
-        window.S.item = item;
+        const item = window.S.lastSearch[i]; window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
         window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f };
-        window.UI.populateInputs(item); 
-        window.UI.view('v-qty'); 
-        window.UI.open('m-add');
+        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
     saveLibEdit: async () => {
-        const n = document.getElementById('qty-name-in').value;
-        const q = parseFloat(document.getElementById('qty-in').value);
-        const u = document.getElementById('unit-in').value;
-        const k = parseFloat(document.getElementById('calc-kcal').value);
-        const p = parseFloat(document.getElementById('calc-p').value);
-        const c = parseFloat(document.getElementById('calc-c').value);
-        const f = parseFloat(document.getElementById('calc-f').value);
-        const bw = parseFloat(document.getElementById('unit-weight').value);
-
+        const n = document.getElementById('qty-name-in').value, q = parseFloat(document.getElementById('qty-in').value), u = document.getElementById('unit-in').value, k = parseFloat(document.getElementById('calc-kcal').value), p = parseFloat(document.getElementById('calc-p').value), c = parseFloat(document.getElementById('calc-c').value), f = parseFloat(document.getElementById('calc-f').value), bw = parseFloat(document.getElementById('unit-weight').value);
         const newItem = { n, q, u, k, p, c, f, baseWeight: bw };
-
-        if(window.S.editLibItem.isPlate) {
-            const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n); if(idx >= 0) window.S.platos[idx].n = n; await window.DB.savePlates();
-        } else {
-            const idx = window.S.lib.findIndex(x=>x.n === window.S.editLibItem.n); 
-            if(idx >= 0) window.S.lib[idx] = newItem; 
-            else window.S.lib.push(newItem);
-            await window.DB.saveLib();
-        }
+        if(window.S.editLibItem.isPlate) { const idx = window.S.platos.findIndex(x=>x.n===window.S.editLibItem.n); if(idx >= 0) window.S.platos[idx].n = n; await window.DB.savePlates(); } 
+        else { const idx = window.S.lib.findIndex(x=>x.n === window.S.editLibItem.n); if(idx >= 0) window.S.lib[idx] = newItem; else window.S.lib.push(newItem); await window.DB.saveLib(); }
         window.UI.view('v-home'); window.Logic.search();
     },
 
     saveUnitConfig: () => { alert("Configuración lista."); },
     delItem: async (mk,i) => { if(confirm("Borrar?")){window.S.day[mk].splice(i,1); await window.DB.setDay(); window.Sys.sync();}},
     wipeMeal: async (mk) => { if(confirm("Vaciar?")){window.S.day[mk]=[]; await window.DB.setDay(); window.Sys.sync();}},
+    
     openCopy: (mk, t, btnEl) => { 
-        if(btnEl) {
-            const originalHTML = btnEl.innerHTML;
-            btnEl.innerHTML = '<i class="fas fa-check"></i>';
-            btnEl.style.transform = 'scale(0.8)';
-            setTimeout(() => { btnEl.innerHTML = originalHTML; btnEl.style.transform = 'scale(1)'; }, 600);
-        }
+        if(btnEl) { const originalHTML = btnEl.innerHTML; btnEl.innerHTML = '<i class="fas fa-check"></i>'; btnEl.style.transform = 'scale(0.8)'; setTimeout(() => { btnEl.innerHTML = originalHTML; btnEl.style.transform = 'scale(1)'; }, 600); }
         window.S.srcMeal=mk; window.S.copyMode=t; 
         document.getElementById('copy-date').valueAsDate=window.S.d; 
         document.getElementById('copy-meal').value=mk; 
-        
-        // NUEVO: Textos dinámicos y amigables
         const nombresComidas = { '01_desayuno': 'desayuno', '02_almuerzo': 'almuerzo', '03_comida': 'comida', '04_merienda': 'merienda', '05_cena': 'cena' };
         const nombre = nombresComidas[mk] || 'comida';
         const modal = document.getElementById('m-copy');
-        
-        const accion = t === 'move' ? 'Mover ' : 'Copiar ';
-        const accionDesc = t === 'move' ? 'mover tu ' : 'copiar tu ';
-        
-        modal.querySelector('h3').innerText = accion + nombre.charAt(0).toUpperCase() + nombre.slice(1);
-        modal.querySelector('label').innerText = 'Elige un día al que quieres ' + accionDesc + nombre + ':';
-
+        modal.querySelector('h3').innerText = (t === 'move' ? 'Mover ' : 'Copiar ') + nombre.charAt(0).toUpperCase() + nombre.slice(1);
+        modal.querySelector('label').innerText = 'Elige un día al que quieres ' + (t === 'move' ? 'mover tu ' : 'copiar tu ') + nombre + ':';
         window.UI.open('m-copy'); 
     },
+    
     execCopy: async () => { 
         const d=document.getElementById('copy-date').value, tm=document.getElementById('copy-meal').value, r=fire.doc(db,`usuarios/${window.S.uid}/diario`,d), s=await fire.getDoc(r); 
         let da=s.exists()?s.data():{}; 
@@ -676,6 +504,7 @@ window.Logic = {
         if(d===window.S.d.toISOString().split('T')[0]) window.Sys.sync(); 
         window.UI.showToast(window.S.copyMode === 'move' ? '🚀 Movido correctamente' : '📋 Copiado correctamente');
     },
+
     openCreatePlate: (mk) => { window.S.srcMeal=mk; const c=document.getElementById('plate-ingredients-list'); c.innerHTML=''; window.S.day[mk].forEach((it,i)=>{c.innerHTML+=`<div class="plate-check-row"><span>${it.n}</span><input type="checkbox" value="${i}" checked></div>`}); window.UI.open('m-create-plate'); },
     savePlateToDb: async () => { const n=document.getElementById('plate-name').value; const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("Plato guardado"); },
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
@@ -687,6 +516,7 @@ window.Logic = {
     wipe: async () => { if(confirm("Borrar día?")) { await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, window.S.d.toISOString().split('T')[0]), {}); window.Sys.sync(); window.UI.closeAll(); }},
     execImport: async () => { const d = document.getElementById('imp-date').value, m = document.getElementById('imp-meal').value; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, d)); if(s.exists() && s.data()[m]) { window.S.day[m] = [...(window.S.day[m]||[]), ...s.data()[m]]; await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); } else alert("Sin datos"); }
 };
+
 // --- 8. STATS ---
 window.Stats = {
     open: () => { document.getElementById('st-date').valueAsDate = window.S.d; window.Stats.updateView(); window.UI.open('m-stats'); },
@@ -713,21 +543,15 @@ window.Stats = {
         if (window.S.u) {
             window.S.u.w = val; // Actualiza tu peso actual
             if (!window.S.u.iw) window.S.u.iw = val; // Si no tenías peso inicial, usa este
-            
-            // Guarda silenciosamente el nuevo perfil en la base de datos
             await fire.setDoc(fire.doc(db, 'usuarios', window.S.uid), window.S.u); 
-            
-            // ¡Recalcula TMB, Calorías y Macros instantáneamente!
             window.Calc.bio(); 
         }
 
-        // Usamos nuestro Toast elegante
         window.UI.showToast('⚖️ Peso guardado y calorías ajustadas'); 
         window.Stats.updateView();
     },
     updateView: async () => {
         try {
-            // LEE LA FECHA DEL SELECTOR (MÁQUINA DEL TIEMPO)
             const dateInput = document.getElementById('st-date').value;
             const dStr = dateInput || window.S.d.toISOString().split('T')[0];
             if (!dateInput) document.getElementById('st-date').value = dStr;
@@ -747,7 +571,6 @@ window.Stats = {
             }
             fb.innerHTML = html;
 
-            // DONUT DIARIO (VIAJA EN EL TIEMPO)
             let dayCal=0; if(cur) MEALS.forEach(m=>{ if(cur[m.k]) cur[m.k].forEach(i=>dayCal+=i.k); });
             const goal = window.S.u.calc.goal;
             const diffCal = goal - dayCal;
@@ -758,7 +581,6 @@ window.Stats = {
             window.Stats.chartDaily = new Chart(ctxD, { type:'doughnut', data:{labels:['Base','Resto/Exc'],datasets:[{data:isOver?[goal, Math.abs(diffCal)]:[dayCal, diffCal], backgroundColor:isOver?['#3b82f6', '#ef4444']:['#3b82f6', '#10b981'], borderWidth:0}]}, options:{cutout:'75%', plugins:{legend:{display:false}}} });
             document.getElementById('daily-txt').innerHTML=`<span class="srt-val">${Math.round(dayCal)}</span><span class="srt-lbl">de ${goal}</span>`;
 
-            // DONUT SEMANAL (SEMANA DE LA FECHA ELEGIDA)
             const dObj = new Date(dStr); const dayNum = dObj.getDay()||7; dObj.setDate(dObj.getDate()-dayNum+1);
             let wCal=0, wGoal=goal*7;
             for(let i=0;i<7;i++){ const tD=new Date(dObj); tD.setDate(dObj.getDate()+i); const k=tD.toISOString().split('T')[0]; const h=hist.find(x=>x.id===k); if(h) MEALS.forEach(m=>{if(h[m.k]) h[m.k].forEach(x=>wCal+=x.k)}); }
@@ -766,7 +588,6 @@ window.Stats = {
             window.Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), { type:'doughnut', data:{labels:['S','R'],datasets:[{data:[wCal, Math.max(0, wGoal-wCal)], backgroundColor:['#8b5cf6','#e2e8f0']}]}, options:{cutout:'75%', plugins:{legend:{display:false}}} });
             document.getElementById('weekly-txt').innerHTML=`<span class="srt-val">${Math.round(wCal)}</span><span class="srt-lbl">de ${wGoal}</span>`;
 
-            // LÍNEA DE PESO (30 DÍAS HACIA ATRÁS DESDE LA FECHA ELEGIDA)
             const cD=[], cW=[]; for(let i=29; i>=0; i--) { const tD=new Date(dStr); tD.setDate(tD.getDate()-i); const k=tD.toISOString().split('T')[0]; cD.push(k.slice(5)); const h=hist.find(x=>x.id===k); cW.push(h?h.weight:null); }
             if(window.Stats.chartWeight) window.Stats.chartWeight.destroy();
             const canvasW = document.getElementById('chart-weight'); const ctxW = canvasW.getContext('2d');
@@ -806,45 +627,28 @@ window.Stats = {
             
             let maxW = hist[0].w, minW = hist[0].w; hist.forEach(x => { if(x.w > maxW) maxW = x.w; if(x.w < minW) minW = x.w; });
 
-          // CÁLCULOS DE IMC Y VARIACIÓN
             const h_m = window.S.u.h / 100;
             const firstIMC = first.w / (h_m * h_m);
             const currentIMC = last.w / (h_m * h_m);
             const w7IMC = w7 / (h_m * h_m);
-            
             const diffIMCTotal = currentIMC - firstIMC;
             const diffIMC7 = currentIMC - w7IMC;
 
-            // PREDICCIÓN ARITMÉTICA EXACTA
             const targetW = window.S.u.tw || 75;
             document.getElementById('wf-target-w').innerText = targetW;
             let targetText = "--";
             
-            // Tasa de pérdida diaria (kilos perdidos por día)
             const dailyRate = diffTotal / daysTotal;
-
-            // Si hay tendencia de bajada (al menos 5 gramos al día de media) y aún no llegaste
             if (dailyRate < -0.005 && last.w > targetW) { 
-                // ¿Cuántos kilos faltan?
-                const kilosFaltan = targetW - last.w; // Ej: 75 - 82 = -7
-                // ¿Cuántos días tardaré a este ritmo?
-                const daysLeft = kilosFaltan / dailyRate; // Ej: -7 / -0.1 = 70 días
-                
-                // Sumamos esos días a la fecha actual
+                const kilosFaltan = targetW - last.w; 
+                const daysLeft = kilosFaltan / dailyRate; 
                 const projDate = new Date(); 
                 projDate.setDate(projDate.getDate() + daysLeft);
-                
-                // Formato exacto: "15 de mayo de 2026"
                 targetText = projDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-            } else if (last.w <= targetW) { 
-                targetText = "¡Logrado! 🎉"; 
-            } else { 
-                targetText = "Estancado o subiendo"; 
-            }
+            } else if (last.w <= targetW) { targetText = "¡Logrado! 🎉"; } else { targetText = "Estancado o subiendo"; }
 
             const fd = (d) => `<span style="color:${d > 0 ? '#ef4444' : '#10b981'}; font-weight:900;">${d > 0 ? '+' : ''}${d.toFixed(1)}</span>`;
 
-            // Rellenar UI
             document.getElementById('wf-total-lbl').innerText = `Total (${daysTotal} días)`;
             document.getElementById('wf-total-val').innerHTML = fd(diffTotal) + 'kg';
             document.getElementById('wf-7d-val').innerHTML = fd(diff7) + 'kg';
@@ -856,7 +660,6 @@ window.Stats = {
             document.getElementById('wf-imc-7d').innerHTML = fd(diffIMC7);
             document.getElementById('wf-target').innerText = targetText;
 
-            // Gráfica
             if(window.Stats.chartFull) window.Stats.chartFull.destroy();
             const canvasCtx = document.getElementById('chart-weight-full').getContext('2d');
             let grad = canvasCtx.createLinearGradient(0, 0, 0, 300);
@@ -925,7 +728,6 @@ window.AI = {
     }
 };
 
-// Eventos de inputs para cálculo dinámico
 document.getElementById('qty-in').addEventListener('input', window.Logic.updateCalculations);
 document.getElementById('unit-in').addEventListener('change', window.Logic.updateUnitDisplay);
 
