@@ -91,11 +91,12 @@
             
             <label>Nombre (ID)</label><input id="e-name" class="inp" placeholder="Tu nombre">
             
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
                 <div><label>Altura (cm)</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
                 <div><label>Peso Inicial (kg)</label><input type="number" id="e-iw" class="inp" oninput="window.Calc.live()"></div>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:-5px;">
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
                 <div><label>Peso Actual (kg)</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()" style="background:#eff6ff; border-color:#bfdbfe; font-weight:bold; color:#1e40af;"></div>
                 <div><label>Meta (kg)</label><input type="number" id="e-tw" class="inp" placeholder="Ej: 75" oninput="window.Calc.live()"></div>
             </div>
@@ -210,7 +211,40 @@
     <div class="modal" id="m-item-act"><div class="sheet"><div class="modal-h"><h3>Acciones</h3><button class="close-x" onclick="document.getElementById('m-item-act').style.display='none'">&times;</button></div><h4 id="ia-name" style="text-align:center;color:var(--a)"></h4><input type="date" id="ia-date" class="inp"><select id="ia-meal" class="inp"><option value="01_desayuno">Desayuno</option><option value="02_almuerzo">Almuerzo</option><option value="03_comida">Comida</option><option value="04_merienda">Merienda</option><option value="05_cena">Cena</option></select><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="window.Logic.execItemAct('copy')" class="btn" style="background:#eff6ff;color:var(--a)">Copiar</button><button onclick="window.Logic.execItemAct('move')" class="btn" style="background:#fffbeb;color:var(--warn)">Mover</button></div></div></div>
     <div class="modal" id="m-create-plate"><div class="sheet" style="max-height:80vh;overflow-y:auto"><div class="modal-h"><h3>Plato</h3><button class="close-x" onclick="document.getElementById('m-create-plate').style.display='none'">&times;</button></div><input type="text" id="plate-name" class="inp" placeholder="Nombre"><div id="plate-ingredients-list" style="margin:10px 0"></div><button class="btn pri" onclick="window.Logic.savePlateToDb()">Guardar</button></div></div>
     <div class="modal" id="m-edit-plate"><div class="sheet"><div class="modal-h"><h3>Editar</h3><button class="close-x" onclick="document.getElementById('m-edit-plate').style.display='none'">&times;</button></div><input type="text" id="plate-edit-name" class="inp"><div id="plate-edit-ingredients-list" style="margin:10px 0"></div><button class="btn pri" onclick="window.Logic.saveLibEdit()">Guardar</button></div></div>
-<div class="modal" id="m-glob"><div class="sheet"><h3>Opciones</h3>...</div></div>
+<div class="modal" id="m-glob">
+    <div class="sheet">
+        <div class="modal-h">
+            <h3>⚡ Opciones Rápidas</h3>
+            <button class="close-x" onclick="window.UI.closeAll()">&times;</button>
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+            <button class="btn pri" style="background:#0f172a;" onclick="window.Logic.exportJSON()">
+                <i class="fas fa-file-download"></i> Exportar Backup (JSON)
+            </button>
+            
+            <button class="btn sec" onclick="document.getElementById('file-import-json').click()">
+                <i class="fas fa-file-upload"></i> Restaurar / Importar (JSON)
+            </button>
+            <input type="file" id="file-import-json" accept=".json" style="display:none" onchange="window.Logic.importJSON(this); this.value='';">
+
+            <div class="separator">PDFs</div>
+
+            <button class="btn sec" onclick="window.Logic.pdf()">
+                <i class="fas fa-file-pdf"></i> Generar PDF del Día
+            </button>
+            <button class="btn sec" onclick="window.Logic.pdfHistory()">
+                <i class="fas fa-book"></i> Generar PDF del Historial
+            </button>
+
+            <div class="separator">Peligro</div>
+
+            <button class="btn" style="background:#fef2f2; color:#ef4444; border:1px solid #fecaca;" onclick="window.Logic.wipe()">
+                <i class="fas fa-trash-alt"></i> Borrar datos de este día
+            </button>
+        </div>
+    </div>
+</div>
 <div class="modal" id="m-weight-full">
         <div class="sheet" style="max-width: 800px; height: 90vh; display: flex; flex-direction: column; padding: 20px 15px;">
             <div class="modal-h" style="margin-bottom: 15px;">
