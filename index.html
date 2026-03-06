@@ -63,11 +63,10 @@
                 <button class="day-btn" onclick="window.Stats.changeDate(1)">></button>
             </div>
             
-          <div class="weight-input-box" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px;">
-    <input type="number" id="w-today" class="inp" placeholder="Peso (kg)" step="0.1">
-    <input type="number" id="w-waist" class="inp" placeholder="Cintura (cm)" step="0.1">
-    <button class="btn pri" onclick="window.Stats.saveWeight()" style="width: auto; padding: 0 15px;">Guardar</button>
-</div>
+            <div class="weight-input-box">
+                <input type="number" id="w-today" class="inp" placeholder="Peso hoy (kg)" step="0.1">
+                <button class="btn pri" onclick="window.Stats.saveWeight()">Guardar</button>
+            </div>
             <div id="w-feedback" class="w-delta" style="margin-bottom:20px; padding:0 5px; font-size:0.9rem; display:flex; justify-content:space-between;"></div>
 
             <div class="rings-container">
@@ -79,52 +78,46 @@
         </div>
     </div>
 
-  <div class="modal" id="m-prof">
-    <div class="sheet">
-        <div class="modal-h"><h3>Mi Perfil</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-            <div><label>Altura (cm)</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
-            <div><label>Peso Inicial (kg)</label><input type="number" id="e-iw" class="inp" oninput="window.Calc.live()"></div>
-        </div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px;">
-            <div><label>Cintura Inicial (cm)</label><input type="number" id="e-iwst" class="inp" oninput="window.Calc.live()"></div>
-            <div><label>Meta Peso (kg)</label><input type="number" id="e-tw" class="inp" placeholder="Ej: 75" oninput="window.Calc.live()"></div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px;">
-            <div><label>Peso Actual (kg)</label><input type="number" id="e-w" class="inp" disabled style="background:#eff6ff; font-weight:bold; color:#1e40af;"></div>
-            <div><label>Cintura Actual (cm)</label><input type="number" id="e-waist" class="inp" disabled style="background:#fff7ed; font-weight:bold; color:#9a3412;"></div>
-        </div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px;">
-            <div><label>Año Nacimiento</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
-            <div><label>Sexo</label><select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">H</option><option value="female">M</option></select></div>
-        </div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px;">
-            <div><label>Actividad</label><select id="e-act" class="inp" onchange="window.Calc.live()"><option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option></select></div>
-            <div><label>Objetivo</label><select id="e-mod" class="inp" onchange="window.Calc.live()"><option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option></select></div>
-        </div>
-        
-        <label style="margin-top:10px; display:block;">Macros (%)</label>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
-            <input id="pp" type="number" class="inp" oninput="window.Calc.live()"><input id="pc" type="number" class="inp" oninput="window.Calc.live()"><input id="pf" type="number" class="inp" oninput="window.Calc.live()">
-        </div>
-        <div id="p-check" style="text-align:center;margin-bottom:10px;font-size:0.8rem"></div>
-        
-        <button class="btn pri" onclick="window.Logic.saveUser()">Guardar Cambios</button>
-        <button class="btn sec" onclick="window.Sys.logout()" style="margin-top:10px; color:#ef4444; border:1px solid #ef4444; background:white">Cerrar Sesión</button>
-        
-        <div id="bio-resumen" style="margin-top:15px; padding:10px; background:#f8fafc; border-radius:10px; font-size:0.8rem; display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-            <span>TMB: <b id="l-tmb">0</b></span>
-            <span>Mantenimiento: <b id="l-maint">0</b></span>
-            <span>IMC: <b id="l-imc">0</b></span>
-            <span>Calorías Meta: <b id="l-goal">0</b></span>
+    <div class="modal" id="m-prof">
+        <div class="sheet">
+            <div class="modal-h"><h3>Mi Perfil</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
+            
+            <div class="live-box" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:5px">
+                <div class="stat-item"><span class="stat-val" id="l-tmb">--</span><span class="stat-lbl">TMB</span></div>
+                <div class="stat-item"><span class="stat-val" id="l-maint" style="color:var(--a)">--</span><span class="stat-lbl">Mant.</span></div>
+                <div class="stat-item"><span class="stat-val" id="l-goal" style="color:var(--bad)">--</span><span class="stat-lbl">Meta</span></div>
+                <div class="stat-item"><span class="stat-val" id="l-imc">--</span><span class="stat-lbl">IMC</span></div>
+            </div>
+            
+            <label>Nombre (ID)</label><input id="e-name" class="inp" placeholder="Tu nombre">
+            
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Altura (cm)</label><input type="number" id="e-h" class="inp" oninput="window.Calc.live()"></div>
+                <div><label>Peso Inicial (kg)</label><input type="number" id="e-iw" class="inp" oninput="window.Calc.live()"></div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Peso Actual (kg)</label><input type="number" id="e-w" class="inp" oninput="window.Calc.live()" style="background:#eff6ff; border-color:#bfdbfe; font-weight:bold; color:#1e40af;"></div>
+                <div><label>Meta (kg)</label><input type="number" id="e-tw" class="inp" placeholder="Ej: 75" oninput="window.Calc.live()"></div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Año Nacimiento</label><input type="number" id="e-y" class="inp" placeholder="Ej: 1975" oninput="window.Calc.live()"></div>
+                <div><label>Sexo</label><select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">H</option><option value="female">M</option></select></div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+                <div><label>Actividad</label><select id="e-act" class="inp" onchange="window.Calc.live()"><option value="1.2">Sedentario</option><option value="1.375">Ligero</option><option value="1.55">Moderado</option><option value="1.725">Intenso</option></select></div>
+                <div><label>Objetivo</label><select id="e-mod" class="inp" onchange="window.Calc.live()"><option value="-500">Perder</option><option value="0">Mantener</option><option value="300">Ganar</option></select></div>
+            </div>
+            
+            <label>Macros (%)</label><div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px"><input id="pp" type="number" class="inp" placeholder="% P" oninput="window.Calc.live()"><input id="pc" type="number" class="inp" placeholder="% C" oninput="window.Calc.live()"><input id="pf" type="number" class="inp" placeholder="% G" oninput="window.Calc.live()"></div>
+            <div id="p-check" style="text-align:center;margin-bottom:10px;font-size:0.8rem"></div>
+            
+            <button class="btn pri" onclick="window.Logic.saveUser()">Guardar Cambios</button>
+            <button class="btn sec" onclick="window.Sys.logout()" style="margin-top:10px; color:#ef4444; border-color:#ef4444; background:white">Cerrar Sesión</button>
         </div>
     </div>
-</div>
 
     <div class="modal" id="m-add">
         <div class="sheet"><div class="modal-h"><h3>Añadir</h3><button class="ai-header-btn" id="btn-config-ai" onclick="window.UI.view('v-conf')">Config</button><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>

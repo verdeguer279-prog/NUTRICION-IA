@@ -321,7 +321,7 @@ window.Logic = {
     filterType: 'all',      
     showGlobal: false,      
 
- saveUser: async () => {
+  saveUser: async () => {
         const n = document.getElementById('e-name').value; 
         if (!n) return alert("Nombre obligatorio"); 
         try { 
@@ -329,13 +329,15 @@ window.Logic = {
             const val = (id) => parseFloat(document.getElementById(id).value); 
             const u = { 
                 uid: realUid, name: n, email: auth.currentUser ? auth.currentUser.email : "", 
-                h: val('e-h'), iw: val('e-iw'), iwst: val('e-iwst'), w: val('e-w'), waist: val('e-waist'), 
-                tw: val('e-tw'), y: val('e-y'), g: document.getElementById('e-g').value, 
-                act: val('e-act'), mod: val('e-mod'), 
+                h: val('e-h'), iw: val('e-iw'), w: val('e-w'), tw: val('e-tw'), y: val('e-y'), 
+                g: document.getElementById('e-g').value, act: val('e-act'), mod: val('e-mod'), 
                 customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
             }; 
             await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
+            
+            // --- NOVEDAD: Le grabamos a fuego al navegador quién eres ---
             localStorage.setItem('nutria_saved_user', n);
+
             window.S.u = window.DB.norm(u); window.S.uid = n; window.Calc.bio(); window.UI.closeAll(); location.reload(); 
         } catch (e) { alert("Error: " + e.message); }
     },
@@ -517,49 +519,35 @@ window.Logic = {
 
 // --- 8. STATS ---
 window.Stats = {
-    open: () => { 
-        document.getElementById('st-date').valueAsDate = window.S.d; 
-        window.Stats.updateView(); 
-        window.UI.open('m-stats'); 
-    },
+    open: () => { document.getElementById('st-date').valueAsDate = window.S.d; window.Stats.updateView(); window.UI.open('m-stats'); },
     changeDate: (n) => { 
         const d = new Date(document.getElementById('st-date').value); 
         d.setDate(d.getDate() + n); 
         document.getElementById('st-date').valueAsDate = d; 
         window.Stats.updateView(); 
     },
-saveWeight: async () => {
-        const wVal = parseFloat(document.getElementById('w-today').value);
-        const waistVal = parseFloat(document.getElementById('w-waist').value);
-        
-        if(!wVal || wVal <= 0) return alert("Introduce al menos el peso");
+    saveWeight: async () => {
+        const val = parseFloat(document.getElementById('w-today').value);
+        if(!val || val <= 0) return alert("Peso no válido");
         const dStr = document.getElementById('st-date').value;
         
+        // 1. Guardar en el diario histórico
         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
         const snap = await fire.getDoc(ref); 
         let data = snap.exists() ? snap.data() : {}; 
-        
-        data.weight = wVal;
-        data.waist = waistVal || null; 
-        
+        data.weight = val;
         await fire.setDoc(ref, data); 
+        if (dStr === window.S.d.toISOString().split('T')[0]) window.S.day.weight = val;
         
-        if (dStr === window.S.d.toISOString().split('T')[0]) {
-            window.S.day.weight = wVal;
-            window.S.day.waist = waistVal;
-        }
-        
+        // 2. MAGIA: Auto-actualizar el perfil y recalcular metabolismo
         if (window.S.u) {
-            window.S.u.w = wVal; 
-            if(waistVal) window.S.u.waist = waistVal; // Mantener perfil actualizado con cintura
-            if (!window.S.u.iw) window.S.u.iw = wVal; 
-            if (!window.S.u.iwst && waistVal) window.S.u.iwst = waistVal; // Guardar cintura inicial si no existe
-            
+            window.S.u.w = val; // Actualiza tu peso actual
+            if (!window.S.u.iw) window.S.u.iw = val; // Si no tenías peso inicial, usa este
             await fire.setDoc(fire.doc(db, 'usuarios', window.S.uid), window.S.u); 
             window.Calc.bio(); 
         }
 
-        window.UI.showToast('⚖️ Datos de progreso guardados'); 
+        window.UI.showToast('⚖️ Peso guardado y calorías ajustadas'); 
         window.Stats.updateView();
     },
     updateView: async () => {
@@ -570,10 +558,7 @@ saveWeight: async () => {
 
             const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
             const hist = []; q.forEach(x=>hist.push({id:x.id, ...x.data()}));
-            
-            const cur = hist.find(x=>x.id===dStr); 
-            document.getElementById('w-today').value = cur ? cur.weight : '';
-            document.getElementById('w-waist').value = cur ? cur.waist : '';
+            const cur = hist.find(x=>x.id===dStr); document.getElementById('w-today').value = cur?cur.weight:'';
             
             const fb = document.getElementById('w-feedback'); let html = '';
             let firstW=window.S.u.w; let prevW=null, currW=cur?cur.weight:null;
@@ -603,30 +588,30 @@ saveWeight: async () => {
             window.Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), { type:'doughnut', data:{labels:['S','R'],datasets:[{data:[wCal, Math.max(0, wGoal-wCal)], backgroundColor:['#8b5cf6','#e2e8f0']}]}, options:{cutout:'75%', plugins:{legend:{display:false}}} });
             document.getElementById('weekly-txt').innerHTML=`<span class="srt-val">${Math.round(wCal)}</span><span class="srt-lbl">de ${wGoal}</span>`;
 
+            const cD=[], cW=[]; for(let i=29; i>=0; i--) { const tD=new Date(dStr); tD.setDate(tD.getDate()-i); const k=tD.toISOString().split('T')[0]; cD.push(k.slice(5)); const h=hist.find(x=>x.id===k); cW.push(h?h.weight:null); }
             if(window.Stats.chartWeight) window.Stats.chartWeight.destroy();
             const canvasW = document.getElementById('chart-weight'); const ctxW = canvasW.getContext('2d');
-            let gradient = ctxW.createLinearGradient(0, 0, 0, 200);
+            let gradient = ctxW.createLinearGradient(0, 0, 0, canvasW.parentElement.clientHeight || 200);
             gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)'); gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
 
             window.Stats.chartWeight = new Chart(ctxW, { 
-                type:'line', data:{ labels:hist.slice(-30).map(x=>x.id.slice(5)), datasets:[{ label:'Peso (kg)', data:hist.slice(-30).map(x=>x.weight), borderColor:'#10b981', backgroundColor: gradient, fill: true, tension:0.4, spanGaps:true, borderWidth: 3, pointRadius: 0 }] }, 
-                options:{ 
-                    plugins:{ legend:{display:false} }, 
-                    maintainAspectRatio:false,
+                type:'line', data:{ labels:cD, datasets:[{ label:'Peso (kg)', data:cW, borderColor:'#10b981', backgroundColor: gradient, fill: true, tension:0.4, spanGaps:true, borderWidth: 3, pointRadius: 0, pointHoverRadius: 6, pointHitRadius: 15 }] }, 
+                options:{ plugins:{ legend:{display:false}, tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', titleFont: { size: 13 }, bodyFont: { size: 14, weight: 'bold' }, padding: 10, cornerRadius: 8, displayColors: false } }, interaction: { mode: 'index', intersect: false }, maintainAspectRatio:false,
                     onHover: (event) => { event.native.target.style.cursor = 'pointer'; },
                     onClick: () => { window.Stats.openWeightDetail(); }
                 } 
             });
-        } catch(e) { console.error("Stats View Error:", e); }
+        } catch(e) { console.error("Stats:", e); }
     },
- openWeightDetail: async () => {
+    
+    openWeightDetail: async () => {
         document.getElementById('loading-screen').style.display = 'flex';
         try {
             const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
-            const hist = []; q.forEach(x => { if(x.data().weight) hist.push({ id: x.id, w: x.data().weight, waist: x.data().waist }); });
+            const hist = []; q.forEach(x => { if(x.data().weight) hist.push({ id: x.id, w: x.data().weight }); });
             
             if(hist.length < 2) {
-                alert("Registra al menos 2 pesos para ver el análisis.");
+                alert("Registra al menos 2 pesos en días distintos para ver el análisis avanzado.");
                 document.getElementById('loading-screen').style.display = 'none'; return;
             }
 
@@ -645,7 +630,9 @@ saveWeight: async () => {
             const h_m = window.S.u.h / 100;
             const firstIMC = first.w / (h_m * h_m);
             const currentIMC = last.w / (h_m * h_m);
+            const w7IMC = w7 / (h_m * h_m);
             const diffIMCTotal = currentIMC - firstIMC;
+            const diffIMC7 = currentIMC - w7IMC;
 
             const targetW = window.S.u.tw || 75;
             document.getElementById('wf-target-w').innerText = targetW;
@@ -658,53 +645,33 @@ saveWeight: async () => {
                 const projDate = new Date(); 
                 projDate.setDate(projDate.getDate() + daysLeft);
                 targetText = projDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-            } else if (last.w <= targetW) { targetText = "¡Logrado! 🎉"; }
+            } else if (last.w <= targetW) { targetText = "¡Logrado! 🎉"; } else { targetText = "Estancado o subiendo"; }
 
             const fd = (d) => `<span style="color:${d > 0 ? '#ef4444' : '#10b981'}; font-weight:900;">${d > 0 ? '+' : ''}${d.toFixed(1)}</span>`;
 
-            // Renderizar etiquetas (Tus cálculos originales)
             document.getElementById('wf-total-lbl').innerText = `Total (${daysTotal} días)`;
             document.getElementById('wf-total-val').innerHTML = fd(diffTotal) + 'kg';
             document.getElementById('wf-7d-val').innerHTML = fd(diff7) + 'kg';
             document.getElementById('wf-avg-val').innerHTML = fd(avgW) + 'kg';
+            
             document.getElementById('wf-imc-ini').innerText = firstIMC.toFixed(1);
             document.getElementById('wf-imc-val').innerText = currentIMC.toFixed(1);
             document.getElementById('wf-imc-total').innerHTML = fd(diffIMCTotal);
+            document.getElementById('wf-imc-7d').innerHTML = fd(diffIMC7);
             document.getElementById('wf-target').innerText = targetText;
 
-            // NUEVA LÓGICA DE CINTURA (Comparando con la Cintura Inicial del Perfil)
-            const iniWaist = window.S.u.iwst;
-            if(iniWaist && last.waist) {
-                const diffWaist = last.waist - iniWaist;
-                const waistEl = document.getElementById('wf-waist-total');
-                if(waistEl) waistEl.innerHTML = fd(diffWaist) + 'cm';
-            }
-
-            // GRÁFICA 1: PESO (Mantenida)
             if(window.Stats.chartFull) window.Stats.chartFull.destroy();
             const canvasCtx = document.getElementById('chart-weight-full').getContext('2d');
+            let grad = canvasCtx.createLinearGradient(0, 0, 0, 300);
+            grad.addColorStop(0, 'rgba(37, 99, 235, 0.3)'); grad.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
             window.Stats.chartFull = new Chart(canvasCtx, {
-                type: 'line', 
-                data: { labels: hist.map(x => x.id.slice(5)), datasets: [{ label: 'Peso', data: hist.map(x => x.w), borderColor: '#2563eb', tension: 0.4, fill:true, backgroundColor:'rgba(37,99,235,0.1)' }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                type: 'line', data: { labels: hist.map(x => { const parts = x.id.split('-'); return `${parts[2]}/${parts[1]}`; }), datasets: [{ label: 'Peso (kg)', data: hist.map(x => x.w), borderColor: '#2563eb', backgroundColor: grad, fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: 'white', pointBorderWidth: 2, pointHoverRadius: 7 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', padding: 12, titleFont: { size: 14 }, bodyFont: { size: 15, weight: 'bold' } } }, interaction: { mode: 'index', intersect: false }, scales: { y: { min: Math.floor(minW - 2), max: Math.ceil(maxW + 2) } } }
             });
 
-            // NUEVA GRÁFICA 2: CINTURA
-            if(window.Stats.chartWaistFull) window.Stats.chartWaistFull.destroy();
-            const canvasWaist = document.getElementById('chart-waist-full');
-            if(canvasWaist) {
-                window.Stats.chartWaistFull = new Chart(canvasWaist.getContext('2d'), {
-                    type: 'line',
-                    data: { 
-                        labels: hist.filter(x => x.waist).map(x => x.id.slice(5)), 
-                        datasets: [{ label: 'Cintura', data: hist.filter(x => x.waist).map(x => x.waist), borderColor: '#ea580c', tension: 0.4, fill:true, backgroundColor:'rgba(234,88,12,0.1)' }] 
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            }
-
             window.UI.open('m-weight-full');
-        } catch(e) { console.error("Weight Detail Error:", e); }
+        } catch(e) { console.error(e); }
         document.getElementById('loading-screen').style.display = 'none';
     }
 };
