@@ -79,7 +79,7 @@
         </div>
     </div>
 
-   <div class="modal" id="m-prof">
+  <div class="modal" id="m-prof">
     <div class="sheet">
         <div class="modal-h"><h3>Mi Perfil</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
         
@@ -94,12 +94,12 @@
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px;">
-            <div><label>Peso Actual (kg)</label><input type="number" id="e-w" class="inp" disabled style="background:#eff6ff; border-color:#bfdbfe; font-weight:bold; color:#1e40af;"></div>
-            <div><label>Cintura Actual (cm)</label><input type="number" id="e-waist" class="inp" disabled style="background:#fff7ed; border-color:#fde68a; font-weight:bold; color:#9a3412;"></div>
+            <div><label>Peso Actual (kg)</label><input type="number" id="e-w" class="inp" disabled style="background:#eff6ff; font-weight:bold; color:#1e40af;"></div>
+            <div><label>Cintura Actual (cm)</label><input type="number" id="e-waist" class="inp" disabled style="background:#fff7ed; font-weight:bold; color:#9a3412;"></div>
         </div>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px;">
-            <div><label>Año Nacimiento</label><input type="number" id="e-y" class="inp" placeholder="Ej: 1975" oninput="window.Calc.live()"></div>
+            <div><label>Año Nacimiento</label><input type="number" id="e-y" class="inp" oninput="window.Calc.live()"></div>
             <div><label>Sexo</label><select id="e-g" class="inp" onchange="window.Calc.live()"><option value="male">H</option><option value="female">M</option></select></div>
         </div>
         
@@ -110,14 +110,12 @@
         
         <label style="margin-top:10px; display:block;">Macros (%)</label>
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px">
-            <input id="pp" type="number" class="inp" placeholder="% P" oninput="window.Calc.live()">
-            <input id="pc" type="number" class="inp" placeholder="% C" oninput="window.Calc.live()">
-            <input id="pf" type="number" class="inp" placeholder="% G" oninput="window.Calc.live()">
+            <input id="pp" type="number" class="inp" oninput="window.Calc.live()"><input id="pc" type="number" class="inp" oninput="window.Calc.live()"><input id="pf" type="number" class="inp" oninput="window.Calc.live()">
         </div>
         <div id="p-check" style="text-align:center;margin-bottom:10px;font-size:0.8rem"></div>
         
         <button class="btn pri" onclick="window.Logic.saveUser()">Guardar Cambios</button>
-        <button class="btn sec" onclick="window.Sys.logout()" style="margin-top:10px; color:#ef4444; border-color:#ef4444; background:white">Cerrar Sesión</button>
+        <button class="btn sec" onclick="window.Sys.logout()" style="margin-top:10px; color:#ef4444; border:1px solid #ef4444; background:white">Cerrar Sesión</button>
         
         <div id="bio-resumen" style="margin-top:15px; padding:10px; background:#f8fafc; border-radius:10px; font-size:0.8rem; display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
             <span>TMB: <b id="l-tmb">0</b></span>

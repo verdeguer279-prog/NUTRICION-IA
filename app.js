@@ -321,7 +321,7 @@ window.Logic = {
     filterType: 'all',      
     showGlobal: false,      
 
-  saveUser: async () => {
+ saveUser: async () => {
         const n = document.getElementById('e-name').value; 
         if (!n) return alert("Nombre obligatorio"); 
         try { 
@@ -329,15 +329,13 @@ window.Logic = {
             const val = (id) => parseFloat(document.getElementById(id).value); 
             const u = { 
                 uid: realUid, name: n, email: auth.currentUser ? auth.currentUser.email : "", 
-                h: val('e-h'), iw: val('e-iw'), w: val('e-w'), tw: val('e-tw'), y: val('e-y'), 
-                g: document.getElementById('e-g').value, act: val('e-act'), mod: val('e-mod'), 
+                h: val('e-h'), iw: val('e-iw'), iwst: val('e-iwst'), w: val('e-w'), waist: val('e-waist'), 
+                tw: val('e-tw'), y: val('e-y'), g: document.getElementById('e-g').value, 
+                act: val('e-act'), mod: val('e-mod'), 
                 customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
             }; 
             await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
-            
-            // --- NOVEDAD: Le grabamos a fuego al navegador quién eres ---
             localStorage.setItem('nutria_saved_user', n);
-
             window.S.u = window.DB.norm(u); window.S.uid = n; window.Calc.bio(); window.UI.closeAll(); location.reload(); 
         } catch (e) { alert("Error: " + e.message); }
     },
@@ -530,7 +528,7 @@ window.Stats = {
         document.getElementById('st-date').valueAsDate = d; 
         window.Stats.updateView(); 
     },
-    saveWeight: async () => {
+saveWeight: async () => {
         const wVal = parseFloat(document.getElementById('w-today').value);
         const waistVal = parseFloat(document.getElementById('w-waist').value);
         
@@ -553,7 +551,10 @@ window.Stats = {
         
         if (window.S.u) {
             window.S.u.w = wVal; 
+            if(waistVal) window.S.u.waist = waistVal; // Mantener perfil actualizado con cintura
             if (!window.S.u.iw) window.S.u.iw = wVal; 
+            if (!window.S.u.iwst && waistVal) window.S.u.iwst = waistVal; // Guardar cintura inicial si no existe
+            
             await fire.setDoc(fire.doc(db, 'usuarios', window.S.uid), window.S.u); 
             window.Calc.bio(); 
         }
@@ -618,7 +619,7 @@ window.Stats = {
             });
         } catch(e) { console.error("Stats View Error:", e); }
     },
-    openWeightDetail: async () => {
+ openWeightDetail: async () => {
         document.getElementById('loading-screen').style.display = 'flex';
         try {
             const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
@@ -661,6 +662,7 @@ window.Stats = {
 
             const fd = (d) => `<span style="color:${d > 0 ? '#ef4444' : '#10b981'}; font-weight:900;">${d > 0 ? '+' : ''}${d.toFixed(1)}</span>`;
 
+            // Renderizar etiquetas (Tus cálculos originales)
             document.getElementById('wf-total-lbl').innerText = `Total (${daysTotal} días)`;
             document.getElementById('wf-total-val').innerHTML = fd(diffTotal) + 'kg';
             document.getElementById('wf-7d-val').innerHTML = fd(diff7) + 'kg';
@@ -670,20 +672,36 @@ window.Stats = {
             document.getElementById('wf-imc-total').innerHTML = fd(diffIMCTotal);
             document.getElementById('wf-target').innerText = targetText;
 
-            // Lógica de cintura si existe
-            if(first.waist && last.waist) {
-                const diffWaist = last.waist - first.waist;
+            // NUEVA LÓGICA DE CINTURA (Comparando con la Cintura Inicial del Perfil)
+            const iniWaist = window.S.u.iwst;
+            if(iniWaist && last.waist) {
+                const diffWaist = last.waist - iniWaist;
                 const waistEl = document.getElementById('wf-waist-total');
                 if(waistEl) waistEl.innerHTML = fd(diffWaist) + 'cm';
             }
 
+            // GRÁFICA 1: PESO (Mantenida)
             if(window.Stats.chartFull) window.Stats.chartFull.destroy();
             const canvasCtx = document.getElementById('chart-weight-full').getContext('2d');
             window.Stats.chartFull = new Chart(canvasCtx, {
                 type: 'line', 
-                data: { labels: hist.map(x => x.id.slice(5)), datasets: [{ label: 'Peso', data: hist.map(x => x.w), borderColor: '#2563eb', tension: 0.4, fill:true }] },
+                data: { labels: hist.map(x => x.id.slice(5)), datasets: [{ label: 'Peso', data: hist.map(x => x.w), borderColor: '#2563eb', tension: 0.4, fill:true, backgroundColor:'rgba(37,99,235,0.1)' }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
+
+            // NUEVA GRÁFICA 2: CINTURA
+            if(window.Stats.chartWaistFull) window.Stats.chartWaistFull.destroy();
+            const canvasWaist = document.getElementById('chart-waist-full');
+            if(canvasWaist) {
+                window.Stats.chartWaistFull = new Chart(canvasWaist.getContext('2d'), {
+                    type: 'line',
+                    data: { 
+                        labels: hist.filter(x => x.waist).map(x => x.id.slice(5)), 
+                        datasets: [{ label: 'Cintura', data: hist.filter(x => x.waist).map(x => x.waist), borderColor: '#ea580c', tension: 0.4, fill:true, backgroundColor:'rgba(234,88,12,0.1)' }] 
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
 
             window.UI.open('m-weight-full');
         } catch(e) { console.error("Weight Detail Error:", e); }
