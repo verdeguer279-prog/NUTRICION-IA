@@ -34,7 +34,7 @@ window.Sys = {
                 ['app-header','feed','fab-btn'].forEach(x=>document.getElementById(x).style.display='block');
                 document.getElementById('fab-btn').style.display='flex';
                 
-                // --- NOVEDAD: Memoria infalible del navegador ---
+                // --- Memoria infalible del navegador ---
                 let dbId = localStorage.getItem('nutria_saved_user') || user.uid; 
                 
                 try {
@@ -70,7 +70,7 @@ window.Sys = {
     },
     login: async () => { try { await signInWithPopup(auth, provider); } catch (e) { alert(`Error login: ${e.message}`); } },
     
-    // Novedad: Al cerrar sesión borramos la memoria para que otro usuario pueda entrar
+    // Al cerrar sesión borramos la memoria para que otro usuario pueda entrar
     logout: async () => { localStorage.removeItem('nutria_saved_user'); await signOut(auth); location.reload(); },
     
     load: async (id, email, name) => {
@@ -100,12 +100,12 @@ window.DB = {
     col: (n) => fire.collection(db, n),
     doc: (p, i) => fire.doc(db, p, i),
     
-    norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), iw: parseFloat(u.iw||u.w||70), w: parseFloat(u.w||70), tw: parseFloat(u.tw||75), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),
+    norm: (u) => ({ id: u.name||u.uid, name: u.name||'Usuario', email: u.email, h: parseFloat(u.h||170), iw: parseFloat(u.iw||u.w||70), w: parseFloat(u.w||70), iwaist: parseFloat(u.iwaist||u.waist||0), waist: parseFloat(u.waist||0), tw: parseFloat(u.tw||75), y: parseInt(u.y||1990), g: u.g||'male', act: u.act||"1.2", mod: u.mod||"0", mac: u.customMacros || {p:null, c:null, f:null} }),
     
-    setU: async (u) => { await fire.setDoc(fire.doc(db, 'usuarios', u.name), u); window.S.uid = u.name; },
+    setU: async (u) => { await fire.setDoc(fire.doc(db, 'usuarios', u.name), u, { merge: true }); window.S.uid = u.name; },
     getU: async (id) => { const s = await fire.getDoc(fire.doc(db, 'usuarios', id)); return s.exists() ? s.data() : null; },
     getDay: async (d) => { if(!window.S.uid) return {}; const k = d.toISOString().split('T')[0]; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, k)); let data = s.exists() ? s.data() : {}; MEALS.forEach(m => { if (!data[m.k]) data[m.k] = [] }); return data; },
-    setDay: async () => { if(!window.S.uid) return; const k = window.S.d.toISOString().split('T')[0]; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, k), window.S.day); },
+    setDay: async () => { if(!window.S.uid) return; const k = window.S.d.toISOString().split('T')[0]; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, k), window.S.day, { merge: true }); },
     
     lib: async () => { 
         try {
@@ -120,9 +120,9 @@ window.DB = {
         } catch(e) { window.S.lib = []; }
     },
     
-    saveLib: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`), { items: window.S.lib }); },
+    saveLib: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`), { items: window.S.lib }, { merge: true }); },
     getPlates: async () => { try { if(!window.S.uid) return; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`)); window.S.platos = s.exists() ? s.data().items : []; } catch (e) { window.S.platos = []; } },
-    savePlates: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`), { items: window.S.platos }); }
+    savePlates: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`), { items: window.S.platos }, { merge: true }); }
 };
 
 // --- 4. UI ---
@@ -144,8 +144,17 @@ window.UI = {
 
     openProfile: () => {
         if(!window.S.u) return; const u=window.S.u;
-        document.getElementById('e-name').value=u.name; document.getElementById('e-h').value=u.h; document.getElementById('e-iw').value=u.iw||u.w; document.getElementById('e-w').value=u.w; document.getElementById('e-tw').value=u.tw||75;
-        document.getElementById('e-y').value=u.y; document.getElementById('e-g').value=u.g; document.getElementById('e-act').value=u.act; document.getElementById('e-mod').value=u.mod;
+        document.getElementById('e-name').value=u.name; 
+        document.getElementById('e-h').value=u.h; 
+        document.getElementById('e-y').value=u.y; 
+        document.getElementById('e-iw').value=u.iw||u.w; 
+        document.getElementById('e-w').value=u.w; 
+        document.getElementById('e-iwaist').value=u.iwaist||u.waist||''; 
+        document.getElementById('e-waist').value=u.waist||''; 
+        document.getElementById('e-tw').value=u.tw||75;
+        document.getElementById('e-g').value=u.g; 
+        document.getElementById('e-act').value=u.act; 
+        document.getElementById('e-mod').value=u.mod;
         document.getElementById('pp').value=u.mac.p; document.getElementById('pc').value=u.mac.c; document.getElementById('pf').value=u.mac.f;
         window.Calc.live(); window.UI.open('m-prof');
     },
@@ -188,7 +197,7 @@ window.Calc = {
     
     live: () => {
         const val=(id)=>parseFloat(document.getElementById(id).value)||0; 
-        const h=val('e-h'), w=val('e-w'), year=val('e-y'); 
+        const h=val('e-h'), w=val('e-w')||val('e-iw'), year=val('e-y'); 
         const act=val('e-act'), mod=val('e-mod'); 
         const g=document.getElementById('e-g').value; 
         const pp=val('pp'), pc=val('pc'), pf=val('pf');
@@ -321,7 +330,7 @@ window.Logic = {
     filterType: 'all',      
     showGlobal: false,      
 
-  saveUser: async () => {
+    saveUser: async () => {
         const n = document.getElementById('e-name').value; 
         if (!n) return alert("Nombre obligatorio"); 
         try { 
@@ -329,13 +338,15 @@ window.Logic = {
             const val = (id) => parseFloat(document.getElementById(id).value); 
             const u = { 
                 uid: realUid, name: n, email: auth.currentUser ? auth.currentUser.email : "", 
-                h: val('e-h'), iw: val('e-iw'), w: val('e-w'), tw: val('e-tw'), y: val('e-y'), 
+                h: val('e-h'), iw: val('e-iw'), w: window.S.u ? window.S.u.w : val('e-iw'), 
+                iwaist: val('e-iwaist'), waist: window.S.u ? window.S.u.waist : val('e-iwaist'),
+                tw: val('e-tw'), y: val('e-y'), 
                 g: document.getElementById('e-g').value, act: val('e-act'), mod: val('e-mod'), 
                 customMacros: { p: val('pp'), c: val('pc'), f: val('pf') } 
             }; 
-            await fire.setDoc(fire.doc(db, 'usuarios', n), u); 
+            await fire.setDoc(fire.doc(db, 'usuarios', n), u, { merge: true }); 
             
-            // --- NOVEDAD: Le grabamos a fuego al navegador quién eres ---
+            // Le grabamos a fuego al navegador quién eres
             localStorage.setItem('nutria_saved_user', n);
 
             window.S.u = window.DB.norm(u); window.S.uid = n; window.Calc.bio(); window.UI.closeAll(); location.reload(); 
@@ -510,7 +521,7 @@ window.Logic = {
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
     execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); },
     pdf: () => { const el = document.getElementById('feed'); if(!el || el.innerText.trim() === "") return alert("Vacío"); const opt = { margin: 10, filename: `Diario_${window.S.d.toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; html2pdf().set(opt).from(el).save(); },
-    pdfHistory: async () => { if(!confirm("Generar historial completo?")) return; document.getElementById('loading-screen').style.display='flex'; try { const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__'))); let html = `<div style="padding:20px; font-family:sans-serif;"><h1>Historial - ${window.S.u.name}</h1><table style="width:100%; border-collapse:collapse; font-size:12px;"><tr style="background:#0f172a; color:white;"><th style="padding:8px">Fecha</th><th>Kcal</th><th>P</th><th>C</th><th>G</th><th>Peso</th></tr>`; q.forEach(doc => { const d = doc.data(); let tk=0, tp=0, tc=0, tf=0; MEALS.forEach(m => { if(d[m.k]) d[m.k].forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; }); }); if(tk>0) html += `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${doc.id}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tk)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tp)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tc)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tf)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${d.weight||'-'}</td></tr>`; }); html += `</table></div>`; const tempDiv = document.createElement('div'); tempDiv.innerHTML = html; document.body.appendChild(tempDiv); await html2pdf().set({ margin: 10, filename: `Historial_${window.S.u.name}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(tempDiv).save(); document.body.removeChild(tempDiv); } catch(e) { alert("Error: " + e.message); } document.getElementById('loading-screen').style.display='none'; },
+    pdfHistory: async () => { if(!confirm("Generar historial completo?")) return; document.getElementById('loading-screen').style.display='flex'; try { const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__'))); let html = `<div style="padding:20px; font-family:sans-serif;"><h1>Historial - ${window.S.u.name}</h1><table style="width:100%; border-collapse:collapse; font-size:12px;"><tr style="background:#0f172a; color:white;"><th style="padding:8px">Fecha</th><th>Kcal</th><th>P</th><th>C</th><th>G</th><th>Peso</th><th>Cintura</th></tr>`; q.forEach(doc => { const d = doc.data(); let tk=0, tp=0, tc=0, tf=0; MEALS.forEach(m => { if(d[m.k]) d[m.k].forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; }); }); if(tk>0) html += `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${doc.id}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tk)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tp)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tc)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tf)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${d.weight||'-'}</td><td style="text-align:center;border-bottom:1px solid #ddd">${d.waist||'-'}</td></tr>`; }); html += `</table></div>`; const tempDiv = document.createElement('div'); tempDiv.innerHTML = html; document.body.appendChild(tempDiv); await html2pdf().set({ margin: 10, filename: `Historial_${window.S.u.name}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(tempDiv).save(); document.body.removeChild(tempDiv); } catch(e) { alert("Error: " + e.message); } document.getElementById('loading-screen').style.display='none'; },
     exportJSON: async () => { document.getElementById('loading-screen').style.display='flex'; try { const q = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/diario`)); let history = {}; q.forEach(doc => { history[doc.id] = doc.data(); }); const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ user: window.S.u, history: history })); const a = document.createElement('a'); a.href = dataStr; a.download = `Backup_${window.S.u.name}.json`; document.body.appendChild(a); a.click(); a.remove(); } catch(e) { alert("Error: " + e.message); } document.getElementById('loading-screen').style.display='none'; },
     importJSON: (input) => { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const json = JSON.parse(e.target.result); document.getElementById('loading-screen').style.display='flex'; if(json.history && confirm("Restaurar Historial Completo?")) { const batch = fire.writeBatch(db); Object.entries(json.history).forEach(([d, v]) => batch.set(fire.doc(db, `usuarios/${window.S.uid}/diario`, d), v)); await batch.commit(); alert("Historial Restaurado"); window.Sys.sync(); } else if (!json.history) { await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, window.S.d.toISOString().split('T')[0]), json); alert("Día Importado"); window.Sys.sync(); } } catch(e) { alert("Error JSON: " + e.message); } document.getElementById('loading-screen').style.display='none'; }; reader.readAsText(file); },
     wipe: async () => { if(confirm("Borrar día?")) { await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, window.S.d.toISOString().split('T')[0]), {}); window.Sys.sync(); window.UI.closeAll(); }},
@@ -527,27 +538,47 @@ window.Stats = {
         window.Stats.updateView(); 
     },
     saveWeight: async () => {
-        const val = parseFloat(document.getElementById('w-today').value);
-        if(!val || val <= 0) return alert("Peso no válido");
-        const dStr = document.getElementById('st-date').value;
+        const wVal = parseFloat(document.getElementById('w-today').value);
+        const waistVal = parseFloat(document.getElementById('waist-today').value);
         
-        // 1. Guardar en el diario histórico
+        if((!wVal || wVal <= 0) && (!waistVal || waistVal <= 0)) return alert("Introduce al menos un valor válido (peso o cintura)");
+        
+        const dStr = document.getElementById('st-date').value;
         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
-        const snap = await fire.getDoc(ref); 
-        let data = snap.exists() ? snap.data() : {}; 
-        data.weight = val;
-        await fire.setDoc(ref, data); 
-        if (dStr === window.S.d.toISOString().split('T')[0]) window.S.day.weight = val;
+        
+        // 1. Guardar en el diario histórico usando MERGE TRUE para no pisar las comidas
+        let updateData = {};
+        if (wVal > 0) updateData.weight = wVal;
+        if (waistVal > 0) updateData.waist = waistVal;
+
+        await fire.setDoc(ref, updateData, { merge: true });
+        
+        if (dStr === window.S.d.toISOString().split('T')[0]) {
+            if (wVal > 0) window.S.day.weight = wVal;
+            if (waistVal > 0) window.S.day.waist = waistVal;
+        }
         
         // 2. MAGIA: Auto-actualizar el perfil y recalcular metabolismo
         if (window.S.u) {
-            window.S.u.w = val; // Actualiza tu peso actual
-            if (!window.S.u.iw) window.S.u.iw = val; // Si no tenías peso inicial, usa este
-            await fire.setDoc(fire.doc(db, 'usuarios', window.S.uid), window.S.u); 
-            window.Calc.bio(); 
+            let userUpdated = false;
+            if (wVal > 0) {
+                window.S.u.w = wVal;
+                if (!window.S.u.iw) window.S.u.iw = wVal;
+                userUpdated = true;
+            }
+            if (waistVal > 0) {
+                window.S.u.waist = waistVal;
+                if (!window.S.u.iwaist) window.S.u.iwaist = waistVal;
+                userUpdated = true;
+            }
+
+            if (userUpdated) {
+                await fire.setDoc(fire.doc(db, 'usuarios', window.S.uid), window.S.u, { merge: true }); 
+                window.Calc.bio(); 
+            }
         }
 
-        window.UI.showToast('⚖️ Peso guardado y calorías ajustadas'); 
+        window.UI.showToast('⚖️ Métricas guardadas y ajustadas'); 
         window.Stats.updateView();
     },
     updateView: async () => {
@@ -558,7 +589,10 @@ window.Stats = {
 
             const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
             const hist = []; q.forEach(x=>hist.push({id:x.id, ...x.data()}));
-            const cur = hist.find(x=>x.id===dStr); document.getElementById('w-today').value = cur?cur.weight:'';
+            
+            const cur = hist.find(x=>x.id===dStr); 
+            document.getElementById('w-today').value = cur && cur.weight ? cur.weight : '';
+            document.getElementById('waist-today').value = cur && cur.waist ? cur.waist : '';
             
             const fb = document.getElementById('w-feedback'); let html = '';
             let firstW=window.S.u.w; let prevW=null, currW=cur?cur.weight:null;
@@ -608,24 +642,30 @@ window.Stats = {
         document.getElementById('loading-screen').style.display = 'flex';
         try {
             const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__')));
-            const hist = []; q.forEach(x => { if(x.data().weight) hist.push({ id: x.id, w: x.data().weight }); });
+            const histW = []; 
+            const histWaist = [];
             
-            if(hist.length < 2) {
+            q.forEach(x => { 
+                if(x.data().weight) histW.push({ id: x.id, w: x.data().weight }); 
+                if(x.data().waist) histWaist.push({ id: x.id, waist: x.data().waist }); 
+            });
+            
+            if(histW.length < 2) {
                 alert("Registra al menos 2 pesos en días distintos para ver el análisis avanzado.");
                 document.getElementById('loading-screen').style.display = 'none'; return;
             }
 
-            const first = hist[0]; const last = hist[hist.length - 1];
+            const first = histW[0]; const last = histW[histW.length - 1];
             const d1 = new Date(first.id); const today = new Date();
             const daysTotal = Math.max(1, Math.floor((today - d1) / (1000 * 60 * 60 * 24)));
             const diffTotal = last.w - first.w;
             
             const d7 = new Date(); d7.setDate(d7.getDate() - 7); const d7Str = d7.toISOString().split('T')[0];
-            let w7 = first.w; for(let i = hist.length - 1; i >= 0; i--) { if(hist[i].id <= d7Str) { w7 = hist[i].w; break; } }
+            let w7 = first.w; for(let i = histW.length - 1; i >= 0; i--) { if(histW[i].id <= d7Str) { w7 = histW[i].w; break; } }
             const diff7 = last.w - w7;
             const avgW = (daysTotal >= 7) ? (diffTotal / (daysTotal / 7)) : diffTotal;
             
-            let maxW = hist[0].w, minW = hist[0].w; hist.forEach(x => { if(x.w > maxW) maxW = x.w; if(x.w < minW) minW = x.w; });
+            let maxW = histW[0].w, minW = histW[0].w; histW.forEach(x => { if(x.w > maxW) maxW = x.w; if(x.w < minW) minW = x.w; });
 
             const h_m = window.S.u.h / 100;
             const firstIMC = first.w / (h_m * h_m);
@@ -660,15 +700,31 @@ window.Stats = {
             document.getElementById('wf-imc-7d').innerHTML = fd(diffIMC7);
             document.getElementById('wf-target').innerText = targetText;
 
+            // Gráfica de Peso
             if(window.Stats.chartFull) window.Stats.chartFull.destroy();
             const canvasCtx = document.getElementById('chart-weight-full').getContext('2d');
             let grad = canvasCtx.createLinearGradient(0, 0, 0, 300);
             grad.addColorStop(0, 'rgba(37, 99, 235, 0.3)'); grad.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
 
             window.Stats.chartFull = new Chart(canvasCtx, {
-                type: 'line', data: { labels: hist.map(x => { const parts = x.id.split('-'); return `${parts[2]}/${parts[1]}`; }), datasets: [{ label: 'Peso (kg)', data: hist.map(x => x.w), borderColor: '#2563eb', backgroundColor: grad, fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: 'white', pointBorderWidth: 2, pointHoverRadius: 7 }] },
+                type: 'line', data: { labels: histW.map(x => { const parts = x.id.split('-'); return `${parts[2]}/${parts[1]}`; }), datasets: [{ label: 'Peso (kg)', data: histW.map(x => x.w), borderColor: '#2563eb', backgroundColor: grad, fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: 'white', pointBorderWidth: 2, pointHoverRadius: 7 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', padding: 12, titleFont: { size: 14 }, bodyFont: { size: 15, weight: 'bold' } } }, interaction: { mode: 'index', intersect: false }, scales: { y: { min: Math.floor(minW - 2), max: Math.ceil(maxW + 2) } } }
             });
+
+            // Gráfica de Cintura (Si hay datos)
+            if(window.Stats.chartWaistFull) window.Stats.chartWaistFull.destroy();
+            if(histWaist.length > 0) {
+                const canvasWaistCtx = document.getElementById('chart-waist-full').getContext('2d');
+                let gradWaist = canvasWaistCtx.createLinearGradient(0, 0, 0, 300);
+                gradWaist.addColorStop(0, 'rgba(139, 92, 246, 0.3)'); gradWaist.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+                
+                let maxWaist = histWaist[0].waist, minWaist = histWaist[0].waist; histWaist.forEach(x => { if(x.waist > maxWaist) maxWaist = x.waist; if(x.waist < minWaist) minWaist = x.waist; });
+
+                window.Stats.chartWaistFull = new Chart(canvasWaistCtx, {
+                    type: 'line', data: { labels: histWaist.map(x => { const parts = x.id.split('-'); return `${parts[2]}/${parts[1]}`; }), datasets: [{ label: 'Cintura (cm)', data: histWaist.map(x => x.waist), borderColor: '#8b5cf6', backgroundColor: gradWaist, fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: 'white', pointBorderWidth: 2, pointHoverRadius: 7 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', padding: 12, titleFont: { size: 14 }, bodyFont: { size: 15, weight: 'bold' } } }, interaction: { mode: 'index', intersect: false }, scales: { y: { min: Math.floor(minWaist - 2), max: Math.ceil(maxWaist + 2) } } }
+                });
+            }
 
             window.UI.open('m-weight-full');
         } catch(e) { console.error(e); }
