@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BodyMetrics Visual Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .drag-over {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+        }
+        
+        /* Contenedor centralizado para la silueta */
+        .body-visualizer-container {
+            position: relative;
+            width: clamp(140px, 38vw, 260px); 
+            margin: 0 auto;
+        }
+
+        .body-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* VIÑETAS ELÁSTICAS */
+        .measure-tag {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: clamp(2px, 0.8vw, 6px) clamp(4px, 1.5vw, 10px);
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transform: translateY(-50%); 
+            transition: all 0.2s ease;
+            z-index: 30;
+            width: max-content;
+            min-width: 0; 
+        }
+        
+        .measure-tag:hover {
+            background: #eff6ff;
+            transform: translateY(-50%) scale(1.05);
+            border-color: #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            z-index: 40;
+        }
+
+        .measure-name {
+            display: block;
+            font-size: clamp(0.35rem, 1.2vw, 0.6rem); 
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            line-height: 1.1;
+            margin-bottom: 0px;
+        }
+
+        .measure-val {
+            display: block;
+            font-size: clamp(0.65rem, 2.5vw, 1.1rem);
+            font-weight: 900;
+            line-height: 1;
+            margin-top: 1px;
+        }
+
+        .measure-unit {
+            font-size: clamp(0.4rem, 1.5vw, 0.65rem);
+            font-weight: 600;
+            margin-left: 1px;
+            opacity: 0.7;
+        }
+
+        .tag-right { left: 100%; margin-left: clamp(2px, 1vw, 8px); } 
+        .tag-left { right: 100%; margin-right: clamp(2px, 1vw, 8px); } 
+
+        .param-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            align-items: center;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+        }
+        .param-row:last-child { border-bottom: none; }
+        .param-row:hover { background-color: #f8fafc; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-2 sm:p-4 md:p-6 overflow-x-hidden">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">BodyMetrics NutrIA</h1>
+                <p class="text-slate-500 mt-1 text-sm" id="dbStatus">Conectando...</p>
+            </div>
+            
+            <div class="flex items-center gap-4 flex-wrap justify-center">
+                <div class="flex items-center gap-2">
+                    <label for="dateSelector" class="text-xs text-slate-500 font-medium hidden sm:block">Fecha:</label>
+                    <input type="date" id="dateSelector" class="bg-slate-100 border border-slate-200 text-slate-800 text-sm rounded-xl px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold outline-none h-[42px] cursor-pointer">
+                </div>
+                <button onclick="window.location.href='index.html'" class="px-3 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-200 transition-colors">
+    ← Volver a Nutr-IA
+</button>
+
+                <button id="btnShowChart" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow transition-colors flex items-center gap-1.5 h-[42px]">
+                    📈 Evolución
+                </button>
+
+                <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200 h-[42px]">
+                    <button id="btnMale" class="px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 bg-blue-500 text-white shadow h-full">Masculino</button>
+                    <button id="btnFemale" class="px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 text-slate-500 hover:bg-slate-200 h-full">Femenino</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[340px,1fr] gap-6 mb-6">
+            
+            <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                <h3 class="font-bold text-lg text-slate-900 mb-2 border-b pb-2">Análisis Corporal</h3>
+               <div class="text-[10px] text-slate-400 mb-3 flex gap-3">
+    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Medido hoy</span>
+    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-600"></span> No actualizado</span>
+</div>
+                
+                <div class="space-y-2 text-sm">
+                    <div class="param-row" data-key="Peso" data-label="Peso"><span class="text-slate-600 font-medium">Peso:</span> <div class="text-left"><span id="val-Peso" class="font-bold text-lg">-</span><span class="text-xs ml-1">kg</span></div></div>
+                    <div class="param-row" data-key="IMC" data-label="IMC"><span class="text-slate-600 font-medium">IMC:</span> <div class="text-left"><span id="val-IMC" class="font-bold">-</span></div></div>
+                    <div class="param-row" data-key="Grasa Corporal (%)" data-label="Grasa Corporal"><span class="text-slate-600 font-medium">Grasa Corporal:</span> <div class="text-left"><span id="val-Grasa" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                    <div class="param-row" data-key="Masa Muscular (kg)" data-label="Masa Muscular"><span class="text-slate-600 font-medium">Masa Muscular:</span> <div class="text-left"><span id="val-MasaMuscular" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
+                    <div class="param-row" data-key="Músculo Esquelético (%)" data-label="Músculo Esquelético"><span class="text-slate-600 font-medium">Músculo Esquelético:</span> <div class="text-left"><span id="val-MusculoEsq" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                    <div class="param-row" data-key="Peso Corporal sin Grasa (kg)" data-label="Peso sin Grasa"><span class="text-slate-600 font-medium">Peso sin Grasa:</span> <div class="text-left"><span id="val-PesoSinGrasa" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
+                    <div class="param-row" data-key="Grasa Subcutánea (%)" data-label="Grasa Subcutánea"><span class="text-slate-600 font-medium">Grasa Subcutánea:</span> <div class="text-left"><span id="val-GrasaSub" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                    <div class="param-row" data-key="Grasa Visceral" data-label="Grasa Visceral"><span class="text-slate-600 font-medium">Grasa Visceral:</span> <div class="text-left"><span id="val-GrasaVisc" class="font-bold">-</span></div></div>
+                    <div class="param-row" data-key="Agua Corporal (%)" data-label="Agua Corporal"><span class="text-slate-600 font-medium">Agua Corporal:</span> <div class="text-left"><span id="val-Agua" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                    <div class="param-row" data-key="Masa Ósea (kg)" data-label="Masa Ósea"><span class="text-slate-600 font-medium">Masa Ósea:</span> <div class="text-left"><span id="val-MasaOsea" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
+                    <div class="param-row" data-key="Proteína (%)" data-label="Proteína"><span class="text-slate-600 font-medium">Proteína:</span> <div class="text-left"><span id="val-Proteina" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                    <div class="param-row" data-key="Tasa Metabólica Basal (kcal)" data-label="Tasa Metabólica (TMB)"><span class="text-slate-600 font-medium">TMB:</span> <div class="text-left"><span id="val-TMB" class="font-bold">-</span><span class="text-xs ml-1">kcal</span></div></div>
+                    <div class="param-row" data-key="Edad Metabólica" data-label="Edad Metabólica"><span class="text-slate-600 font-medium">Edad Metabólica:</span> <div class="text-left"><span id="val-EdadMet" class="font-bold">-</span></div></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-2 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center overflow-visible min-h-[450px]">
+                <div class="body-visualizer-container" id="visualizerContainer">
+                    <img id="bodyImage" src="HOMBREMEDIDAS.PNG" alt="Silueta Corporal" class="body-image">
+                    <svg id="svgLines" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
+                    <div id="measuresOverlay" class="absolute inset-0 w-full h-full z-30"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <div id="dropZone" class="bg-white p-5 rounded-2xl shadow-sm border-2 border-dashed border-slate-300 hover:border-blue-500 transition-colors flex flex-col justify-center items-center text-center cursor-pointer relative h-32 max-w-md mx-auto">
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <h3 class="text-md font-bold mb-1 text-slate-800">📂 Cargar Archivo CSV</h3>
+                <p class="text-xs text-slate-500">Arrastra exportación de Renpho aquí</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="measureModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden flex justify-center items-center z-50 p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full" id="modalContent">
+            <h3 class="text-2xl font-bold text-slate-900 mb-1" id="modalTitle">Zona Corporal</h3>
+            <p class="text-sm text-slate-500 mb-4" id="modalSubtitle">Fecha</p>
+            
+            <div class="relative mb-6">
+<input type="number" id="measureValue" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-medium text-center">            </div>
+
+            <div class="flex space-x-2">
+                <button id="btnModalDelete" class="flex-1 px-3 py-3 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-colors text-sm">Borrar Dato</button>
+                <button id="btnModalCancel" class="flex-1 px-3 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors text-sm">Cancelar</button>
+                <button id="btnModalSave" class="flex-1 px-3 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors text-sm">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chartModal" class="fixed inset-0 bg-slate-900 bg-opacity-80 hidden flex justify-center items-center z-50 p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-slate-800">Evolución Histórica</h3>
+                <button id="btnCloseChart" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <label class="text-sm font-bold text-slate-600 mr-2">Selecciona Métrica a graficar:</label>
+                <select id="chartMetricSelector" class="bg-slate-50 border border-slate-200 text-slate-800 text-md rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 font-bold outline-none cursor-pointer">
+                    </select>
+            </div>
+
+            <div class="flex-1 relative w-full h-full bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <canvas id="evolutionCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"; // <-- Importación añadida
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
+            authDomain: "nutricion-f6e70.firebaseapp.com",
+            projectId: "nutricion-f6e70",
+            storageBucket: "nutricion-f6e70.firebasestorage.app",
+            messagingSenderId: "926932712073",
+            appId: "1:926932712073:web:d660418820d91ec4ec6458"
+        };
+
+       const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app); // <-- Inicializamos Auth
+
+        let USER_ID = null; 
+        let DOC_REF = null;
+        const dbStatus = document.getElementById('dbStatus');
+        const dateSelector = document.getElementById('dateSelector');
+        const measuresOverlay = document.getElementById('measuresOverlay');
+        const svgLines = document.getElementById('svgLines');
+        const bodyImage = document.getElementById('bodyImage');
+
+        let isMale = true; 
+        let trackingData = [];
+        let activeEditKey = null;
+
+        const bodyMeasuresDefMale = [
+            { key: 'Cuello', label: 'Cuello', align: 'left', row: 10, targetX: 47, targetY: 17 }, 
+            { key: 'Pecho / Pectoral', label: 'Pecho', align: 'left', row: 24, targetX: 36, targetY: 25 },
+            { key: 'Brazo Derecho', label: 'Bíceps Der', align: 'left', row: 38, targetX: 27, targetY: 29 }, 
+            { key: 'Abdomen (Ombligo)', label: 'Abdomen', align: 'left', row: 52, targetX: 38, targetY: 41 }, 
+            { key: 'Muslo Derecho', label: 'Muslo Der', align: 'left', row: 66, targetX: 37, targetY: 62 }, 
+            { key: 'Gemelo Derecho', label: 'Gemelo Der', align: 'left', row: 80, targetX: 38, targetY: 74 }, 
+            
+            { key: 'Hombro', label: 'Hombros', align: 'right', row: 10, targetX: 62, targetY: 20 },
+            { key: 'Brazo Izquierdo', label: 'Bíceps Izq', align: 'right', row: 24, targetX: 74, targetY: 27 }, 
+            { key: 'Cintura', label: 'Cintura', align: 'right', row: 38, targetX: 61, targetY: 36 }, 
+            { key: 'Cadera', label: 'Cadera', align: 'right', row: 52, targetX: 61, targetY: 47 }, 
+            { key: 'Muslo Izquierdo', label: 'Muslo Izq', align: 'right', row: 66, targetX: 63, targetY: 62 }, 
+            { key: 'Gemelo Izquierdo', label: 'Gemelo Izq', align: 'right', row: 80, targetX: 62, targetY: 74 } 
+        ];
+
+        const bodyMeasuresDefFemale = [
+            { key: 'Cuello', label: 'Cuello', align: 'left', row: 10, targetX: 47, targetY: 17 }, 
+            { key: 'Pecho / Pectoral', label: 'Pecho', align: 'left', row: 24, targetX: 36, targetY: 25 },
+            { key: 'Brazo Derecho', label: 'Bíceps Der', align: 'left', row: 38, targetX: 27, targetY: 29 }, 
+            { key: 'Abdomen (Ombligo)', label: 'Abdomen', align: 'left', row: 52, targetX: 38, targetY: 41 }, 
+            { key: 'Muslo Derecho', label: 'Muslo Der', align: 'left', row: 66, targetX: 37, targetY: 62 }, 
+            { key: 'Gemelo Derecho', label: 'Gemelo Der', align: 'left', row: 80, targetX: 38, targetY: 74 }, 
+            
+            { key: 'Hombro', label: 'Hombros', align: 'right', row: 10, targetX: 62, targetY: 20 },
+            { key: 'Brazo Izquierdo', label: 'Bíceps Izq', align: 'right', row: 24, targetX: 74, targetY: 27 }, 
+            { key: 'Cintura', label: 'Cintura', align: 'right', row: 38, targetX: 61, targetY: 36 }, 
+            { key: 'Cadera', label: 'Cadera', align: 'right', row: 52, targetX: 61, targetY: 47 }, 
+            { key: 'Muslo Izquierdo', label: 'Muslo Izq', align: 'right', row: 66, targetX: 63, targetY: 62 }, 
+            { key: 'Gemelo Izquierdo', label: 'Gemelo Izq', align: 'right', row: 80, targetX: 62, targetY: 74 } 
+        ];
+
+        // Función auxiliar para obtener la fecha de hoy en formato YYYY-MM-DD
+        function getTodayStr() { 
+            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+            return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+        }
+
+        async function init() {
+            setGenderUI(true); 
+            dateSelector.value = getTodayStr(); // Por defecto mostramos hoy
+            await loadFromFirebase();
+            attachEditablePanelListeners();
+        }
+
+        async function loadFromFirebase() {
+            dbStatus.textContent = "⏳ Cargando...";
+            try {
+                const docSnap = await getDoc(DOC_REF);
+                if (docSnap.exists() && docSnap.data().registros) {
+                    // Ordenamos de más nuevo a más antiguo
+                    trackingData = docSnap.data().registros.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    dbStatus.textContent = "🟢 Sincronizado";
+                } else {
+                    dbStatus.textContent = "🟡 Sin datos";
+                }
+                updateVisuals();
+            } catch (error) {
+                dbStatus.textContent = "🔴 Error Red";
+                updateVisuals();
+            }
+        }
+
+        async function saveToFirebase() {
+            dbStatus.textContent = "⏳ Guardando...";
+            try {
+                // Ordenar antes de guardar por seguridad
+                trackingData.sort((a, b) => new Date(b.date) - new Date(a.date));
+                await setDoc(DOC_REF, { registros: trackingData, ultima_actualizacion: new Date() }, { merge: true });
+                dbStatus.textContent = "🟢 Guardado";
+            } catch (error) {
+                dbStatus.textContent = "🔴 Error Guardar";
+            }
+        }
+
+        dateSelector.addEventListener('change', updateVisuals);
+
+        // ==========================================
+        // LÓGICA DE HERENCIA DE DATOS (VIAJE EN EL TIEMPO)
+        // ==========================================
+        function getMetricForDate(key, targetDate) {
+            // Recorremos los datos (están ordenados de más nuevo a más viejo)
+            for (let entry of trackingData) {
+                // Buscamos la primera entrada que sea igual o anterior a la fecha objetivo
+                // Y que además contenga un valor válido para la clave buscada
+                if (entry.date <= targetDate && entry[key] !== undefined && entry[key] !== null && entry[key] !== 0) {
+                    return { 
+                        value: entry[key], 
+                        isInherited: entry.date !== targetDate, // Si la fecha es distinta, es heredado
+                        sourceDate: entry.date
+                    };
+                }
+            }
+            return { value: null, isInherited: false, sourceDate: null };
+        }
+
+        function updateVisuals() {
+            measuresOverlay.innerHTML = ''; 
+            let linesHTML = '';
+            const selectedDate = dateSelector.value || getTodayStr();
+
+            // 1. Rellenar Panel de Análisis
+           const setParam = (id, key) => {
+    const el = document.getElementById(id);
+    const result = getMetricForDate(key, selectedDate);
+    
+    if(result.value !== null) {
+        el.textContent = parseFloat(result.value.toFixed(2));
+        // 🔴 CAMBIO: Ahora usa text-red-600 para datos heredados
+        el.className = `font-bold text-lg ${result.isInherited ? 'text-red-600' : 'text-blue-600'}`;
+        el.title = result.isInherited ? `Última medida: ${result.sourceDate}` : 'Medido este día';
+    } else {
+        el.textContent = '-';
+        el.className = 'font-bold text-lg text-slate-300';
+    }
+};
+
+            setParam('val-Peso', 'Peso');
+            setParam('val-IMC', 'IMC');
+            setParam('val-Grasa', 'Grasa Corporal (%)');
+            setParam('val-MasaMuscular', 'Masa Muscular (kg)');
+            setParam('val-MusculoEsq', 'Músculo Esquelético (%)');
+            setParam('val-PesoSinGrasa', 'Peso Corporal sin Grasa (kg)');
+            setParam('val-GrasaSub', 'Grasa Subcutánea (%)');
+            setParam('val-GrasaVisc', 'Grasa Visceral');
+            setParam('val-Agua', 'Agua Corporal (%)');
+            setParam('val-MasaOsea', 'Masa Ósea (kg)');
+            setParam('val-Proteina', 'Proteína (%)');
+            setParam('val-TMB', 'Tasa Metabólica Basal (kcal)');
+            setParam('val-EdadMet', 'Edad Metabólica');
+
+            // 2. Dibujar Viñetas
+            const activeMeasuresDef = isMale ? bodyMeasuresDefMale : bodyMeasuresDefFemale;
+
+           activeMeasuresDef.forEach(def => {
+    const result = getMetricForDate(def.key, selectedDate);
+    
+    const tag = document.createElement('div');
+    tag.className = `measure-tag ${def.align === 'right' ? 'tag-right' : 'tag-left'}`;
+    tag.style.top = def.row + '%';
+    
+    const displayValue = result.value !== null ? parseFloat(result.value.toFixed(2)) : '--';
+    
+    // 🔴 CAMBIO: El texto de la viñeta ahora es rojo si no está actualizado
+    const colorClass = result.value !== null ? (result.isInherited ? 'text-red-600' : 'text-blue-600') : 'text-slate-400';
+    
+    tag.innerHTML = `
+        <span class="measure-name">${def.label}</span>
+        <span class="measure-val ${colorClass}" title="${result.isInherited ? 'No actualizado desde el ' + result.sourceDate : 'Medido este día'}">${displayValue}<span class="measure-unit">cm</span></span>
+    `;
+
+    tag.addEventListener('click', () => openEditModal(def.key, def.label, result.value, selectedDate));
+    measuresOverlay.appendChild(tag);
+
+    const startX = def.align === 'left' ? '0%' : '100%';
+    linesHTML += `<line x1="${startX}" y1="${def.row}%" x2="${def.targetX}%" y2="${def.targetY}%" stroke="#94a3b8" stroke-width="2" />`;
+    
+    // 🔴 CAMBIO: El punto anatómico se vuelve rojo si el dato es heredado
+    const dotColor = result.value !== null && result.isInherited ? '#dc2626' : (isMale ? '#3b82f6' : '#ec4899');
+    linesHTML += `<circle cx="${def.targetX}%" cy="${def.targetY}%" r="3.5" fill="${dotColor}" stroke="#ffffff" stroke-width="1.5" />`;
+});
+
+            svgLines.innerHTML = linesHTML;
+        }
+
+        function attachEditablePanelListeners() {
+            document.querySelectorAll('.param-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const key = row.getAttribute('data-key');
+                    const label = row.getAttribute('data-label');
+                    const selectedDate = dateSelector.value || getTodayStr();
+                    const result = getMetricForDate(key, selectedDate);
+                    // Le pasamos el result.value solo para que lo vea en el input, pero guardará sobre selectedDate
+                    openEditModal(key, label, result.value, selectedDate);
+                });
+            });
+        }
+
+        // ==========================================
+        // UI HOMBRES Y MUJERES
+        // ==========================================
+        const btnFemale = document.getElementById('btnFemale');
+        const btnMale = document.getElementById('btnMale');
+
+        function setGenderUI(male) {
+            isMale = male;
+            if (isMale) {
+                bodyImage.src = 'HOMBREMEDIDAS.PNG'; 
+                btnMale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all bg-blue-500 text-white shadow h-full';
+                btnFemale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-slate-200 h-full';
+            } else {
+                bodyImage.src = 'MUJERMEDIDAS.PNG'; 
+                btnFemale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all bg-pink-500 text-white shadow h-full';
+                btnMale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-slate-200 h-full';
+            }
+            updateVisuals(); 
+        }
+
+        btnFemale.addEventListener('click', () => setGenderUI(false));
+        btnMale.addEventListener('click', () => setGenderUI(true));
+
+        // ==========================================
+        // MODAL DE EDICIÓN
+        // ==========================================
+        const modal = document.getElementById('measureModal');
+        const modalValueInput = document.getElementById('measureValue');
+        let targetSaveDate = null; // Guardamos en qué fecha se va a inyectar el dato
+
+        function openEditModal(key, label, currentValue, targetDate) {
+            activeEditKey = key;
+            targetSaveDate = targetDate;
+            document.getElementById('modalTitle').textContent = label;
+            document.getElementById('modalSubtitle').textContent = `Inyectar dato en el día: ${targetDate}`;
+            
+            // Si el valor actual existía, lo ponemos en el input para que sea más fácil modificarlo
+            modalValueInput.value = (currentValue !== null && currentValue > 0) ? currentValue : '';
+            modal.classList.remove('hidden');
+            modalValueInput.focus();
+        }
+
+        document.getElementById('btnModalCancel').addEventListener('click', () => modal.classList.add('hidden'));
+
+        document.getElementById('btnModalSave').addEventListener('click', () => {
+            const val = parseFloat(modalValueInput.value);
+            if (activeEditKey && targetSaveDate) {
+                // Buscamos si existe ya un registro completo en ese día exacto
+                let record = trackingData.find(d => d.date === targetSaveDate);
+                if(!record) {
+                    record = { date: targetSaveDate };
+                    trackingData.push(record);
+                }
+                
+                // Si el usuario deja el input vacío o mete 0, en lugar de guardar 0 borramos el dato de ESE DÍA.
+                // Esto hará que el sistema automáticamente herede el dato del día anterior al repintar.
+                if (isNaN(val) || val <= 0) {
+                    delete record[activeEditKey];
+                } else {
+                    record[activeEditKey] = val;
+                }
+                
+                updateVisuals();
+                saveToFirebase();
+            }
+            modal.classList.add('hidden');
+        });
+
+        document.getElementById('btnModalDelete').addEventListener('click', () => {
+            modalValueInput.value = '';
+            document.getElementById('btnModalSave').click(); 
+        });
+
+        function addOrUpdateRecord(dateStr, dataObj) {
+            let record = trackingData.find(d => d.date === dateStr);
+            if (!record) { record = { date: dateStr }; trackingData.push(record); }
+            Object.keys(dataObj).forEach(key => {
+                const val = parseFloat(dataObj[key]);
+                if(!isNaN(val)) record[key] = val;
+            });
+            // Re-ordenamos al inyectar nuevos
+            trackingData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        // ==========================================
+        // CARGA DE CSV
+        // ==========================================
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        ['dragenter', 'dragover'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('drag-over'); }));
+        ['dragleave', 'drop'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('drag-over'); }));
+
+        fileInput.addEventListener('change', function(e) { handleFile(e.target.files[0]); this.value = ''; });
+        dropZone.addEventListener('drop', function(e) { handleFile(e.dataTransfer.files[0]); });
+
+        function handleFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            const fallbackDate = getTodayStr();
+
+            if (file.name.endsWith('.json')) {
+                reader.onload = e => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        const measures = Array.isArray(data) ? data[0] : data; 
+                        addOrUpdateRecord(measures.date || fallbackDate, measures);
+                        saveToFirebase();
+                        updateVisuals();
+                        alert("✅ JSON cargado.");
+                    } catch(err) { alert("Error: " + err.message); }
+                };
+                reader.readAsText(file);
+            } else {
+                reader.onload = e => {
+                    try {
+                        const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                        const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                        if (!rawData || rawData.length === 0) throw new Error("Archivo vacío.");
+
+                        const headerStr = rawData[0] ? rawData[0].join(' ').toLowerCase() : '';
+                        const isPesoFile = headerStr.includes('peso') && headerStr.includes('imc');
+
+                        if (!isPesoFile) {
+                            rawData.forEach(row => {
+                                if (row.length < 2) return;
+                                let rowDataObj = {};
+                                let fileDate = fallbackDate;
+                                let dateStr = String(row[0]).trim();
+                                let dateMatch = dateStr.match(/^(\d{4})[-.](\d{2})[-.](\d{2})/);
+                                if(dateMatch) fileDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+
+                                row.forEach(cell => {
+                                    if (typeof cell === 'string' && cell.includes(':')) {
+                                        const parts = cell.split(':');
+                                        if(parts.length < 2) return;
+                                        const key = parts[0].trim().toLowerCase();
+                                        const val = parseFloat(parts[1]);
+                                        if (!isNaN(val)) {
+                                            if (key.includes('cuello') || key.includes('neck')) rowDataObj['Cuello'] = val;
+                                            else if (key.includes('hombro') || key.includes('shoulder')) rowDataObj['Hombro'] = val;
+                                            else if (key.includes('pecho') || key.includes('chest')) rowDataObj['Pecho / Pectoral'] = val;
+                                            else if (key.includes('cintura') || key.includes('waist')) rowDataObj['Cintura'] = val;
+                                            else if (key.includes('abdomen')) rowDataObj['Abdomen (Ombligo)'] = val;
+                                            else if (key.includes('cadera') || key.includes('hip')) rowDataObj['Cadera'] = val;
+                                            else if (key.includes('muslo') || key.includes('thigh')) {
+                                                if(key.includes('l ') || key.includes('izq')) rowDataObj['Muslo Izquierdo'] = val;
+                                                else rowDataObj['Muslo Derecho'] = val;
+                                            }
+                                            else if (key.includes('pantorrilla') || key.includes('calf')) {
+                                                if(key.includes('l ') || key.includes('izq')) rowDataObj['Gemelo Izquierdo'] = val;
+                                                else rowDataObj['Gemelo Derecho'] = val;
+                                            }
+                                            else if (key.includes('bíceps') || key.includes('biceps') || key.includes('brazo')) {
+                                                if(key.includes('l ') || key.includes('izq')) rowDataObj['Brazo Izquierdo'] = val;
+                                                else rowDataObj['Brazo Derecho'] = val;
+                                            }
+                                        }
+                                    }
+                                });
+                                if(Object.keys(rowDataObj).length > 0) addOrUpdateRecord(fileDate, rowDataObj);
+                            });
+                        } else {
+                            const keys = rawData[0]; 
+                            const dataRows = rawData.slice(1).filter(row => row.length > 0);
+                            dataRows.forEach(row => {
+                                let rowDataObj = {};
+                                let fileDate = fallbackDate;
+                                row.forEach((val, i) => {
+                                    if(!keys[i]) return;
+                                    const k = String(keys[i]).toLowerCase();
+                                    if (k.includes('fecha') || k.includes('date') || k.includes('time')) {
+                                        let dateStr = String(val).trim();
+                                        let dateMatch = dateStr.match(/^(\d{4})[-.](\d{2})[-.](\d{2})/);
+                                        if(dateMatch) fileDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+                                    }
+                                });
+                                row.forEach((val, i) => {
+                                    if(!keys[i]) return;
+                                    const k = String(keys[i]).trim().toLowerCase();
+                                    let strVal = String(val).replace(',', '.');
+                                    const numericVal = parseFloat(strVal);
+                                    if(isNaN(numericVal)) return;
+
+                                    if (k === 'peso(kg)' || k === 'weight(kg)' || (k.includes('peso') && !k.includes('sin grasa') && !k.includes('óptimo'))) rowDataObj['Peso'] = numericVal;
+                                    else if (k.includes('imc') || k.includes('bmi')) rowDataObj['IMC'] = numericVal;
+                                    else if (k.includes('grasa corporal')) rowDataObj['Grasa Corporal (%)'] = numericVal;
+                                    else if (k.includes('músculo esquelético')) rowDataObj['Músculo Esquelético (%)'] = numericVal;
+                                    else if (k.includes('peso corporal sin grasa')) rowDataObj['Peso Corporal sin Grasa (kg)'] = numericVal;
+                                    else if (k.includes('grasa subcutánea')) rowDataObj['Grasa Subcutánea (%)'] = numericVal;
+                                    else if (k.includes('grasa visceral')) rowDataObj['Grasa Visceral'] = numericVal;
+                                    else if (k.includes('agua corporal')) rowDataObj['Agua Corporal (%)'] = numericVal;
+                                    else if (k.includes('masa muscular')) rowDataObj['Masa Muscular (kg)'] = numericVal;
+                                    else if (k.includes('masa ósea') || k.includes('bone mass')) rowDataObj['Masa Ósea (kg)'] = numericVal;
+                                    else if (k.includes('proteína') || k.includes('protein')) rowDataObj['Proteína (%)'] = numericVal;
+                                    else if (k.includes('metabólica basal') || k.includes('bmr') || k.includes('tasa metabólica')) rowDataObj['Tasa Metabólica Basal (kcal)'] = numericVal;
+                                    else if (k.includes('edad metabólica')) rowDataObj['Edad Metabólica'] = numericVal;
+                                });
+                                if(Object.keys(rowDataObj).length > 0) addOrUpdateRecord(fileDate, rowDataObj);
+                            });
+                        }
+                        saveToFirebase();
+                        updateVisuals();
+                        alert("✅ Archivo cargado correctamente.");
+                    } catch(err) { alert("Error: " + err.message); }
+                };
+                reader.readAsBinaryString(file);
+            }
+        }
+
+        // ==========================================
+        // MOTOR DE GRÁFICAS (CHART.JS)
+        // ==========================================
+        const chartModal = document.getElementById('chartModal');
+        const btnShowChart = document.getElementById('btnShowChart');
+        const btnCloseChart = document.getElementById('btnCloseChart');
+        const chartMetricSelector = document.getElementById('chartMetricSelector');
+        let evolutionChart = null;
+
+        // Lista de todas las métricas posibles
+        const allMetrics = [
+            'Peso', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'IMC', 'Músculo Esquelético (%)', 
+            'Agua Corporal (%)', 'Grasa Visceral', 'Tasa Metabólica Basal (kcal)',
+            'Cuello', 'Pecho / Pectoral', 'Brazo Izquierdo', 'Brazo Derecho', 'Cintura', 'Abdomen (Ombligo)', 
+            'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'
+        ];
+
+        // Llenar el desplegable de métricas de la gráfica
+        allMetrics.forEach(metric => {
+            const option = document.createElement('option');
+            option.value = metric;
+            option.text = metric;
+            chartMetricSelector.add(option);
+        });
+
+        btnShowChart.addEventListener('click', () => {
+            chartModal.classList.remove('hidden');
+            renderChart(chartMetricSelector.value);
+        });
+
+        btnCloseChart.addEventListener('click', () => {
+            chartModal.classList.add('hidden');
+        });
+
+        chartMetricSelector.addEventListener('change', (e) => {
+            renderChart(e.target.value);
+        });
+
+        function renderChart(metricKey) {
+            const ctx = document.getElementById('evolutionCanvas').getContext('2d');
+            
+            // Invertimos la tabla para que la gráfica vaya de pasado (izq) a presente (der)
+            const chronologicalData = [...trackingData].reverse();
+            
+            const labels = [];
+            const dataPoints = [];
+
+            chronologicalData.forEach(entry => {
+                // Solo pintamos los puntos donde realmente haya un registro guardado (no los heredados de días vacíos)
+                if (entry[metricKey] !== undefined && entry[metricKey] !== null && entry[metricKey] !== 0) {
+                    labels.push(entry.date);
+                    dataPoints.push(entry[metricKey]);
+                }
+            });
+
+            if (evolutionChart) {
+                evolutionChart.destroy();
+            }
+
+            evolutionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: metricKey,
+                        data: dataPoints,
+                        borderColor: '#4f46e5', // Indigo 600
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#4f46e5',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.3 // Hace la línea curva suave
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 16, weight: 'bold' },
+                            padding: 12,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: false,
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { weight: 'bold' }, color: '#64748b' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN Y VALIDACIÓN DE SESIÓN
+        // ==========================================
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Obtenemos el ID que usa Nutria en app.js o hacemos fallback al UID de Firebase
+                USER_ID = localStorage.getItem('nutria_saved_user') || user.uid;
+                DOC_REF = doc(db, "medidas_corporales", USER_ID);
+                
+                // Si el nodo no existe en Firebase, getDoc en loadFromFirebase no fallará, 
+                // simplemente devolverá que no existe y preparará un array vacío.
+                init();
+            } else {
+                // Protección: Si alguien entra directamente a MEDIDAS.html sin sesión
+                alert("🔒 Sesión no detectada. Redirigiendo a la aplicación principal...");
+                window.location.href = 'index.html';
+            }
+        });
+
+        // La función init() original se mantiene igual, se llamará automáticamente arriba
+    </script>
+</body>
+</html>
