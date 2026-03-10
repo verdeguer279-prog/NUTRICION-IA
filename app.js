@@ -522,8 +522,47 @@ window.Logic = {
     execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); },
     pdf: () => { const el = document.getElementById('feed'); if(!el || el.innerText.trim() === "") return alert("Vacío"); const opt = { margin: 10, filename: `Diario_${window.S.d.toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; html2pdf().set(opt).from(el).save(); },
     pdfHistory: async () => { if(!confirm("Generar historial completo?")) return; document.getElementById('loading-screen').style.display='flex'; try { const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__'))); let html = `<div style="padding:20px; font-family:sans-serif;"><h1>Historial - ${window.S.u.name}</h1><table style="width:100%; border-collapse:collapse; font-size:12px;"><tr style="background:#0f172a; color:white;"><th style="padding:8px">Fecha</th><th>Kcal</th><th>P</th><th>C</th><th>G</th><th>Peso</th><th>Cintura</th></tr>`; q.forEach(doc => { const d = doc.data(); let tk=0, tp=0, tc=0, tf=0; MEALS.forEach(m => { if(d[m.k]) d[m.k].forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; }); }); if(tk>0) html += `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${doc.id}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tk)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tp)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tc)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tf)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${d.weight||'-'}</td><td style="text-align:center;border-bottom:1px solid #ddd">${d.waist||'-'}</td></tr>`; }); html += `</table></div>`; const tempDiv = document.createElement('div'); tempDiv.innerHTML = html; document.body.appendChild(tempDiv); await html2pdf().set({ margin: 10, filename: `Historial_${window.S.u.name}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(tempDiv).save(); document.body.removeChild(tempDiv); } catch(e) { alert("Error: " + e.message); } document.getElementById('loading-screen').style.display='none'; },
-    exportJSON: async () => { document.getElementById('loading-screen').style.display='flex'; try { const q = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/diario`)); let history = {}; q.forEach(doc => { history[doc.id] = doc.data(); }); const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ user: window.S.u, history: history })); const a = document.createElement('a'); a.href = dataStr; a.download = `Backup_${window.S.u.name}.json`; document.body.appendChild(a); a.click(); a.remove(); } catch(e) { alert("Error: " + e.message); } document.getElementById('loading-screen').style.display='none'; },
-    importJSON: (input) => { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const json = JSON.parse(e.target.result); document.getElementById('loading-screen').style.display='flex'; if(json.history && confirm("Restaurar Historial Completo?")) { const batch = fire.writeBatch(db); Object.entries(json.history).forEach(([d, v]) => batch.set(fire.doc(db, `usuarios/${window.S.uid}/diario`, d), v)); await batch.commit(); alert("Historial Restaurado"); window.Sys.sync(); } else if (!json.history) { await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, window.S.d.toISOString().split('T')[0]), json); alert("Día Importado"); window.Sys.sync(); } } catch(e) { alert("Error JSON: " + e.message); } document.getElementById('loading-screen').style.display='none'; }; reader.readAsText(file); },
+    exportJSON: async () => { 
+        document.getElementById('loading-screen').style.display='flex'; 
+        try { 
+            const q = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/diario`)); 
+            let history = {}; 
+            q.forEach(doc => { history[doc.id] = doc.data(); }); 
+            const medidasRef = fire.doc(db, "medidas_corporales", window.S.uid);
+            const medidasSnap = await fire.getDoc(medidasRef);
+            let medidasHistory = [];
+            if (medidasSnap.exists() && medidasSnap.data().registros) { medidasHistory = medidasSnap.data().registros; }
+            const exportData = { user: window.S.u, history: history, medidas: medidasHistory };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2)); 
+            const a = document.createElement('a'); a.href = dataStr; a.download = `Backup_Completo_${window.S.u.name}.json`; 
+            document.body.appendChild(a); a.click(); a.remove(); 
+        } catch(e) { alert("Error: " + e.message); } 
+        document.getElementById('loading-screen').style.display='none'; 
+    },
+    importJSON: (input) => { 
+        const file = input.files[0]; if(!file) return; 
+        const reader = new FileReader(); 
+        reader.onload = async (e) => { 
+            try { 
+                const json = JSON.parse(e.target.result); 
+                document.getElementById('loading-screen').style.display='flex'; 
+                if(json.history && confirm("¿Restaurar Historial Completo (Comidas y Medidas)?")) { 
+                    const batch = fire.writeBatch(db); 
+                    Object.entries(json.history).forEach(([d, v]) => batch.set(fire.doc(db, `usuarios/${window.S.uid}/diario`, d), v)); 
+                    if (json.medidas && json.medidas.length > 0) {
+                        const medidasRef = fire.doc(db, "medidas_corporales", window.S.uid);
+                        batch.set(medidasRef, { registros: json.medidas, ultima_actualizacion: new Date() }, { merge: true });
+                    }
+                    await batch.commit(); alert("✅ Historial restaurado"); window.Sys.sync(); 
+                } else if (!json.history) { 
+                    await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, window.S.d.toISOString().split('T')[0]), json); 
+                    alert("Día Importado"); window.Sys.sync(); 
+                } 
+            } catch(e) { alert("Error JSON: " + e.message); } 
+            document.getElementById('loading-screen').style.display='none'; 
+        }; 
+        reader.readAsText(file); 
+    },
     wipe: async () => { if(confirm("Borrar día?")) { await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, window.S.d.toISOString().split('T')[0]), {}); window.Sys.sync(); window.UI.closeAll(); }},
     execImport: async () => { const d = document.getElementById('imp-date').value, m = document.getElementById('imp-meal').value; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, d)); if(s.exists() && s.data()[m]) { window.S.day[m] = [...(window.S.day[m]||[]), ...s.data()[m]]; await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); } else alert("Sin datos"); }
 };
