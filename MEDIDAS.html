@@ -99,26 +99,40 @@
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-2 sm:p-4 md:p-6 overflow-x-hidden">
 
     <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">BodyMetrics NutrIA</h1>
-                <p class="text-slate-500 mt-1 text-sm" id="dbStatus">Conectando...</p>
+        <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+            
+            <div class="flex flex-col gap-2">
+                <div class="flex flex-wrap items-center gap-3">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">BodyMetrics NutrIA</h1>
+                    
+                    <button onclick="window.location.href='index.html'" class="px-3 py-1.5 rounded-lg text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200">
+                        Volver a Nutr-IA →
+                    </button>
+                    
+                    <button id="btnExportJSON" title="Exportar datos a JSON" class="w-9 h-9 flex items-center justify-center rounded-xl bg-amber-100 text-amber-500 hover:bg-amber-200 transition-colors border border-amber-200 text-lg shadow-sm">
+                        ⚡
+                    </button>
+                </div>
+                <p class="text-slate-500 text-sm font-bold" id="dbStatus">Conectando...</p>
             </div>
             
-            <div class="flex items-center gap-4 flex-wrap justify-center">
-                <div class="flex items-center gap-2">
-                    <label for="dateSelector" class="text-xs text-slate-500 font-medium hidden sm:block">Fecha:</label>
-                    <input type="date" id="dateSelector" class="bg-slate-100 border border-slate-200 text-slate-800 text-sm rounded-xl px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold outline-none h-[42px] cursor-pointer">
+            <div class="flex items-center gap-3 flex-wrap justify-start lg:justify-end w-full lg:w-auto">
+                
+                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button id="btnPrevDate" class="w-9 sm:w-10 h-10 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <input type="date" id="dateSelector" class="bg-transparent text-slate-800 text-xs sm:text-sm text-center font-bold outline-none cursor-pointer w-[115px] sm:w-[130px]">
+                    <button id="btnNextDate" class="w-9 sm:w-10 h-10 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
                 </div>
-                <button onclick="window.location.href='index.html'" class="px-3 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-200 transition-colors">
-    ← Volver a Nutr-IA
-</button>
 
-                <button id="btnShowChart" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow transition-colors flex items-center gap-1.5 h-[42px]">
+                <button id="btnShowChart" class="px-3 py-1.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow transition-colors flex items-center gap-1.5 h-12">
                     📈 Evolución
                 </button>
 
-                <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200 h-[42px]">
+                <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200 h-12">
                     <button id="btnMale" class="px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 bg-blue-500 text-white shadow h-full">Masculino</button>
                     <button id="btnFemale" class="px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 text-slate-500 hover:bg-slate-200 h-full">Femenino</button>
                 </div>
@@ -130,9 +144,9 @@
             <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
                 <h3 class="font-bold text-lg text-slate-900 mb-2 border-b pb-2">Análisis Corporal</h3>
                <div class="text-[10px] text-slate-400 mb-3 flex gap-3">
-    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Medido hoy</span>
-    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-600"></span> No actualizado</span>
-</div>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Medido hoy</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-600"></span> No actualizado</span>
+                </div>
                 
                 <div class="space-y-2 text-sm">
                     <div class="param-row" data-key="Peso" data-label="Peso"><span class="text-slate-600 font-medium">Peso:</span> <div class="text-left"><span id="val-Peso" class="font-bold text-lg">-</span><span class="text-xs ml-1">kg</span></div></div>
@@ -153,9 +167,13 @@
 
             <div class="bg-white p-2 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center overflow-visible min-h-[450px]">
                 <div class="body-visualizer-container" id="visualizerContainer">
-                    <img id="bodyImage" src="HOMBREMEDIDAS.PNG" alt="Silueta Corporal" class="body-image">
+                    <img id="bodyImage" src="HOMBREMEDIDAS.png" alt="Silueta Corporal" class="body-image">
                     <svg id="svgLines" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
                     <div id="measuresOverlay" class="absolute inset-0 w-full h-full z-30"></div>
+                    
+                    <div id="sampleBadge" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs sm:text-sm font-black px-4 py-1.5 rounded-full shadow-lg z-50 hidden pointer-events-none border-2 border-yellow-200 whitespace-nowrap">
+                        ⚠️ IMAGEN DE MUESTRA
+                    </div>
                 </div>
             </div>
         </div>
@@ -175,7 +193,8 @@
             <p class="text-sm text-slate-500 mb-4" id="modalSubtitle">Fecha</p>
             
             <div class="relative mb-6">
-<input type="number" id="measureValue" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-medium text-center">            </div>
+                <input type="number" id="measureValue" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-medium text-center">
+            </div>
 
             <div class="flex space-x-2">
                 <button id="btnModalDelete" class="flex-1 px-3 py-3 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-colors text-sm">Borrar Dato</button>
@@ -197,7 +216,7 @@
             <div class="mb-4">
                 <label class="text-sm font-bold text-slate-600 mr-2">Selecciona Métrica a graficar:</label>
                 <select id="chartMetricSelector" class="bg-slate-50 border border-slate-200 text-slate-800 text-md rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 font-bold outline-none cursor-pointer">
-                    </select>
+                </select>
             </div>
 
             <div class="flex-1 relative w-full h-full bg-slate-50 rounded-xl p-4 border border-slate-100">
@@ -208,8 +227,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"; // <-- Importación añadida
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
@@ -220,12 +239,13 @@
             appId: "1:926932712073:web:d660418820d91ec4ec6458"
         };
 
-       const app = initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app); // <-- Inicializamos Auth
+        const auth = getAuth(app);
 
         let USER_ID = null; 
         let DOC_REF = null;
+
         const dbStatus = document.getElementById('dbStatus');
         const dateSelector = document.getElementById('dateSelector');
         const measuresOverlay = document.getElementById('measuresOverlay');
@@ -233,6 +253,7 @@
         const bodyImage = document.getElementById('bodyImage');
 
         let isMale = true; 
+        let actualUserGenderIsMale = true; 
         let trackingData = [];
         let activeEditKey = null;
 
@@ -268,15 +289,14 @@
             { key: 'Gemelo Izquierdo', label: 'Gemelo Izq', align: 'right', row: 80, targetX: 62, targetY: 74 } 
         ];
 
-        // Función auxiliar para obtener la fecha de hoy en formato YYYY-MM-DD
         function getTodayStr() { 
             const tzoffset = (new Date()).getTimezoneOffset() * 60000;
             return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
         }
 
         async function init() {
-            setGenderUI(true); 
-            dateSelector.value = getTodayStr(); // Por defecto mostramos hoy
+            setGenderUI(isMale); 
+            dateSelector.value = getTodayStr(); 
             await loadFromFirebase();
             attachEditablePanelListeners();
         }
@@ -286,11 +306,10 @@
             try {
                 const docSnap = await getDoc(DOC_REF);
                 if (docSnap.exists() && docSnap.data().registros) {
-                    // Ordenamos de más nuevo a más antiguo
                     trackingData = docSnap.data().registros.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    dbStatus.textContent = "🟢 Sincronizado";
+                    dbStatus.textContent = "🟢 Sincronizado con " + USER_ID;
                 } else {
-                    dbStatus.textContent = "🟡 Sin datos";
+                    dbStatus.textContent = "🟡 Sin datos para " + USER_ID;
                 }
                 updateVisuals();
             } catch (error) {
@@ -302,10 +321,9 @@
         async function saveToFirebase() {
             dbStatus.textContent = "⏳ Guardando...";
             try {
-                // Ordenar antes de guardar por seguridad
                 trackingData.sort((a, b) => new Date(b.date) - new Date(a.date));
                 await setDoc(DOC_REF, { registros: trackingData, ultima_actualizacion: new Date() }, { merge: true });
-                dbStatus.textContent = "🟢 Guardado";
+                dbStatus.textContent = "🟢 Sincronizado con " + USER_ID;
             } catch (error) {
                 dbStatus.textContent = "🔴 Error Guardar";
             }
@@ -313,18 +331,16 @@
 
         dateSelector.addEventListener('change', updateVisuals);
 
-        // ==========================================
-        // LÓGICA DE HERENCIA DE DATOS (VIAJE EN EL TIEMPO)
-        // ==========================================
         function getMetricForDate(key, targetDate) {
-            // Recorremos los datos (están ordenados de más nuevo a más viejo)
+            if (isMale !== actualUserGenderIsMale) {
+                return { value: null, isInherited: false, sourceDate: null };
+            }
+
             for (let entry of trackingData) {
-                // Buscamos la primera entrada que sea igual o anterior a la fecha objetivo
-                // Y que además contenga un valor válido para la clave buscada
                 if (entry.date <= targetDate && entry[key] !== undefined && entry[key] !== null && entry[key] !== 0) {
                     return { 
                         value: entry[key], 
-                        isInherited: entry.date !== targetDate, // Si la fecha es distinta, es heredado
+                        isInherited: entry.date !== targetDate,
                         sourceDate: entry.date
                     };
                 }
@@ -337,21 +353,28 @@
             let linesHTML = '';
             const selectedDate = dateSelector.value || getTodayStr();
 
-            // 1. Rellenar Panel de Análisis
-           const setParam = (id, key) => {
-    const el = document.getElementById(id);
-    const result = getMetricForDate(key, selectedDate);
-    
-    if(result.value !== null) {
-        el.textContent = parseFloat(result.value.toFixed(2));
-        // 🔴 CAMBIO: Ahora usa text-red-600 para datos heredados
-        el.className = `font-bold text-lg ${result.isInherited ? 'text-red-600' : 'text-blue-600'}`;
-        el.title = result.isInherited ? `Última medida: ${result.sourceDate}` : 'Medido este día';
-    } else {
-        el.textContent = '-';
-        el.className = 'font-bold text-lg text-slate-300';
-    }
-};
+            const sampleBadge = document.getElementById('sampleBadge');
+            if (sampleBadge) {
+                if (isMale !== actualUserGenderIsMale) {
+                    sampleBadge.classList.remove('hidden');
+                } else {
+                    sampleBadge.classList.add('hidden');
+                }
+            }
+
+            const setParam = (id, key) => {
+                const el = document.getElementById(id);
+                const result = getMetricForDate(key, selectedDate);
+                
+                if(result.value !== null) {
+                    el.textContent = parseFloat(result.value.toFixed(2));
+                    el.className = `font-bold text-lg ${result.isInherited ? 'text-red-600' : 'text-blue-600'}`;
+                    el.title = result.isInherited ? `Última medida: ${result.sourceDate}` : 'Medido este día';
+                } else {
+                    el.textContent = '--';
+                    el.className = 'font-bold text-lg text-slate-300';
+                }
+            };
 
             setParam('val-Peso', 'Peso');
             setParam('val-IMC', 'IMC');
@@ -367,36 +390,36 @@
             setParam('val-TMB', 'Tasa Metabólica Basal (kcal)');
             setParam('val-EdadMet', 'Edad Metabólica');
 
-            // 2. Dibujar Viñetas
             const activeMeasuresDef = isMale ? bodyMeasuresDefMale : bodyMeasuresDefFemale;
 
-           activeMeasuresDef.forEach(def => {
-    const result = getMetricForDate(def.key, selectedDate);
-    
-    const tag = document.createElement('div');
-    tag.className = `measure-tag ${def.align === 'right' ? 'tag-right' : 'tag-left'}`;
-    tag.style.top = def.row + '%';
-    
-    const displayValue = result.value !== null ? parseFloat(result.value.toFixed(2)) : '--';
-    
-    // 🔴 CAMBIO: El texto de la viñeta ahora es rojo si no está actualizado
-    const colorClass = result.value !== null ? (result.isInherited ? 'text-red-600' : 'text-blue-600') : 'text-slate-400';
-    
-    tag.innerHTML = `
-        <span class="measure-name">${def.label}</span>
-        <span class="measure-val ${colorClass}" title="${result.isInherited ? 'No actualizado desde el ' + result.sourceDate : 'Medido este día'}">${displayValue}<span class="measure-unit">cm</span></span>
-    `;
+            activeMeasuresDef.forEach(def => {
+                const result = getMetricForDate(def.key, selectedDate);
+                
+                const tag = document.createElement('div');
+                tag.className = `measure-tag ${def.align === 'right' ? 'tag-right' : 'tag-left'}`;
+                tag.style.top = def.row + '%';
+                
+                const displayValue = result.value !== null ? parseFloat(result.value.toFixed(2)) : '--';
+                const colorClass = result.value !== null ? (result.isInherited ? 'text-red-600' : 'text-blue-600') : 'text-slate-400';
+                
+                tag.innerHTML = `
+                    <span class="measure-name">${def.label}</span>
+                    <span class="measure-val ${colorClass}" title="${result.value !== null ? (result.isInherited ? 'No actualizado desde el ' + result.sourceDate : 'Medido este día') : 'Sin datos'}">${displayValue}<span class="measure-unit">cm</span></span>
+                `;
 
-    tag.addEventListener('click', () => openEditModal(def.key, def.label, result.value, selectedDate));
-    measuresOverlay.appendChild(tag);
+                tag.addEventListener('click', () => {
+                    if (isMale === actualUserGenderIsMale) {
+                        openEditModal(def.key, def.label, result.value, selectedDate);
+                    }
+                });
+                measuresOverlay.appendChild(tag);
 
-    const startX = def.align === 'left' ? '0%' : '100%';
-    linesHTML += `<line x1="${startX}" y1="${def.row}%" x2="${def.targetX}%" y2="${def.targetY}%" stroke="#94a3b8" stroke-width="2" />`;
-    
-    // 🔴 CAMBIO: El punto anatómico se vuelve rojo si el dato es heredado
-    const dotColor = result.value !== null && result.isInherited ? '#dc2626' : (isMale ? '#3b82f6' : '#ec4899');
-    linesHTML += `<circle cx="${def.targetX}%" cy="${def.targetY}%" r="3.5" fill="${dotColor}" stroke="#ffffff" stroke-width="1.5" />`;
-});
+                const startX = def.align === 'left' ? '0%' : '100%';
+                linesHTML += `<line x1="${startX}" y1="${def.row}%" x2="${def.targetX}%" y2="${def.targetY}%" stroke="#94a3b8" stroke-width="2" />`;
+                
+                const dotColor = result.value !== null && result.isInherited ? '#dc2626' : (isMale ? '#3b82f6' : '#ec4899');
+                linesHTML += `<circle cx="${def.targetX}%" cy="${def.targetY}%" r="3.5" fill="${dotColor}" stroke="#ffffff" stroke-width="1.5" />`;
+            });
 
             svgLines.innerHTML = linesHTML;
         }
@@ -404,30 +427,27 @@
         function attachEditablePanelListeners() {
             document.querySelectorAll('.param-row').forEach(row => {
                 row.addEventListener('click', () => {
+                    if (isMale !== actualUserGenderIsMale) return; 
                     const key = row.getAttribute('data-key');
                     const label = row.getAttribute('data-label');
                     const selectedDate = dateSelector.value || getTodayStr();
                     const result = getMetricForDate(key, selectedDate);
-                    // Le pasamos el result.value solo para que lo vea en el input, pero guardará sobre selectedDate
                     openEditModal(key, label, result.value, selectedDate);
                 });
             });
         }
 
-        // ==========================================
-        // UI HOMBRES Y MUJERES
-        // ==========================================
         const btnFemale = document.getElementById('btnFemale');
         const btnMale = document.getElementById('btnMale');
 
         function setGenderUI(male) {
             isMale = male;
             if (isMale) {
-                bodyImage.src = 'HOMBREMEDIDAS.PNG'; 
+                bodyImage.src = 'HOMBREMEDIDAS.png'; 
                 btnMale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all bg-blue-500 text-white shadow h-full';
                 btnFemale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-slate-200 h-full';
             } else {
-                bodyImage.src = 'MUJERMEDIDAS.PNG'; 
+                bodyImage.src = 'MUJERMEDIDAS.png'; 
                 btnFemale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all bg-pink-500 text-white shadow h-full';
                 btnMale.className = 'px-3 py-1.5 rounded-lg text-sm font-bold transition-all text-slate-500 hover:bg-slate-200 h-full';
             }
@@ -437,12 +457,9 @@
         btnFemale.addEventListener('click', () => setGenderUI(false));
         btnMale.addEventListener('click', () => setGenderUI(true));
 
-        // ==========================================
-        // MODAL DE EDICIÓN
-        // ==========================================
         const modal = document.getElementById('measureModal');
         const modalValueInput = document.getElementById('measureValue');
-        let targetSaveDate = null; // Guardamos en qué fecha se va a inyectar el dato
+        let targetSaveDate = null; 
 
         function openEditModal(key, label, currentValue, targetDate) {
             activeEditKey = key;
@@ -450,7 +467,6 @@
             document.getElementById('modalTitle').textContent = label;
             document.getElementById('modalSubtitle').textContent = `Inyectar dato en el día: ${targetDate}`;
             
-            // Si el valor actual existía, lo ponemos en el input para que sea más fácil modificarlo
             modalValueInput.value = (currentValue !== null && currentValue > 0) ? currentValue : '';
             modal.classList.remove('hidden');
             modalValueInput.focus();
@@ -461,15 +477,12 @@
         document.getElementById('btnModalSave').addEventListener('click', () => {
             const val = parseFloat(modalValueInput.value);
             if (activeEditKey && targetSaveDate) {
-                // Buscamos si existe ya un registro completo en ese día exacto
                 let record = trackingData.find(d => d.date === targetSaveDate);
                 if(!record) {
                     record = { date: targetSaveDate };
                     trackingData.push(record);
                 }
                 
-                // Si el usuario deja el input vacío o mete 0, en lugar de guardar 0 borramos el dato de ESE DÍA.
-                // Esto hará que el sistema automáticamente herede el dato del día anterior al repintar.
                 if (isNaN(val) || val <= 0) {
                     delete record[activeEditKey];
                 } else {
@@ -494,9 +507,28 @@
                 const val = parseFloat(dataObj[key]);
                 if(!isNaN(val)) record[key] = val;
             });
-            // Re-ordenamos al inyectar nuevos
             trackingData.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
+
+        // ==========================================
+        // NAVEGACIÓN POR DÍAS (+ / -)
+        // ==========================================
+        function changeDateBy(days) {
+            if (!dateSelector.value) dateSelector.value = getTodayStr();
+            const [y, m, d] = dateSelector.value.split('-');
+            const current = new Date(y, m - 1, d); 
+            current.setDate(current.getDate() + days);
+            
+            const ny = current.getFullYear();
+            const nm = String(current.getMonth() + 1).padStart(2, '0');
+            const nd = String(current.getDate()).padStart(2, '0');
+            
+            dateSelector.value = `${ny}-${nm}-${nd}`;
+            updateVisuals();
+        }
+
+        document.getElementById('btnPrevDate').addEventListener('click', () => changeDateBy(-1));
+        document.getElementById('btnNextDate').addEventListener('click', () => changeDateBy(1));
 
         // ==========================================
         // CARGA DE CSV
@@ -624,16 +656,12 @@
             }
         }
 
-        // ==========================================
-        // MOTOR DE GRÁFICAS (CHART.JS)
-        // ==========================================
         const chartModal = document.getElementById('chartModal');
         const btnShowChart = document.getElementById('btnShowChart');
         const btnCloseChart = document.getElementById('btnCloseChart');
         const chartMetricSelector = document.getElementById('chartMetricSelector');
         let evolutionChart = null;
 
-        // Lista de todas las métricas posibles
         const allMetrics = [
             'Peso', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'IMC', 'Músculo Esquelético (%)', 
             'Agua Corporal (%)', 'Grasa Visceral', 'Tasa Metabólica Basal (kcal)',
@@ -641,7 +669,6 @@
             'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'
         ];
 
-        // Llenar el desplegable de métricas de la gráfica
         allMetrics.forEach(metric => {
             const option = document.createElement('option');
             option.value = metric;
@@ -665,14 +692,12 @@
         function renderChart(metricKey) {
             const ctx = document.getElementById('evolutionCanvas').getContext('2d');
             
-            // Invertimos la tabla para que la gráfica vaya de pasado (izq) a presente (der)
             const chronologicalData = [...trackingData].reverse();
             
             const labels = [];
             const dataPoints = [];
 
             chronologicalData.forEach(entry => {
-                // Solo pintamos los puntos donde realmente haya un registro guardado (no los heredados de días vacíos)
                 if (entry[metricKey] !== undefined && entry[metricKey] !== null && entry[metricKey] !== 0) {
                     labels.push(entry.date);
                     dataPoints.push(entry[metricKey]);
@@ -690,7 +715,7 @@
                     datasets: [{
                         label: metricKey,
                         data: dataPoints,
-                        borderColor: '#4f46e5', // Indigo 600
+                        borderColor: '#4f46e5',
                         backgroundColor: 'rgba(79, 70, 229, 0.1)',
                         borderWidth: 3,
                         pointBackgroundColor: '#fff',
@@ -699,7 +724,7 @@
                         pointRadius: 5,
                         pointHoverRadius: 7,
                         fill: true,
-                        tension: 0.3 // Hace la línea curva suave
+                        tension: 0.3 
                     }]
                 },
                 options: {
@@ -731,25 +756,103 @@
         }
 
         // ==========================================
+        // EXPORTACIÓN JSON PARA INTELIGENCIA ARTIFICIAL
+        // ==========================================
+        document.getElementById('btnExportJSON').addEventListener('click', () => {
+            if (!trackingData || trackingData.length === 0) {
+                alert("No hay datos para exportar.");
+                return;
+            }
+
+            const metricasAExportar = [
+                'Peso', 'IMC', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'Músculo Esquelético (%)', 
+                'Peso Corporal sin Grasa (kg)', 'Grasa Subcutánea (%)', 'Grasa Visceral', 'Agua Corporal (%)',
+                'Masa Ósea (kg)', 'Proteína (%)', 'Tasa Metabólica Basal (kcal)', 'Edad Metabólica',
+                'Cuello', 'Hombro', 'Pecho / Pectoral', 'Brazo Izquierdo', 'Brazo Derecho', 'Cintura', 'Abdomen (Ombligo)', 
+                'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'
+            ];
+
+            const exportData = trackingData.map(entry => {
+                const diaSnapshot = {
+                    fecha_visualizacion: entry.date,
+                    metricas: {}
+                };
+
+                metricasAExportar.forEach(m => {
+                    const res = getMetricForDate(m, entry.date);
+                    if (res.value !== null) {
+                        diaSnapshot.metricas[m] = {
+                            valor: res.value,
+                            fecha_real_de_medicion: res.sourceDate,
+                            es_dato_heredado_rojo: res.isInherited 
+                        };
+                    }
+                });
+
+                return diaSnapshot;
+            });
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `Evolucion_NutrIA_${USER_ID}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        });
+
+        // ==========================================
         // INICIALIZACIÓN Y VALIDACIÓN DE SESIÓN
         // ==========================================
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Obtenemos el ID que usa Nutria en app.js o hacemos fallback al UID de Firebase
-                USER_ID = localStorage.getItem('nutria_saved_user') || user.uid;
+                let nombreRealUsuario = user.uid; 
+
+                try {
+                    const q = query(collection(db, 'usuarios'), where('uid', '==', user.uid));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (!querySnapshot.empty) {
+                        nombreRealUsuario = querySnapshot.docs[0].id;
+                    } else {
+                        const localUser = localStorage.getItem('nutria_saved_user');
+                        if (localUser && localUser !== user.uid) {
+                            nombreRealUsuario = localUser;
+                        }
+                    }
+                } catch(e) {
+                    console.warn("No se pudo buscar el nombre en la BD, usando memoria local.");
+                    nombreRealUsuario = localStorage.getItem('nutria_saved_user') || user.uid;
+                }
+
+                USER_ID = nombreRealUsuario;
                 DOC_REF = doc(db, "medidas_corporales", USER_ID);
                 
-                // Si el nodo no existe en Firebase, getDoc en loadFromFirebase no fallará, 
-                // simplemente devolverá que no existe y preparará un array vacío.
+                // Detectar sexo desde el perfil de Nutria
+                try {
+                    const perfilRef = doc(db, 'usuarios', USER_ID);
+                    const perfilSnap = await getDoc(perfilRef);
+                    if (perfilSnap.exists()) {
+                        const datosPerfil = perfilSnap.data();
+                        if (datosPerfil.g === 'female') {
+                            actualUserGenderIsMale = false;
+                            isMale = false; 
+                        } else {
+                            actualUserGenderIsMale = true;  
+                            isMale = true; 
+                        }
+                    }
+                } catch(e) {
+                    console.warn("No se pudo cargar el género desde la base de datos.");
+                }
+
                 init();
             } else {
-                // Protección: Si alguien entra directamente a MEDIDAS.html sin sesión
                 alert("🔒 Sesión no detectada. Redirigiendo a la aplicación principal...");
                 window.location.href = 'index.html';
             }
         });
 
-        // La función init() original se mantiene igual, se llamará automáticamente arriba
     </script>
 </body>
 </html>
