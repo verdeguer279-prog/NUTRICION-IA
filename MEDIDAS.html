@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BodyMetrics Visual Tracker</title>
+    <title>BodyMetrics & Workouts Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,7 +14,6 @@
             background-color: #eff6ff !important;
         }
         
-        /* Contenedor centralizado para la silueta */
         .body-visualizer-container {
             position: relative;
             width: clamp(140px, 38vw, 260px); 
@@ -30,7 +29,6 @@
             z-index: 10;
         }
 
-        /* VIÑETAS ELÁSTICAS */
         .measure-tag {
             position: absolute;
             background: rgba(255, 255, 255, 0.95);
@@ -94,16 +92,23 @@
         }
         .param-row:last-child { border-bottom: none; }
         .param-row:hover { background-color: #f8fafc; }
+
+        /* CLASES PARA EL SISTEMA DE PESTAÑAS MÓVIL */
+        @media (max-width: 1279px) {
+            .mobile-panel-hidden {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-2 sm:p-4 md:p-6 overflow-x-hidden">
 
-    <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+    <div class="max-w-[1500px] mx-auto">
+        <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-4 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
             
             <div class="flex flex-col gap-2">
                 <div class="flex flex-wrap items-center gap-3">
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">BodyMetrics NutrIA</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">BodyMetrics <span class="text-blue-600">& Workouts</span></h1>
                     
                     <button onclick="window.location.href='index.html'" class="px-3 py-1.5 rounded-lg text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200">
                         Volver a Nutr-IA →
@@ -113,7 +118,9 @@
                         ⚡
                     </button>
                 </div>
-                <p class="text-slate-500 text-sm font-bold" id="dbStatus">Conectando...</p>
+                <p class="text-slate-500 text-sm font-bold flex items-center gap-2">
+                    <span id="dbStatusMedidas">Conectando...</span>
+                </p>
             </div>
             
             <div class="flex items-center gap-3 flex-wrap justify-start lg:justify-end w-full lg:w-auto">
@@ -139,52 +146,159 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[340px,1fr] gap-6 mb-6">
+        <div class="flex xl:hidden w-full bg-slate-200 rounded-xl p-1 mb-6 border border-slate-300">
+            <button id="tab-analisis" class="mobile-tab flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-white shadow text-blue-600 transition-all">📊 Análisis</button>
+            <button id="tab-silueta" class="mobile-tab flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-500 hover:bg-slate-100 transition-all">👤 Silueta</button>
+            <button id="tab-entrena" class="mobile-tab flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg text-slate-500 hover:bg-slate-100 transition-all">🏋️‍♂️ Entrenos</button>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-[330px_minmax(300px,1fr)_420px] gap-6 mb-6">
             
-            <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
-                <h3 class="font-bold text-lg text-slate-900 mb-2 border-b pb-2">Análisis Corporal</h3>
-               <div class="text-[10px] text-slate-400 mb-3 flex gap-3">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Medido hoy</span>
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-600"></span> No actualizado</span>
+            <div id="col-analisis" class="mobile-panel flex flex-col gap-6">
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                    <h3 class="font-bold text-lg text-slate-900 mb-2 border-b pb-2">Análisis Corporal</h3>
+                    <div class="text-[10px] text-slate-400 mb-3 flex gap-3">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Medido hoy</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-600"></span> Heredado</span>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm">
+                        <div class="param-row" data-key="Peso" data-label="Peso"><span class="text-slate-600 font-medium">Peso:</span> <div class="text-left"><span id="val-Peso" class="font-bold text-lg">-</span><span class="text-xs ml-1">kg</span></div></div>
+                        <div class="param-row" data-key="IMC" data-label="IMC"><span class="text-slate-600 font-medium">IMC:</span> <div class="text-left"><span id="val-IMC" class="font-bold">-</span></div></div>
+                        <div class="param-row" data-key="Grasa Corporal (%)" data-label="Grasa Corporal"><span class="text-slate-600 font-medium">Grasa:</span> <div class="text-left"><span id="val-Grasa" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                        <div class="param-row" data-key="Masa Muscular (kg)" data-label="Masa Muscular"><span class="text-slate-600 font-medium">Masa Musc:</span> <div class="text-left"><span id="val-MasaMuscular" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
+                        <div class="param-row" data-key="Músculo Esquelético (%)" data-label="Músculo Esquelético"><span class="text-slate-600 font-medium">Músc. Esq:</span> <div class="text-left"><span id="val-MusculoEsq" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                        <div class="param-row" data-key="Peso Corporal sin Grasa (kg)" data-label="Peso sin Grasa"><span class="text-slate-600 font-medium">Peso s/Grasa:</span> <div class="text-left"><span id="val-PesoSinGrasa" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
+                        <div class="param-row" data-key="Grasa Subcutánea (%)" data-label="Grasa Subcutánea"><span class="text-slate-600 font-medium">Grasa Sub:</span> <div class="text-left"><span id="val-GrasaSub" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                        <div class="param-row" data-key="Grasa Visceral" data-label="Grasa Visceral"><span class="text-slate-600 font-medium">Grasa Visc:</span> <div class="text-left"><span id="val-GrasaVisc" class="font-bold">-</span></div></div>
+                        <div class="param-row" data-key="Agua Corporal (%)" data-label="Agua Corporal"><span class="text-slate-600 font-medium">Agua:</span> <div class="text-left"><span id="val-Agua" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                        <div class="param-row" data-key="Masa Ósea (kg)" data-label="Masa Ósea"><span class="text-slate-600 font-medium">Masa Ósea:</span> <div class="text-left"><span id="val-MasaOsea" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
+                        <div class="param-row" data-key="Proteína (%)" data-label="Proteína"><span class="text-slate-600 font-medium">Proteína:</span> <div class="text-left"><span id="val-Proteina" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
+                        <div class="param-row" data-key="Tasa Metabólica Basal (kcal)" data-label="Tasa Metabólica (TMB)"><span class="text-slate-600 font-medium">TMB:</span> <div class="text-left"><span id="val-TMB" class="font-bold">-</span><span class="text-xs ml-1">kcal</span></div></div>
+                        <div class="param-row" data-key="Edad Metabólica" data-label="Edad Metabólica"><span class="text-slate-600 font-medium">Edad Met:</span> <div class="text-left"><span id="val-EdadMet" class="font-bold">-</span></div></div>
+                    </div>
                 </div>
-                
-                <div class="space-y-2 text-sm">
-                    <div class="param-row" data-key="Peso" data-label="Peso"><span class="text-slate-600 font-medium">Peso:</span> <div class="text-left"><span id="val-Peso" class="font-bold text-lg">-</span><span class="text-xs ml-1">kg</span></div></div>
-                    <div class="param-row" data-key="IMC" data-label="IMC"><span class="text-slate-600 font-medium">IMC:</span> <div class="text-left"><span id="val-IMC" class="font-bold">-</span></div></div>
-                    <div class="param-row" data-key="Grasa Corporal (%)" data-label="Grasa Corporal"><span class="text-slate-600 font-medium">Grasa Corporal:</span> <div class="text-left"><span id="val-Grasa" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
-                    <div class="param-row" data-key="Masa Muscular (kg)" data-label="Masa Muscular"><span class="text-slate-600 font-medium">Masa Muscular:</span> <div class="text-left"><span id="val-MasaMuscular" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
-                    <div class="param-row" data-key="Músculo Esquelético (%)" data-label="Músculo Esquelético"><span class="text-slate-600 font-medium">Músculo Esquelético:</span> <div class="text-left"><span id="val-MusculoEsq" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
-                    <div class="param-row" data-key="Peso Corporal sin Grasa (kg)" data-label="Peso sin Grasa"><span class="text-slate-600 font-medium">Peso sin Grasa:</span> <div class="text-left"><span id="val-PesoSinGrasa" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
-                    <div class="param-row" data-key="Grasa Subcutánea (%)" data-label="Grasa Subcutánea"><span class="text-slate-600 font-medium">Grasa Subcutánea:</span> <div class="text-left"><span id="val-GrasaSub" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
-                    <div class="param-row" data-key="Grasa Visceral" data-label="Grasa Visceral"><span class="text-slate-600 font-medium">Grasa Visceral:</span> <div class="text-left"><span id="val-GrasaVisc" class="font-bold">-</span></div></div>
-                    <div class="param-row" data-key="Agua Corporal (%)" data-label="Agua Corporal"><span class="text-slate-600 font-medium">Agua Corporal:</span> <div class="text-left"><span id="val-Agua" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
-                    <div class="param-row" data-key="Masa Ósea (kg)" data-label="Masa Ósea"><span class="text-slate-600 font-medium">Masa Ósea:</span> <div class="text-left"><span id="val-MasaOsea" class="font-bold">-</span><span class="text-xs ml-1">kg</span></div></div>
-                    <div class="param-row" data-key="Proteína (%)" data-label="Proteína"><span class="text-slate-600 font-medium">Proteína:</span> <div class="text-left"><span id="val-Proteina" class="font-bold">-</span><span class="text-xs ml-1">%</span></div></div>
-                    <div class="param-row" data-key="Tasa Metabólica Basal (kcal)" data-label="Tasa Metabólica (TMB)"><span class="text-slate-600 font-medium">TMB:</span> <div class="text-left"><span id="val-TMB" class="font-bold">-</span><span class="text-xs ml-1">kcal</span></div></div>
-                    <div class="param-row" data-key="Edad Metabólica" data-label="Edad Metabólica"><span class="text-slate-600 font-medium">Edad Metabólica:</span> <div class="text-left"><span id="val-EdadMet" class="font-bold">-</span></div></div>
+
+                <div id="dropZone" class="bg-white p-4 rounded-2xl shadow-sm border-2 border-dashed border-slate-300 hover:border-blue-500 transition-colors flex flex-col justify-center items-center text-center cursor-pointer relative h-28">
+                    <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <h3 class="text-sm font-bold mb-1 text-slate-800">📂 Cargar CSV Renpho</h3>
                 </div>
             </div>
 
-            <div class="bg-white p-2 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center overflow-visible min-h-[450px]">
-                <div class="body-visualizer-container" id="visualizerContainer">
-                    <img id="bodyImage" src="HOMBREMEDIDAS.png" alt="Silueta Corporal" class="body-image">
-                    <svg id="svgLines" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
-                    <div id="measuresOverlay" class="absolute inset-0 w-full h-full z-30"></div>
-                    
-                    <div id="sampleBadge" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs sm:text-sm font-black px-4 py-1.5 rounded-full shadow-lg z-50 hidden pointer-events-none border-2 border-yellow-200 whitespace-nowrap">
-                        ⚠️ IMAGEN DE MUESTRA
+            <div id="col-silueta" class="mobile-panel mobile-panel-hidden h-full">
+                <div class="bg-white p-2 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center overflow-visible h-full min-h-[450px]">
+                    <div class="body-visualizer-container" id="visualizerContainer">
+                        <img id="bodyImage" src="HOMBREMEDIDAS.png" alt="Silueta Corporal" class="body-image">
+                        <svg id="svgLines" class="absolute inset-0 w-full h-full pointer-events-none z-20"></svg>
+                        <div id="measuresOverlay" class="absolute inset-0 w-full h-full z-30"></div>
+                        
+                        <div id="sampleBadge" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs sm:text-sm font-black px-4 py-1.5 rounded-full shadow-lg z-50 hidden pointer-events-none border-2 border-yellow-200 whitespace-nowrap">
+                            ⚠️ IMAGEN DE MUESTRA
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="mb-6">
-            <div id="dropZone" class="bg-white p-5 rounded-2xl shadow-sm border-2 border-dashed border-slate-300 hover:border-blue-500 transition-colors flex flex-col justify-center items-center text-center cursor-pointer relative h-32 max-w-md mx-auto">
-                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                <h3 class="text-md font-bold mb-1 text-slate-800">📂 Cargar Archivo CSV</h3>
-                <p class="text-xs text-slate-500">Arrastra exportación de Renpho aquí</p>
+            <div id="col-entrena" class="mobile-panel mobile-panel-hidden flex flex-col gap-4">
+                
+                <div class="bg-emerald-50 p-4 rounded-2xl shadow-sm border border-emerald-300 flex flex-col gap-2">
+                    <div>
+                        <h3 class="font-bold text-emerald-900 flex items-center gap-2">👣 Tus pasos diarios</h3>
+                        <p class="text-[10px] text-emerald-700 font-medium uppercase tracking-wide">Se restan 2.500 de actividad base</p>
+                    </div>
+                    <div class="flex items-center gap-2 w-full mt-1">
+                        <input type="number" id="dailyStepsInput" placeholder="Ej: 8500" class="w-full p-2 bg-white border border-emerald-200 rounded-xl font-black text-emerald-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-center text-sm">
+                        <button id="btnSaveSteps" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl transition-colors shadow-sm text-sm whitespace-nowrap">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-sm text-slate-900 mb-3 border-b pb-2">Añadir Actividad</h3>
+                    
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <label class="cursor-pointer">
+                            <input type="checkbox" id="chkFuerza" class="peer sr-only">
+                            <div class="px-3 py-1.5 rounded-xl border border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 font-bold text-xs transition-all select-none">🏋️ Fuerza</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" id="chkClase" class="peer sr-only">
+                            <div class="px-3 py-1.5 rounded-xl border border-slate-200 peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-700 font-bold text-xs transition-all select-none">🧘‍♀️ Clase</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" id="chkAerobico" class="peer sr-only">
+                            <div class="px-3 py-1.5 rounded-xl border border-slate-200 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 font-bold text-xs transition-all select-none">🏃‍♂️ Cardio</div>
+                        </label>
+                    </div>
+
+                    <div id="formsContainer" class="space-y-3 mb-4 hidden">
+                        <div id="panelFuerza" class="bg-blue-50 p-3 rounded-xl border border-blue-100 hidden">
+                            <div class="flex gap-2 mb-2">
+                                <input type="time" id="fuerzaStart" value="08:30" class="w-1/2 p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                                <input type="time" id="fuerzaEnd" value="09:20" class="w-1/2 p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <label class="inline-flex items-center bg-white border border-slate-200 px-2 py-1 rounded cursor-pointer hover:bg-slate-50"><input type="checkbox" value="Pecho" class="fuerza-cb form-checkbox h-3 w-3 text-blue-600 rounded"> <span class="ml-1 text-[10px] font-bold">Pecho</span></label>
+                                <label class="inline-flex items-center bg-white border border-slate-200 px-2 py-1 rounded cursor-pointer hover:bg-slate-50"><input type="checkbox" value="Espalda" class="fuerza-cb form-checkbox h-3 w-3 text-blue-600 rounded"> <span class="ml-1 text-[10px] font-bold">Espalda</span></label>
+                                <label class="inline-flex items-center bg-white border border-slate-200 px-2 py-1 rounded cursor-pointer hover:bg-slate-50"><input type="checkbox" value="Hombro" class="fuerza-cb form-checkbox h-3 w-3 text-blue-600 rounded"> <span class="ml-1 text-[10px] font-bold">Hombro</span></label>
+                                <label class="inline-flex items-center bg-white border border-slate-200 px-2 py-1 rounded cursor-pointer hover:bg-slate-50"><input type="checkbox" value="Bíceps" class="fuerza-cb form-checkbox h-3 w-3 text-blue-600 rounded"> <span class="ml-1 text-[10px] font-bold">Bíceps</span></label>
+                                <label class="inline-flex items-center bg-white border border-slate-200 px-2 py-1 rounded cursor-pointer hover:bg-slate-50"><input type="checkbox" value="Tríceps" class="fuerza-cb form-checkbox h-3 w-3 text-blue-600 rounded"> <span class="ml-1 text-[10px] font-bold">Tríceps</span></label>
+                                <label class="inline-flex items-center bg-white border border-slate-200 px-2 py-1 rounded cursor-pointer hover:bg-slate-50"><input type="checkbox" value="Piernas" class="fuerza-cb form-checkbox h-3 w-3 text-blue-600 rounded"> <span class="ml-1 text-[10px] font-bold">Piernas</span></label>
+                            </div>
+                        </div>
+
+                        <div id="panelClase" class="bg-purple-50 p-3 rounded-xl border border-purple-100 hidden">
+                            <div class="flex gap-2 mb-2">
+                                <input type="time" id="claseStart" value="09:30" class="w-1/2 p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                                <input type="time" id="claseEnd" value="10:15" class="w-1/2 p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                            </div>
+                            <select id="claseSelect" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                                <option value="Pilates">Pilates</option>
+                                <option value="Yoga">Yoga</option>
+                                <option value="Crossfit">Crossfit</option>
+                                <option value="Zumba">Zumba</option>
+                                <option value="Spinning">Spinning</option>
+                            </select>
+                        </div>
+
+                        <div id="panelAerobico" class="bg-green-50 p-3 rounded-xl border border-green-100 hidden">
+                            <div class="flex gap-2 mb-2">
+                                <input type="time" id="aeroStart" value="10:15" class="w-1/2 p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                                <input type="time" id="aeroEnd" value="11:00" class="w-1/2 p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                            </div>
+                            <select id="aeroSelect" class="w-full p-2 bg-white border border-slate-200 rounded-lg font-bold text-xs focus:outline-none">
+                                <option value="Caminata al aire libre" selected>Caminata al aire libre</option>
+                                <option value="Cinta (Correr)">Cinta (Correr)</option>
+                                <option value="Cinta (Caminar)">Cinta (Caminar)</option>
+                                <option value="Bicicleta estática">Bicicleta estática</option>
+                                <option value="Elíptica">Elíptica</option>
+                                <option value="Nadar">Nadar</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="btnSaveAll" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded-xl transition-colors hidden text-sm">
+                        + Añadir al Timeline
+                    </button>
+                </div>
+
+                <div class="flex flex-col mb-2">
+                    <div class="flex justify-between items-end mb-2">
+                        <h3 class="font-bold text-md text-slate-800">Timeline de Hoy</h3>
+                        <div class="bg-slate-100 text-slate-700 px-3 py-1 rounded-lg font-black shadow-sm flex items-center gap-1 border border-slate-200 text-sm">
+                        🔥 <span id="totalKcalDisplay">0</span> kcal quemadas
+                    </div>
+                    </div>
+                    
+                    <div id="activityLevelBanner" class="hidden text-xs p-2 rounded-xl border font-medium"></div>
+                </div>
+                
+                <div id="timelineContainer" class="space-y-3 pb-8">
+                    </div>
             </div>
         </div>
+
     </div>
 
     <div id="measureModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden flex justify-center items-center z-50 p-4">
@@ -197,9 +311,40 @@
             </div>
 
             <div class="flex space-x-2">
-                <button id="btnModalDelete" class="flex-1 px-3 py-3 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-colors text-sm">Borrar Dato</button>
+                <button id="btnModalDelete" class="flex-1 px-3 py-3 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200 transition-colors text-sm">Borrar</button>
                 <button id="btnModalCancel" class="flex-1 px-3 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors text-sm">Cancelar</button>
                 <button id="btnModalSave" class="flex-1 px-3 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors text-sm">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editWorkoutModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden flex justify-center items-center z-50 p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">✏️ Editar Entrenamiento</h3>
+            <input type="hidden" id="editBlockId">
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Nombre / Tipo</label>
+                    <input type="text" id="editName" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-slate-700 focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Inicio</label>
+                        <input type="time" id="editStart" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Fin</label>
+                        <input type="time" id="editEnd" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Calorías (Kcal)</label>
+                    <input type="number" id="editKcal" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold focus:ring-2 focus:ring-blue-500 text-orange-600">
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="closeEditWorkoutModal()" class="flex-1 px-3 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors">Cancelar</button>
+                <button onclick="saveEditBlock()" class="flex-1 px-3 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">Guardar</button>
             </div>
         </div>
     </div>
@@ -225,6 +370,21 @@
         </div>
     </div>
 
+<div id="exportModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden flex justify-center items-center z-50 p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full">
+            <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">⚡ Exportar Datos</h3>
+            <p class="text-xs text-slate-500 mb-4">Selecciona qué información deseas descargar en tu archivo JSON:</p>
+            
+            <div class="space-y-2 mb-6">
+                <button onclick="ejecutarExportacion('1')" class="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-300 transition-colors text-sm">📊 Análisis Corporal (Báscula)</button>
+                <button onclick="ejecutarExportacion('2')" class="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-300 transition-colors text-sm">👤 Medidas de Silueta (Cinta)</button>
+                <button onclick="ejecutarExportacion('3')" class="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-green-50 hover:border-green-300 transition-colors text-sm">🏋️‍♂️ Entrenamientos y Pasos</button>
+                <button onclick="ejecutarExportacion('4')" class="w-full text-center px-4 py-3 bg-slate-800 border border-slate-800 rounded-xl font-bold text-white hover:bg-slate-900 transition-colors text-sm shadow-md mt-2">📦 Exportar TODO (Global)</button>
+            </div>
+            
+            <button onclick="closeExportModal()" class="w-full px-4 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors text-sm">Cancelar</button>
+        </div>
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -243,20 +403,534 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
+        // ==========================================
+        // VARIABLES GLOBALES
+        // ==========================================
         let USER_ID = null; 
-        let DOC_REF = null;
+        let DOC_REF_MEDIDAS = null;
+        let DOC_REF_ENTRENA = null;
 
-        const dbStatus = document.getElementById('dbStatus');
-        const dateSelector = document.getElementById('dateSelector');
-        const measuresOverlay = document.getElementById('measuresOverlay');
-        const svgLines = document.getElementById('svgLines');
-        const bodyImage = document.getElementById('bodyImage');
-
+        // Variables Medidas
+        let trackingData = [];
         let isMale = true; 
         let actualUserGenderIsMale = true; 
-        let trackingData = [];
         let activeEditKey = null;
+        let targetSaveDate = null; 
 
+        // Variables Entrenamientos
+        let todayBlocks = [];
+        const BASELINE_STEPS = 2500;
+        const THRESHOLD_MODERATE = 350;
+        const KCAL_PER_STEP = 0.04;
+        const KCAL_RATES = {
+            'Fuerza': 6.0, 'Pilates': 4.5, 'Yoga': 3.5, 'Crossfit': 11.0, 'Zumba': 8.0, 
+            'Spinning': 10.0, 'Caminata al aire libre': 5.5, 'Cinta (Correr)': 12.0, 
+            'Cinta (Caminar)': 5.5, 'Bicicleta estática': 8.0, 'Elíptica': 9.0, 'Nadar': 10.0
+        };
+        const EXERCISES = {
+            'Pecho': ['Press de banca', 'Press inclinado', 'Aperturas', 'Cruces en polea', 'Flexiones'],
+            'Hombro': ['Press militar', 'Elevaciones laterales', 'Elevaciones frontales', 'Pájaros', 'Face pull'],
+            'Tríceps': ['Polea prono', 'Polea supino', 'Press francés', 'Fondos', 'Patada tríceps'],
+            'Bíceps': ['Curl con barra', 'Curl alterno', 'Curl martillo', 'Curl en polea baja'],
+            'Espalda': ['Dominadas', 'Jalón al pecho', 'Remo con barra', 'Remo con mancuerna', 'Peso muerto'],
+            'Piernas': ['Sentadillas', 'Prensa', 'Zancadas', 'Extensión cuádriceps', 'Curl femoral', 'Gemelos']
+        };
+
+        // DOM Elementos Comunes
+        const dbStatusMedidas = document.getElementById('dbStatusMedidas');
+        const dateSelector = document.getElementById('dateSelector');
+
+        // ==========================================
+        // LÓGICA DE PESTAÑAS PARA MÓVIL
+        // ==========================================
+        const tabAnalisis = document.getElementById('tab-analisis');
+        const tabSilueta = document.getElementById('tab-silueta');
+        const tabEntrena = document.getElementById('tab-entrena');
+        const colAnalisis = document.getElementById('col-analisis');
+        const colSilueta = document.getElementById('col-silueta');
+        const colEntrena = document.getElementById('col-entrena');
+
+        function switchTab(activeTabId) {
+            if (window.innerWidth >= 1280) return; // Si es PC grande, CSS anula esto.
+            
+            // Reset botones
+            [tabAnalisis, tabSilueta, tabEntrena].forEach(t => {
+                t.classList.remove('bg-white', 'shadow', 'text-blue-600');
+                t.classList.add('text-slate-500', 'hover:bg-slate-100');
+            });
+            // Reset columnas
+            [colAnalisis, colSilueta, colEntrena].forEach(c => c.classList.add('mobile-panel-hidden'));
+
+            // Activar selecciones
+            if(activeTabId === 'analisis') {
+                tabAnalisis.classList.add('bg-white', 'shadow', 'text-blue-600');
+                colAnalisis.classList.remove('mobile-panel-hidden');
+            } else if (activeTabId === 'silueta') {
+                tabSilueta.classList.add('bg-white', 'shadow', 'text-blue-600');
+                colSilueta.classList.remove('mobile-panel-hidden');
+            } else if (activeTabId === 'entrena') {
+                tabEntrena.classList.add('bg-white', 'shadow', 'text-blue-600');
+                colEntrena.classList.remove('mobile-panel-hidden');
+            }
+        }
+
+        tabAnalisis.addEventListener('click', () => switchTab('analisis'));
+        tabSilueta.addEventListener('click', () => switchTab('silueta'));
+        tabEntrena.addEventListener('click', () => switchTab('entrena'));
+
+        // Al cambiar el tamaño de ventana, vigilar redibujado de líneas SVG
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1280) {
+                // Forzar limpieza de clases móviles
+                [colAnalisis, colSilueta, colEntrena].forEach(c => c.classList.remove('mobile-panel-hidden'));
+            } else {
+                // Volver a aplicar el tab activo (por defecto Análisis si venimos de PC)
+                if(!tabSilueta.classList.contains('text-blue-600') && !tabEntrena.classList.contains('text-blue-600')) {
+                    switchTab('analisis');
+                }
+            }
+            updateVisuals();
+        });
+
+
+        function getTodayStr() { 
+            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+            return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+        }
+
+        // ==========================================
+        // CARGA Y FIREBASE CORE
+        // ==========================================
+        async function init() {
+            setGenderUI(isMale); 
+            dateSelector.value = getTodayStr(); 
+            await loadMedidas();
+            await loadEntrenamientos();
+            attachEditablePanelListeners();
+        }
+
+        async function loadMedidas() {
+            dbStatusMedidas.textContent = "⏳ Cargando datos...";
+            try {
+                const docSnap = await getDoc(DOC_REF_MEDIDAS);
+                if (docSnap.exists() && docSnap.data().registros) {
+                    trackingData = docSnap.data().registros.sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
+                dbStatusMedidas.textContent = "🟢 Sincronizado: " + USER_ID;
+                updateVisuals();
+            } catch (error) {
+                dbStatusMedidas.textContent = "🔴 Error Red";
+                updateVisuals();
+            }
+        }
+
+        async function saveMedidas() {
+            dbStatusMedidas.textContent = "⏳ Guardando...";
+            try {
+                trackingData.sort((a, b) => new Date(b.date) - new Date(a.date));
+                await setDoc(DOC_REF_MEDIDAS, { registros: trackingData, ultima_actualizacion: new Date() }, { merge: true });
+                dbStatusMedidas.textContent = "🟢 Sincronizado: " + USER_ID;
+            } catch (error) {
+                dbStatusMedidas.textContent = "🔴 Error Guardar";
+            }
+        }
+
+        async function loadEntrenamientos() {
+            const targetDate = dateSelector.value;
+            try {
+                const docSnap = await getDoc(DOC_REF_ENTRENA);
+                if (docSnap.exists() && docSnap.data()[targetDate]) {
+                    todayBlocks = docSnap.data()[targetDate];
+                } else {
+                    todayBlocks = [];
+                }
+                renderTimeline();
+            } catch (error) {
+                console.error("Error cargando entrenos", error);
+            }
+        }
+
+        async function saveEntrenamientos() {
+            const targetDate = dateSelector.value;
+            try {
+                await setDoc(DOC_REF_ENTRENA, {
+                    [targetDate]: todayBlocks,
+                    ultima_modificacion: new Date()
+                }, { merge: true });
+                renderTimeline();
+            } catch (error) {
+                console.error("Error al guardar entreno", error);
+            }
+        }
+
+        // Control de Fecha Unificado
+        function changeDateBy(days) {
+            if (!dateSelector.value) dateSelector.value = getTodayStr();
+            const [y, m, d] = dateSelector.value.split('-');
+            const current = new Date(y, m - 1, d); 
+            current.setDate(current.getDate() + days);
+            
+            const ny = current.getFullYear();
+            const nm = String(current.getMonth() + 1).padStart(2, '0');
+            const nd = String(current.getDate()).padStart(2, '0');
+            
+            dateSelector.value = `${ny}-${nm}-${nd}`;
+            updateVisuals();
+            loadEntrenamientos();
+        }
+
+        document.getElementById('btnPrevDate').addEventListener('click', () => changeDateBy(-1));
+        document.getElementById('btnNextDate').addEventListener('click', () => changeDateBy(1));
+        dateSelector.addEventListener('change', () => {
+            updateVisuals();
+            loadEntrenamientos();
+        });
+
+        // ==========================================
+        // MÓDULO: ENTRENAMIENTOS
+        // ==========================================
+        const formsContainer = document.getElementById('formsContainer');
+        const btnSaveAll = document.getElementById('btnSaveAll');
+        const timelineContainer = document.getElementById('timelineContainer');
+        const totalKcalDisplay = document.getElementById('totalKcalDisplay');
+        const activityLevelBanner = document.getElementById('activityLevelBanner');
+
+        const chkFuerza = document.getElementById('chkFuerza');
+        const chkClase = document.getElementById('chkClase');
+        const chkAerobico = document.getElementById('chkAerobico');
+        const panelFuerza = document.getElementById('panelFuerza');
+        const panelClase = document.getElementById('panelClase');
+        const panelAerobico = document.getElementById('panelAerobico');
+        const editWorkoutModal = document.getElementById('editWorkoutModal');
+
+        function updateWorkoutUI() {
+            let anyChecked = chkFuerza.checked || chkClase.checked || chkAerobico.checked;
+            formsContainer.style.display = anyChecked ? 'block' : 'none';
+            btnSaveAll.style.display = anyChecked ? 'block' : 'none';
+            panelFuerza.style.display = chkFuerza.checked ? 'block' : 'none';
+            panelClase.style.display = chkClase.checked ? 'block' : 'none';
+            panelAerobico.style.display = chkAerobico.checked ? 'block' : 'none';
+        }
+
+        [chkFuerza, chkClase, chkAerobico].forEach(chk => chk.addEventListener('change', updateWorkoutUI));
+
+        function getDurationInMinutes(start, end) {
+            if(!start || !end) return 0;
+            let s = start.split(':').map(Number);
+            let e = end.split(':').map(Number);
+            let sMins = s[0]*60 + s[1];
+            let eMins = e[0]*60 + e[1];
+            if (eMins < sMins) eMins += 24*60; 
+            return eMins - sMins;
+        }
+
+        // Pasos Independientes
+        document.getElementById('btnSaveSteps').addEventListener('click', () => {
+            let stepsStr = document.getElementById('dailyStepsInput').value;
+            let steps = parseInt(stepsStr) || 0;
+            
+            if (steps > 0) {
+                todayBlocks = todayBlocks.filter(b => b.type !== 'Pasos');
+                let extraSteps = Math.max(0, steps - BASELINE_STEPS);
+                let kcalSteps = Math.round(extraSteps * KCAL_PER_STEP);
+                
+                todayBlocks.push({
+                    id: 'pasos_' + Date.now(), type: 'Pasos', name: "Recuento de Pasos",
+                    start: "Todo el día", end: "", steps: steps, extraSteps: extraSteps, kcal: kcalSteps
+                });
+                saveEntrenamientos();
+            }
+        });
+
+        // Guardar Bloques Multiples
+        btnSaveAll.addEventListener('click', () => {
+            let addedSomething = false;
+
+            if (chkFuerza.checked) {
+                const checkboxes = document.querySelectorAll('.fuerza-cb:checked');
+                const muscles = Array.from(checkboxes).map(cb => cb.value);
+                if (muscles.length > 0) {
+                    let mins = getDurationInMinutes(document.getElementById('fuerzaStart').value, document.getElementById('fuerzaEnd').value);
+                    todayBlocks.push({
+                        id: 'fuerza_' + Date.now(), type: 'Fuerza', name: "Fuerza: " + muscles.join(', '),
+                        start: document.getElementById('fuerzaStart').value, end: document.getElementById('fuerzaEnd').value,
+                        muscles: muscles, exercises: [], kcal: Math.round(mins * KCAL_RATES['Fuerza'])
+                    });
+                    addedSomething = true;
+                    checkboxes.forEach(cb => cb.checked = false); chkFuerza.checked = false;
+                }
+            }
+
+            if (chkClase.checked) {
+                let claseName = document.getElementById('claseSelect').value;
+                let mins = getDurationInMinutes(document.getElementById('claseStart').value, document.getElementById('claseEnd').value);
+                let rate = KCAL_RATES[claseName] || 5; 
+                todayBlocks.push({
+                    id: 'clase_' + Date.now(), type: 'Clase', name: claseName,
+                    start: document.getElementById('claseStart').value, end: document.getElementById('claseEnd').value,
+                    kcal: Math.round(mins * rate)
+                });
+                addedSomething = true; chkClase.checked = false;
+            }
+
+            if (chkAerobico.checked) {
+                let aeroName = document.getElementById('aeroSelect').value;
+                if (aeroName !== "") {
+                    let mins = getDurationInMinutes(document.getElementById('aeroStart').value, document.getElementById('aeroEnd').value);
+                    let rate = KCAL_RATES[aeroName] || 8;
+                    todayBlocks.push({
+                        id: 'aero_' + Date.now(), type: 'Aerobico', name: aeroName,
+                        start: document.getElementById('aeroStart').value, end: document.getElementById('aeroEnd').value,
+                        kcal: Math.round(mins * rate)
+                    });
+                    addedSomething = true;
+                }
+                chkAerobico.checked = false;
+            }
+
+            if (addedSomething) {
+                updateWorkoutUI();
+                saveEntrenamientos();
+            }
+        });
+
+        // Edición y Borrado de Entrenos
+        window.deleteBlock = function(blockId) {
+            if(confirm('¿Eliminar bloque?')) {
+                todayBlocks = todayBlocks.filter(b => b.id !== blockId);
+                saveEntrenamientos();
+            }
+        }
+
+        window.editBlock = function(blockId) {
+            const block = todayBlocks.find(b => b.id === blockId);
+            if(!block) return;
+            
+            document.getElementById('editBlockId').value = block.id;
+            document.getElementById('editName').value = block.name;
+            document.getElementById('editStart').value = block.start !== "Todo el día" ? block.start : "";
+            document.getElementById('editEnd').value = block.end || "";
+            document.getElementById('editKcal').value = block.kcal || 0;
+
+            if(block.type === 'Pasos') {
+                document.getElementById('editStart').disabled = true; document.getElementById('editEnd').disabled = true;
+                document.getElementById('editStart').classList.add('opacity-50'); document.getElementById('editEnd').classList.add('opacity-50');
+            } else {
+                document.getElementById('editStart').disabled = false; document.getElementById('editEnd').disabled = false;
+                document.getElementById('editStart').classList.remove('opacity-50'); document.getElementById('editEnd').classList.remove('opacity-50');
+            }
+            editWorkoutModal.classList.remove('hidden');
+        }
+
+        window.closeEditWorkoutModal = function() { editWorkoutModal.classList.add('hidden'); }
+
+        window.saveEditBlock = function() {
+            const id = document.getElementById('editBlockId').value;
+            const blockIndex = todayBlocks.findIndex(b => b.id === id);
+            
+            if(blockIndex > -1) {
+                todayBlocks[blockIndex].name = document.getElementById('editName').value;
+                if(todayBlocks[blockIndex].type !== 'Pasos') {
+                    todayBlocks[blockIndex].start = document.getElementById('editStart').value;
+                    todayBlocks[blockIndex].end = document.getElementById('editEnd').value;
+                }
+                todayBlocks[blockIndex].kcal = parseInt(document.getElementById('editKcal').value) || 0;
+                saveEntrenamientos();
+            }
+            closeEditWorkoutModal();
+        }
+
+        window.toggleExercises = function(containerId) {
+            const el = document.getElementById(containerId);
+            if(el) el.classList.toggle('hidden');
+        }
+
+        window.addExerciseToBlock = function(blockId) {
+            const blockIndex = todayBlocks.findIndex(b => b.id === blockId);
+            if(blockIndex === -1) return;
+
+            const muscleSel = document.getElementById(`sel_musc_${blockId}`).value;
+            const exSel = document.getElementById(`sel_ex_${blockId}`).value;
+            const sets = document.getElementById(`inp_sets_${blockId}`).value;
+            const weight = document.getElementById(`inp_weight_${blockId}`).value;
+
+            if(!exSel) return alert("Selecciona un ejercicio");
+            todayBlocks[blockIndex].exercises.push({ id: 'ex_'+Date.now(), muscle: muscleSel, name: exSel, sets: sets || '-', weight: weight || '-' });
+            saveEntrenamientos();
+        }
+
+        window.deleteExercise = function(blockId, exId) {
+            const blockIndex = todayBlocks.findIndex(b => b.id === blockId);
+            if(blockIndex > -1) {
+                todayBlocks[blockIndex].exercises = todayBlocks[blockIndex].exercises.filter(e => e.id !== exId);
+                saveEntrenamientos();
+            }
+        }
+
+        window.updateExerciseDropdown = function(blockId) {
+            const muscle = document.getElementById(`sel_musc_${blockId}`).value;
+            const exSelect = document.getElementById(`sel_ex_${blockId}`);
+            exSelect.innerHTML = '';
+            if(EXERCISES[muscle]) { EXERCISES[muscle].forEach(ex => { exSelect.innerHTML += `<option value="${ex}">${ex}</option>`; }); }
+        }
+
+        function renderTimeline() {
+            timelineContainer.innerHTML = '';
+            
+            const stepsBlock = todayBlocks.find(b => b.type === 'Pasos');
+            document.getElementById('dailyStepsInput').value = stepsBlock ? stepsBlock.steps : '';
+
+            let totalDiaKcal = 0;
+
+            if(todayBlocks.length === 0) {
+                totalKcalDisplay.textContent = '0'; activityLevelBanner.className = "hidden";
+                timelineContainer.innerHTML = '<p class="text-slate-400 text-center italic py-4 bg-white rounded-xl border border-dashed border-slate-300 text-sm">No hay actividad hoy.</p>';
+                return;
+            }
+
+            let sortedBlocks = [...todayBlocks].sort((a, b) => {
+                if (a.type === 'Pasos') return 1; if (b.type === 'Pasos') return -1;
+                return a.start.localeCompare(b.start);
+            });
+
+            sortedBlocks.forEach(block => {
+                totalDiaKcal += (block.kcal || 0);
+
+                let colorTheme = 'slate'; let icon = '⏱';
+                let timeStr = block.start === "Todo el día" ? "Todo el día" : `🕒 ${block.start} - ${block.end}`;
+
+                if(block.type === 'Fuerza') { colorTheme = 'blue'; icon = '🏋️'; }
+                if(block.type === 'Clase') { colorTheme = 'purple'; icon = '🧘‍♀️'; }
+                if(block.type === 'Aerobico') { colorTheme = 'green'; icon = '🏃‍♂️'; }
+                if(block.type === 'Pasos') { colorTheme = 'emerald'; icon = '👣'; }
+
+                let headerClickAction = block.type === 'Fuerza' ? `onclick="toggleExercises('exercises_${block.id}')"` : '';
+                let cursorClass = block.type === 'Fuerza' ? 'cursor-pointer hover:bg-blue-100/50 transition-colors' : '';
+
+                let html = `
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm relative group">
+                        
+                        <div ${headerClickAction} class="bg-${colorTheme}-50 px-3 sm:px-4 py-2 border-b border-${colorTheme}-100 flex items-center justify-between gap-2 ${cursorClass}">
+                            
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">${icon}</span>
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-1 flex-wrap">
+                                        <h4 class="font-bold text-${colorTheme}-800 leading-tight text-sm">
+                                            ${block.name}
+                                            ${block.type === 'Fuerza' ? '<span class="text-[8px] ml-1 text-blue-500 font-bold border border-blue-200 px-1 rounded bg-blue-100 uppercase tracking-wide">Clic ↕</span>' : ''}
+                                        </h4>
+                                        <div class="flex gap-1 ml-1 opacity-100 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity">
+                                            <button onclick="event.stopPropagation(); editBlock('${block.id}')" title="Editar" class="text-slate-400 hover:text-blue-600 bg-white sm:bg-transparent px-1 rounded shadow-sm sm:shadow-none text-xs">✏️</button>
+                                            <button onclick="event.stopPropagation(); deleteBlock('${block.id}')" title="Eliminar" class="text-slate-400 hover:text-red-600 bg-white sm:bg-transparent px-1 rounded shadow-sm sm:shadow-none text-xs">🗑️</button>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-${colorTheme}-600/70">${timeStr}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                                ${block.type === 'Pasos' ? `
+                                <div class="flex flex-col items-end text-right border-r border-${colorTheme}-200 pr-2">
+                                    <span class="font-bold text-${colorTheme}-800 text-xs leading-none">${block.steps} <span class="hidden sm:inline">pasos</span></span>
+                                    <span class="text-${colorTheme}-600 font-bold text-[9px] uppercase mt-0.5">+${block.extraSteps} ext</span>
+                                </div>` : ''}
+
+                                <div class="text-right">
+                                    <span class="block text-lg font-black text-${colorTheme}-600">${block.kcal || 0}</span>
+                                    <span class="text-[9px] uppercase font-bold text-${colorTheme}-500">Kcal</span>
+                                </div>
+                            </div>
+                        </div>
+                `;
+
+                if (block.type === 'Fuerza') {
+                    html += `<div id="exercises_${block.id}" class="hidden p-3 bg-white">`; 
+                    if (block.exercises && block.exercises.length > 0) {
+                        html += `<ul class="mb-3 space-y-1">`;
+                        block.exercises.forEach(ex => {
+                            html += `
+                                <li class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100 text-xs">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-slate-700">${ex.name}</span>
+                                        <span class="text-[8px] uppercase font-black text-slate-400">${ex.muscle}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="bg-white px-1.5 py-0.5 rounded shadow-sm font-bold text-slate-600 border border-slate-200">${ex.sets}</span>
+                                        <span class="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded shadow-sm font-bold border border-blue-200">${ex.weight}</span>
+                                        <button onclick="event.stopPropagation(); deleteExercise('${block.id}', '${ex.id}')" class="text-red-400 hover:text-red-600 font-bold ml-1">✕</button>
+                                    </div>
+                                </li>
+                            `;
+                        });
+                        html += `</ul>`;
+                    } else { html += `<p class="text-[10px] text-slate-400 italic mb-2">Añade ejercicios.</p>`; }
+
+                    let muscleOptions = block.muscles.map(m => `<option value="${m}">${m}</option>`).join('');
+                    let firstMuscle = block.muscles[0];
+                    let firstExOptions = EXERCISES[firstMuscle] ? EXERCISES[firstMuscle].map(e => `<option value="${e}">${e}</option>`).join('') : '';
+
+                    html += `
+                        <div class="bg-slate-50 p-2 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-1 items-end">
+                            <div class="w-full sm:w-1/4">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Músculo</label>
+                                <select id="sel_musc_${block.id}" onchange="updateExerciseDropdown('${block.id}')" class="w-full p-1.5 bg-white border border-slate-200 rounded text-[10px] font-bold focus:outline-none">${muscleOptions}</select>
+                            </div>
+                            <div class="w-full sm:w-2/4">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Ejercicio</label>
+                                <select id="sel_ex_${block.id}" class="w-full p-1.5 bg-white border border-slate-200 rounded text-[10px] font-bold focus:outline-none">${firstExOptions}</select>
+                            </div>
+                            <div class="w-full sm:w-auto flex gap-1">
+                                <div class="w-1/2 sm:w-14">
+                                    <label class="block text-[9px] font-bold text-slate-500 uppercase">Series</label>
+                                    <input type="text" id="inp_sets_${block.id}" placeholder="3x10" class="w-full p-1.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-center focus:outline-none">
+                                </div>
+                                <div class="w-1/2 sm:w-14">
+                                    <label class="block text-[9px] font-bold text-slate-500 uppercase">Peso</label>
+                                    <input type="text" id="inp_weight_${block.id}" placeholder="kg" class="w-full p-1.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-center focus:outline-none">
+                                </div>
+                            </div>
+                            <button onclick="addExerciseToBlock('${block.id}')" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold p-1.5 rounded text-[10px] h-[26px]">Añadir</button>
+                        </div>
+                    </div>`; 
+                }
+
+                html += `</div>`;
+                timelineContainer.innerHTML += html;
+            });
+
+            totalKcalDisplay.textContent = totalDiaKcal;
+
+            activityLevelBanner.className = "text-xs p-2 sm:p-3 rounded-xl border font-medium flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2";
+            if (totalDiaKcal >= THRESHOLD_MODERATE) {
+                let extra = totalDiaKcal - THRESHOLD_MODERATE;
+                activityLevelBanner.classList.add("bg-orange-50", "border-orange-200", "text-orange-900");
+                activityLevelBanner.innerHTML = `
+                    <div class="flex flex-col gap-0.5">
+                        <span class="text-sm">📊 Actividad real hoy: <b>MODERADA</b></span>
+                        <span class="text-[10px] opacity-80">Has superado tu límite de actividad ligera.</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white border border-orange-200 px-2.5 py-1.5 rounded-lg shadow-sm">
+                        <span class="text-lg">🍽️</span>
+                        <div class="flex flex-col">
+                            <span class="text-orange-700 font-black leading-none">+${extra} kcal</span>
+                            <span class="text-[9px] uppercase font-bold text-orange-500">Extra para comer</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                let falta = THRESHOLD_MODERATE - totalDiaKcal;
+                activityLevelBanner.classList.add("bg-blue-50", "border-blue-200", "text-blue-900");
+                activityLevelBanner.innerHTML = `
+                    <span>📊 Actividad real hoy: <b>LIGERA</b></span>
+                    <span class="text-[10px] text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">Faltan <b>${falta} kcal</b> para ganar extras</span>
+                `;
+            }
+        }
+
+        // ==========================================
+        // MÓDULO: MEDIDAS Y SILUETA (CODIGO ORIGINAL MANTENIDO)
+        // ==========================================
         const bodyMeasuresDefMale = [
             { key: 'Cuello', label: 'Cuello', align: 'left', row: 10, targetX: 47, targetY: 17 }, 
             { key: 'Pecho / Pectoral', label: 'Pecho', align: 'left', row: 24, targetX: 36, targetY: 25 },
@@ -264,7 +938,6 @@
             { key: 'Abdomen (Ombligo)', label: 'Abdomen', align: 'left', row: 52, targetX: 38, targetY: 41 }, 
             { key: 'Muslo Derecho', label: 'Muslo Der', align: 'left', row: 66, targetX: 37, targetY: 62 }, 
             { key: 'Gemelo Derecho', label: 'Gemelo Der', align: 'left', row: 80, targetX: 38, targetY: 74 }, 
-            
             { key: 'Hombro', label: 'Hombros', align: 'right', row: 10, targetX: 62, targetY: 20 },
             { key: 'Brazo Izquierdo', label: 'Bíceps Izq', align: 'right', row: 24, targetX: 74, targetY: 27 }, 
             { key: 'Cintura', label: 'Cintura', align: 'right', row: 38, targetX: 61, targetY: 36 }, 
@@ -280,7 +953,6 @@
             { key: 'Abdomen (Ombligo)', label: 'Abdomen', align: 'left', row: 52, targetX: 38, targetY: 41 }, 
             { key: 'Muslo Derecho', label: 'Muslo Der', align: 'left', row: 66, targetX: 37, targetY: 62 }, 
             { key: 'Gemelo Derecho', label: 'Gemelo Der', align: 'left', row: 80, targetX: 38, targetY: 74 }, 
-            
             { key: 'Hombro', label: 'Hombros', align: 'right', row: 10, targetX: 62, targetY: 20 },
             { key: 'Brazo Izquierdo', label: 'Bíceps Izq', align: 'right', row: 24, targetX: 74, targetY: 27 }, 
             { key: 'Cintura', label: 'Cintura', align: 'right', row: 38, targetX: 61, targetY: 36 }, 
@@ -289,60 +961,17 @@
             { key: 'Gemelo Izquierdo', label: 'Gemelo Izq', align: 'right', row: 80, targetX: 62, targetY: 74 } 
         ];
 
-        function getTodayStr() { 
-            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-            return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
-        }
-
-        async function init() {
-            setGenderUI(isMale); 
-            dateSelector.value = getTodayStr(); 
-            await loadFromFirebase();
-            attachEditablePanelListeners();
-        }
-
-        async function loadFromFirebase() {
-            dbStatus.textContent = "⏳ Cargando...";
-            try {
-                const docSnap = await getDoc(DOC_REF);
-                if (docSnap.exists() && docSnap.data().registros) {
-                    trackingData = docSnap.data().registros.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    dbStatus.textContent = "🟢 Sincronizado con " + USER_ID;
-                } else {
-                    dbStatus.textContent = "🟡 Sin datos para " + USER_ID;
-                }
-                updateVisuals();
-            } catch (error) {
-                dbStatus.textContent = "🔴 Error Red";
-                updateVisuals();
-            }
-        }
-
-        async function saveToFirebase() {
-            dbStatus.textContent = "⏳ Guardando...";
-            try {
-                trackingData.sort((a, b) => new Date(b.date) - new Date(a.date));
-                await setDoc(DOC_REF, { registros: trackingData, ultima_actualizacion: new Date() }, { merge: true });
-                dbStatus.textContent = "🟢 Sincronizado con " + USER_ID;
-            } catch (error) {
-                dbStatus.textContent = "🔴 Error Guardar";
-            }
-        }
-
-        dateSelector.addEventListener('change', updateVisuals);
+        const measuresOverlay = document.getElementById('measuresOverlay');
+        const svgLines = document.getElementById('svgLines');
+        const bodyImage = document.getElementById('bodyImage');
+        const btnFemale = document.getElementById('btnFemale');
+        const btnMale = document.getElementById('btnMale');
 
         function getMetricForDate(key, targetDate) {
-            if (isMale !== actualUserGenderIsMale) {
-                return { value: null, isInherited: false, sourceDate: null };
-            }
-
+            if (isMale !== actualUserGenderIsMale) return { value: null, isInherited: false, sourceDate: null };
             for (let entry of trackingData) {
                 if (entry.date <= targetDate && entry[key] !== undefined && entry[key] !== null && entry[key] !== 0) {
-                    return { 
-                        value: entry[key], 
-                        isInherited: entry.date !== targetDate,
-                        sourceDate: entry.date
-                    };
+                    return { value: entry[key], isInherited: entry.date !== targetDate, sourceDate: entry.date };
                 }
             }
             return { value: null, isInherited: false, sourceDate: null };
@@ -355,11 +984,8 @@
 
             const sampleBadge = document.getElementById('sampleBadge');
             if (sampleBadge) {
-                if (isMale !== actualUserGenderIsMale) {
-                    sampleBadge.classList.remove('hidden');
-                } else {
-                    sampleBadge.classList.add('hidden');
-                }
+                if (isMale !== actualUserGenderIsMale) sampleBadge.classList.remove('hidden');
+                else sampleBadge.classList.add('hidden');
             }
 
             const setParam = (id, key) => {
@@ -376,25 +1002,17 @@
                 }
             };
 
-            setParam('val-Peso', 'Peso');
-            setParam('val-IMC', 'IMC');
-            setParam('val-Grasa', 'Grasa Corporal (%)');
-            setParam('val-MasaMuscular', 'Masa Muscular (kg)');
-            setParam('val-MusculoEsq', 'Músculo Esquelético (%)');
-            setParam('val-PesoSinGrasa', 'Peso Corporal sin Grasa (kg)');
-            setParam('val-GrasaSub', 'Grasa Subcutánea (%)');
-            setParam('val-GrasaVisc', 'Grasa Visceral');
-            setParam('val-Agua', 'Agua Corporal (%)');
-            setParam('val-MasaOsea', 'Masa Ósea (kg)');
-            setParam('val-Proteina', 'Proteína (%)');
-            setParam('val-TMB', 'Tasa Metabólica Basal (kcal)');
-            setParam('val-EdadMet', 'Edad Metabólica');
+            setParam('val-Peso', 'Peso'); setParam('val-IMC', 'IMC'); setParam('val-Grasa', 'Grasa Corporal (%)');
+            setParam('val-MasaMuscular', 'Masa Muscular (kg)'); setParam('val-MusculoEsq', 'Músculo Esquelético (%)');
+            setParam('val-PesoSinGrasa', 'Peso Corporal sin Grasa (kg)'); setParam('val-GrasaSub', 'Grasa Subcutánea (%)');
+            setParam('val-GrasaVisc', 'Grasa Visceral'); setParam('val-Agua', 'Agua Corporal (%)');
+            setParam('val-MasaOsea', 'Masa Ósea (kg)'); setParam('val-Proteina', 'Proteína (%)');
+            setParam('val-TMB', 'Tasa Metabólica Basal (kcal)'); setParam('val-EdadMet', 'Edad Metabólica');
 
             const activeMeasuresDef = isMale ? bodyMeasuresDefMale : bodyMeasuresDefFemale;
 
             activeMeasuresDef.forEach(def => {
                 const result = getMetricForDate(def.key, selectedDate);
-                
                 const tag = document.createElement('div');
                 tag.className = `measure-tag ${def.align === 'right' ? 'tag-right' : 'tag-left'}`;
                 tag.style.top = def.row + '%';
@@ -402,21 +1020,15 @@
                 const displayValue = result.value !== null ? parseFloat(result.value.toFixed(2)) : '--';
                 const colorClass = result.value !== null ? (result.isInherited ? 'text-red-600' : 'text-blue-600') : 'text-slate-400';
                 
-                tag.innerHTML = `
-                    <span class="measure-name">${def.label}</span>
-                    <span class="measure-val ${colorClass}" title="${result.value !== null ? (result.isInherited ? 'No actualizado desde el ' + result.sourceDate : 'Medido este día') : 'Sin datos'}">${displayValue}<span class="measure-unit">cm</span></span>
-                `;
+                tag.innerHTML = `<span class="measure-name">${def.label}</span><span class="measure-val ${colorClass}" title="${result.value !== null ? (result.isInherited ? 'Heredado de: ' + result.sourceDate : 'Hoy') : 'Sin datos'}">${displayValue}<span class="measure-unit">cm</span></span>`;
 
                 tag.addEventListener('click', () => {
-                    if (isMale === actualUserGenderIsMale) {
-                        openEditModal(def.key, def.label, result.value, selectedDate);
-                    }
+                    if (isMale === actualUserGenderIsMale) openEditMeasureModal(def.key, def.label, result.value, selectedDate);
                 });
                 measuresOverlay.appendChild(tag);
 
                 const startX = def.align === 'left' ? '0%' : '100%';
                 linesHTML += `<line x1="${startX}" y1="${def.row}%" x2="${def.targetX}%" y2="${def.targetY}%" stroke="#94a3b8" stroke-width="2" />`;
-                
                 const dotColor = result.value !== null && result.isInherited ? '#dc2626' : (isMale ? '#3b82f6' : '#ec4899');
                 linesHTML += `<circle cx="${def.targetX}%" cy="${def.targetY}%" r="3.5" fill="${dotColor}" stroke="#ffffff" stroke-width="1.5" />`;
             });
@@ -432,13 +1044,10 @@
                     const label = row.getAttribute('data-label');
                     const selectedDate = dateSelector.value || getTodayStr();
                     const result = getMetricForDate(key, selectedDate);
-                    openEditModal(key, label, result.value, selectedDate);
+                    openEditMeasureModal(key, label, result.value, selectedDate);
                 });
             });
         }
-
-        const btnFemale = document.getElementById('btnFemale');
-        const btnMale = document.getElementById('btnMale');
 
         function setGenderUI(male) {
             isMale = male;
@@ -457,49 +1066,44 @@
         btnFemale.addEventListener('click', () => setGenderUI(false));
         btnMale.addEventListener('click', () => setGenderUI(true));
 
-        const modal = document.getElementById('measureModal');
-        const modalValueInput = document.getElementById('measureValue');
-        let targetSaveDate = null; 
+        const measureModal = document.getElementById('measureModal');
+        const measureValueInput = document.getElementById('measureValue');
 
-        function openEditModal(key, label, currentValue, targetDate) {
+        function openEditMeasureModal(key, label, currentValue, targetDate) {
             activeEditKey = key;
             targetSaveDate = targetDate;
             document.getElementById('modalTitle').textContent = label;
             document.getElementById('modalSubtitle').textContent = `Inyectar dato en el día: ${targetDate}`;
-            
-            modalValueInput.value = (currentValue !== null && currentValue > 0) ? currentValue : '';
-            modal.classList.remove('hidden');
-            modalValueInput.focus();
+            measureValueInput.value = (currentValue !== null && currentValue > 0) ? currentValue : '';
+            measureModal.classList.remove('hidden');
+            measureValueInput.focus();
         }
 
-        document.getElementById('btnModalCancel').addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('btnModalCancel').addEventListener('click', () => measureModal.classList.add('hidden'));
 
         document.getElementById('btnModalSave').addEventListener('click', () => {
-            const val = parseFloat(modalValueInput.value);
+            const val = parseFloat(measureValueInput.value);
             if (activeEditKey && targetSaveDate) {
                 let record = trackingData.find(d => d.date === targetSaveDate);
-                if(!record) {
-                    record = { date: targetSaveDate };
-                    trackingData.push(record);
-                }
+                if(!record) { record = { date: targetSaveDate }; trackingData.push(record); }
                 
-                if (isNaN(val) || val <= 0) {
-                    delete record[activeEditKey];
-                } else {
-                    record[activeEditKey] = val;
-                }
+                if (isNaN(val) || val <= 0) delete record[activeEditKey];
+                else record[activeEditKey] = val;
                 
                 updateVisuals();
-                saveToFirebase();
+                saveMedidas();
             }
-            modal.classList.add('hidden');
+            measureModal.classList.add('hidden');
         });
 
         document.getElementById('btnModalDelete').addEventListener('click', () => {
-            modalValueInput.value = '';
+            measureValueInput.value = '';
             document.getElementById('btnModalSave').click(); 
         });
 
+        // ==========================================
+        // IMPORTADOR DE CSV 
+        // ==========================================
         function addOrUpdateRecord(dateStr, dataObj) {
             let record = trackingData.find(d => d.date === dateStr);
             if (!record) { record = { date: dateStr }; trackingData.push(record); }
@@ -510,35 +1114,11 @@
             trackingData.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
-        // ==========================================
-        // NAVEGACIÓN POR DÍAS (+ / -)
-        // ==========================================
-        function changeDateBy(days) {
-            if (!dateSelector.value) dateSelector.value = getTodayStr();
-            const [y, m, d] = dateSelector.value.split('-');
-            const current = new Date(y, m - 1, d); 
-            current.setDate(current.getDate() + days);
-            
-            const ny = current.getFullYear();
-            const nm = String(current.getMonth() + 1).padStart(2, '0');
-            const nd = String(current.getDate()).padStart(2, '0');
-            
-            dateSelector.value = `${ny}-${nm}-${nd}`;
-            updateVisuals();
-        }
-
-        document.getElementById('btnPrevDate').addEventListener('click', () => changeDateBy(-1));
-        document.getElementById('btnNextDate').addEventListener('click', () => changeDateBy(1));
-
-        // ==========================================
-        // CARGA DE CSV
-        // ==========================================
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
 
         ['dragenter', 'dragover'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('drag-over'); }));
         ['dragleave', 'drop'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('drag-over'); }));
-
         fileInput.addEventListener('change', function(e) { handleFile(e.target.files[0]); this.value = ''; });
         dropZone.addEventListener('drop', function(e) { handleFile(e.dataTransfer.files[0]); });
 
@@ -553,9 +1133,7 @@
                         const data = JSON.parse(e.target.result);
                         const measures = Array.isArray(data) ? data[0] : data; 
                         addOrUpdateRecord(measures.date || fallbackDate, measures);
-                        saveToFirebase();
-                        updateVisuals();
-                        alert("✅ JSON cargado.");
+                        saveMedidas(); updateVisuals(); alert("✅ JSON cargado.");
                     } catch(err) { alert("Error: " + err.message); }
                 };
                 reader.readAsText(file);
@@ -647,21 +1225,19 @@
                                 if(Object.keys(rowDataObj).length > 0) addOrUpdateRecord(fileDate, rowDataObj);
                             });
                         }
-                        saveToFirebase();
-                        updateVisuals();
-                        alert("✅ Archivo cargado correctamente.");
+                        saveMedidas(); updateVisuals(); alert("✅ Archivo cargado correctamente.");
                     } catch(err) { alert("Error: " + err.message); }
                 };
                 reader.readAsBinaryString(file);
             }
         }
 
+        // ==========================================
+        // GRÁFICOS Y EXPORTACIÓN
+        // ==========================================
         const chartModal = document.getElementById('chartModal');
-        const btnShowChart = document.getElementById('btnShowChart');
-        const btnCloseChart = document.getElementById('btnCloseChart');
         const chartMetricSelector = document.getElementById('chartMetricSelector');
         let evolutionChart = null;
-
         const allMetrics = [
             'Peso', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'IMC', 'Músculo Esquelético (%)', 
             'Agua Corporal (%)', 'Grasa Visceral', 'Tasa Metabólica Basal (kcal)',
@@ -669,156 +1245,119 @@
             'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'
         ];
 
-        allMetrics.forEach(metric => {
-            const option = document.createElement('option');
-            option.value = metric;
-            option.text = metric;
-            chartMetricSelector.add(option);
-        });
-
-        btnShowChart.addEventListener('click', () => {
-            chartModal.classList.remove('hidden');
-            renderChart(chartMetricSelector.value);
-        });
-
-        btnCloseChart.addEventListener('click', () => {
-            chartModal.classList.add('hidden');
-        });
-
-        chartMetricSelector.addEventListener('change', (e) => {
-            renderChart(e.target.value);
-        });
+        allMetrics.forEach(metric => chartMetricSelector.add(new Option(metric, metric)));
+        document.getElementById('btnShowChart').addEventListener('click', () => { chartModal.classList.remove('hidden'); renderChart(chartMetricSelector.value); });
+        document.getElementById('btnCloseChart').addEventListener('click', () => chartModal.classList.add('hidden'));
+        chartMetricSelector.addEventListener('change', (e) => renderChart(e.target.value));
 
         function renderChart(metricKey) {
             const ctx = document.getElementById('evolutionCanvas').getContext('2d');
-            
             const chronologicalData = [...trackingData].reverse();
-            
-            const labels = [];
-            const dataPoints = [];
+            const labels = [], dataPoints = [];
 
             chronologicalData.forEach(entry => {
                 if (entry[metricKey] !== undefined && entry[metricKey] !== null && entry[metricKey] !== 0) {
-                    labels.push(entry.date);
-                    dataPoints.push(entry[metricKey]);
+                    labels.push(entry.date); dataPoints.push(entry[metricKey]);
                 }
             });
 
-            if (evolutionChart) {
-                evolutionChart.destroy();
-            }
+            if (evolutionChart) evolutionChart.destroy();
 
             evolutionChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: metricKey,
-                        data: dataPoints,
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#4f46e5',
-                        pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        fill: true,
-                        tension: 0.3 
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleFont: { size: 14 },
-                            bodyFont: { size: 16, weight: 'bold' },
-                            padding: 12,
-                            displayColors: false
-                        }
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: false,
-                            grid: { color: '#f1f5f9' },
-                            ticks: { font: { weight: 'bold' }, color: '#64748b' }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#94a3b8' }
-                        }
-                    }
-                }
+                data: { labels: labels, datasets: [{ label: metricKey, data: dataPoints, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', borderWidth: 3, pointBackgroundColor: '#fff', pointBorderColor: '#4f46e5', pointBorderWidth: 2, pointRadius: 5, fill: true, tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
+       // ==========================================
+        // EXPORTACIÓN JSON SELECTIVA (CON BOTONES)
         // ==========================================
-        // EXPORTACIÓN JSON PARA INTELIGENCIA ARTIFICIAL
-        // ==========================================
+        const exportModal = document.getElementById('exportModal');
+
+        // Al pulsar el rayo, solo abrimos la ventana de opciones
         document.getElementById('btnExportJSON').addEventListener('click', () => {
-            if (!trackingData || trackingData.length === 0) {
-                alert("No hay datos para exportar.");
-                return;
-            }
-
-            const metricasAExportar = [
-                'Peso', 'IMC', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'Músculo Esquelético (%)', 
-                'Peso Corporal sin Grasa (kg)', 'Grasa Subcutánea (%)', 'Grasa Visceral', 'Agua Corporal (%)',
-                'Masa Ósea (kg)', 'Proteína (%)', 'Tasa Metabólica Basal (kcal)', 'Edad Metabólica',
-                'Cuello', 'Hombro', 'Pecho / Pectoral', 'Brazo Izquierdo', 'Brazo Derecho', 'Cintura', 'Abdomen (Ombligo)', 
-                'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'
-            ];
-
-            const exportData = trackingData.map(entry => {
-                const diaSnapshot = {
-                    fecha_visualizacion: entry.date,
-                    metricas: {}
-                };
-
-                metricasAExportar.forEach(m => {
-                    const res = getMetricForDate(m, entry.date);
-                    if (res.value !== null) {
-                        diaSnapshot.metricas[m] = {
-                            valor: res.value,
-                            fecha_real_de_medicion: res.sourceDate,
-                            es_dato_heredado_rojo: res.isInherited 
-                        };
-                    }
-                });
-
-                return diaSnapshot;
-            });
-
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-            const a = document.createElement('a');
-            a.href = dataStr;
-            a.download = `Evolucion_NutrIA_${USER_ID}.json`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+            exportModal.classList.remove('hidden');
         });
 
+        // Cerrar ventana si le damos a cancelar
+        window.closeExportModal = function() {
+            exportModal.classList.add('hidden');
+        }
+
+        // Función que se ejecuta al pulsar uno de los 4 botones
+        window.ejecutarExportacion = async function(opcion) {
+            exportModal.classList.add('hidden'); // Ocultar la ventana de inmediato
+            
+            let exportData = {};
+            let fileName = "";
+
+            const metricasAnalisis = ['Peso', 'IMC', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'Músculo Esquelético (%)', 'Peso Corporal sin Grasa (kg)', 'Grasa Subcutánea (%)', 'Grasa Visceral', 'Agua Corporal (%)', 'Masa Ósea (kg)', 'Proteína (%)', 'Tasa Metabólica Basal (kcal)', 'Edad Metabólica'];
+            const metricasSilueta = ['Cuello', 'Hombro', 'Pecho / Pectoral', 'Brazo Izquierdo', 'Brazo Derecho', 'Cintura', 'Abdomen (Ombligo)', 'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'];
+
+            const extraerMedidas = (lista) => {
+                if (!trackingData || trackingData.length === 0) return [];
+                return trackingData.map(entry => {
+                    let obj = { fecha: entry.date, metricas: {} };
+                    lista.forEach(m => {
+                        const res = getMetricForDate(m, entry.date);
+                        if(res.value !== null) obj.metricas[m] = { valor: res.value, heredado: res.isInherited };
+                    });
+                    return obj;
+                }).filter(e => Object.keys(e.metricas).length > 0);
+            };
+
+            let todosLosEntrenos = {};
+            if (opcion === "3" || opcion === "4") {
+                dbStatusMedidas.textContent = "⏳ Recopilando entrenamientos...";
+                try {
+                    const snap = await getDoc(DOC_REF_ENTRENA);
+                    if (snap.exists()) {
+                        todosLosEntrenos = snap.data();
+                        delete todosLosEntrenos.ultima_modificacion; 
+                    }
+                } catch(e) { console.error("Error cargando entrenos globales", e); }
+                dbStatusMedidas.textContent = "🟢 Sincronizado: " + USER_ID;
+            }
+
+            if (opcion === "1") {
+                exportData = extraerMedidas(metricasAnalisis);
+                fileName = `Analisis_Corporal_${USER_ID}.json`;
+            } else if (opcion === "2") {
+                exportData = extraerMedidas(metricasSilueta);
+                fileName = `Medidas_Silueta_${USER_ID}.json`;
+            } else if (opcion === "3") {
+                exportData = todosLosEntrenos;
+                fileName = `Entrenamientos_${USER_ID}.json`;
+            } else if (opcion === "4") {
+                exportData = {
+                    analisis_corporal: extraerMedidas(metricasAnalisis),
+                    medidas_silueta: extraerMedidas(metricasSilueta),
+                    entrenamientos: todosLosEntrenos
+                };
+                fileName = `Global_Metrics_Workouts_${USER_ID}.json`;
+            }
+
+            // Descargar el archivo
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const a = document.createElement('a'); a.href = dataStr; a.download = fileName;
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+
         // ==========================================
-        // INICIALIZACIÓN Y VALIDACIÓN DE SESIÓN
+        // AUTENTICACIÓN Y ARRANQUE MAESTRO
         // ==========================================
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 let nombreRealUsuario = user.uid; 
-
                 try {
                     const q = query(collection(db, 'usuarios'), where('uid', '==', user.uid));
                     const querySnapshot = await getDocs(q);
-                    
                     if (!querySnapshot.empty) {
                         nombreRealUsuario = querySnapshot.docs[0].id;
                     } else {
                         const localUser = localStorage.getItem('nutria_saved_user');
-                        if (localUser && localUser !== user.uid) {
-                            nombreRealUsuario = localUser;
-                        }
+                        if (localUser && localUser !== user.uid) nombreRealUsuario = localUser;
                     }
                 } catch(e) {
                     console.warn("No se pudo buscar el nombre en la BD, usando memoria local.");
@@ -826,25 +1365,18 @@
                 }
 
                 USER_ID = nombreRealUsuario;
-                DOC_REF = doc(db, "medidas_corporales", USER_ID);
+                DOC_REF_MEDIDAS = doc(db, "medidas_corporales", USER_ID);
+                DOC_REF_ENTRENA = doc(db, "entrenamientos_diarios", USER_ID);
                 
-                // Detectar sexo desde el perfil de Nutria
                 try {
                     const perfilRef = doc(db, 'usuarios', USER_ID);
                     const perfilSnap = await getDoc(perfilRef);
-                    if (perfilSnap.exists()) {
-                        const datosPerfil = perfilSnap.data();
-                        if (datosPerfil.g === 'female') {
-                            actualUserGenderIsMale = false;
-                            isMale = false; 
-                        } else {
-                            actualUserGenderIsMale = true;  
-                            isMale = true; 
-                        }
+                    if (perfilSnap.exists() && perfilSnap.data().g === 'female') {
+                        actualUserGenderIsMale = false; isMale = false; 
+                    } else {
+                        actualUserGenderIsMale = true; isMale = true; 
                     }
-                } catch(e) {
-                    console.warn("No se pudo cargar el género desde la base de datos.");
-                }
+                } catch(e) { console.warn("No se pudo cargar el género."); }
 
                 init();
             } else {
