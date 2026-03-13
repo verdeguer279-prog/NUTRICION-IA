@@ -245,54 +245,105 @@ window.Render = {
         
         if(!window.S.u||!window.S.u.calc)return;
         
-        // --- NUEVA LÓGICA DE BONUS POR ENTRENAMIENTO ---
+       // --- NUEVA LÓGICA DE BONUS SEPARADA ---
         let burnedKcal = 0;
         if (window.S.workouts) { window.S.workouts.forEach(w => { burnedKcal += (w.kcal || 0); }); }
         let bonus = burnedKcal >= 350 ? burnedKcal - 350 : 0;
 
         const tg = window.S.u.calc; 
-        const totalGoal = tg.goal + bonus;
-        const diff = totalGoal - t.k;
-        const maintenance = tg.maintenance || tg.goal;
+        const goal = tg.goal; // META ESTRICTA BASE
+        const maintenance = tg.maintenance || goal;
         
-        // Calcular cuánto bonus se ha gastado realmente
-        const bonusUsado = t.k > tg.goal ? Math.min(t.k - tg.goal, bonus) : 0;
+        // Cálculos
+        let diff = goal - t.k; 
+        let bonusUsado = t.k > goal ? Math.min(t.k - goal, bonus) : 0;
+        let bonusRestante = Math.max(0, bonus - bonusUsado);
         
         let bonusHtml = '';
         if (bonus > 0) {
-            bonusHtml += `<div style="color:#10b981; display:flex; align-items:center; gap:5px" title="Bonus Ganado"><i class="fas fa-running"></i> Bonus: +${Math.round(bonus)}</div>`;
-            if (bonusUsado > 0) {
-                bonusHtml += `<div style="color:#eab308; display:flex; align-items:center; gap:5px" title="Bonus Gastado"><i class="fas fa-cookie-bite"></i> Usado: ${Math.round(bonusUsado)}</div>`;
-            }
+            // Texto del bonus superior ahora es Verde
+            bonusHtml += `<div style="color:#10b981; display:flex; align-items:center; gap:5px" title="Bonus Disponible"><i class="fas fa-running"></i> Bonus: +${Math.round(bonus)}</div>`;
         }
 
         const bioHtml = `
             <div class="top-stat-bar" style="display:flex; justify-content:center; flex-wrap:wrap; gap:15px; font-weight:700; font-size:0.9rem; margin-bottom:10px;">
             <div style="color:#f59e0b; display:flex; align-items:center; gap:5px"><i class="fas fa-fire"></i> Mant: ${maintenance}</div>
-            <div style="color:#ef4444; display:flex; align-items:center; gap:5px"><i class="fas fa-bullseye"></i> Meta: ${tg.goal}</div>
+            <div style="color:#3b82f6; display:flex; align-items:center; gap:5px"><i class="fas fa-bullseye"></i> Meta Base: ${goal}</div>
                 ${bonusHtml}
             </div>`;
         document.getElementById('bio-txt').innerHTML = bioHtml;
 
-        const ring = document.getElementById('ring-bg'), lbl=document.getElementById('l-restan'), val=document.getElementById('v-rem');
-        lbl.style.color = ""; val.style.color = ""; // Reset estilos
+        const ring = document.getElementById('ring-bg');
+        const ringIn = document.querySelector('#ring-bg .ring-in');
+        const lbl = document.getElementById('l-restan');
+        const val = document.getElementById('v-rem');
+        lbl.style.color = ""; val.style.color = ""; 
         
-        if (diff < 0) {
-            ring.classList.add('danger'); lbl.innerText="EXCESO"; val.innerText=Math.abs(Math.round(diff));
-            ring.style.background=`conic-gradient(#ef4444 0% 100%)`; // Todo Rojo
-        } else {
+        ringIn.style.position = 'relative';
+        ringIn.style.zIndex = '10';
+        
+        let innerRing = document.getElementById('inner-bonus-ring');
+        if(!innerRing) {
+            innerRing = document.createElement('div');
+            innerRing.id = 'inner-bonus-ring';
+            innerRing.style.position = 'absolute';
+            innerRing.style.inset = '6px';
+            innerRing.style.borderRadius = '50%';
+            innerRing.style.zIndex = '1'; 
+            ring.insertBefore(innerRing, ring.firstChild);
+        }
+        
+        let extraTxt = document.getElementById('v-bonus-txt');
+        if(!extraTxt) {
+            extraTxt = document.createElement('div');
+            extraTxt.id = 'v-bonus-txt';
+            extraTxt.style.fontWeight = '900';
+            extraTxt.style.fontSize = '0.75rem';
+            extraTxt.style.marginTop = '4px';
+            ringIn.appendChild(extraTxt);
+        }
+
+        // LÓGICA DE COLORES DEL ANILLO (Azul, Morado, Verde, Rojo)
+        if (t.k <= goal) {
+            // Estás dentro de la base: Morado consumido, Azul restante
             ring.classList.remove('danger');
-            if (t.k <= tg.goal) {
-                lbl.innerText = "RESTAN"; val.innerText = Math.round(diff);
-                const pct = Math.min((t.k / totalGoal) * 100, 100);
-                ring.style.background=`conic-gradient(#2563eb 0% ${pct}%, #10b981 ${pct}% 100%)`; // Azul y Verde
+            lbl.innerText = "RESTAN (BASE)"; val.innerText = Math.round(goal - t.k);
+            const pct = (t.k / goal) * 100;
+            ring.style.background = `conic-gradient(#8b5cf6 0% ${pct}%, #3b82f6 ${pct}% 100%)`; 
+            
+            if (bonus > 0) {
+                extraTxt.style.display = 'block'; extraTxt.style.color = '#10b981';
+                extraTxt.innerText = `+${Math.round(bonus)} BONUS`;
+                innerRing.style.background = `conic-gradient(#10b981 0% 100%)`; // Bonus entero verde
+            } else { extraTxt.style.display = 'none'; innerRing.style.background = 'transparent'; }
+            
+        } else {
+            // Te has pasado de la base.
+            if (bonus > 0 && t.k <= (goal + bonus)) {
+                // Usando bonus: El anillo principal base se vuelve Morado completo
+                ring.classList.remove('danger');
+                ring.style.background = `conic-gradient(#8b5cf6 0% 100%)`; 
+                
+                lbl.innerText = "USANDO BONUS"; val.innerText = Math.round(bonusRestante);
+                extraTxt.style.display = 'block'; extraTxt.style.color = '#10b981';
+                extraTxt.innerText = `USADO: ${Math.round(bonusUsado)}`;
+                
+                // Anillo interno: Verde Oscuro (gastado) y Verde Normal (restante)
+                const pctBonus = (bonusUsado / bonus) * 100;
+                innerRing.style.background = `conic-gradient(#059669 0% ${pctBonus}%, #10b981 ${pctBonus}% 100%)`; 
             } else {
-                lbl.innerText = "EXTRA RESTA"; val.innerText = Math.round(diff);
-                lbl.style.color = "#eab308"; // Texto en amarillo para indicar que estamos en zona bonus
-                const basePct = (tg.goal / totalGoal) * 100;
-                const consumedPct = (t.k / totalGoal) * 100;
-                // Azul (Base), Amarillo (Bonus gastado), Verde (Bonus restante)
-                ring.style.background=`conic-gradient(#2563eb 0% ${basePct}%, #eab308 ${basePct}% ${consumedPct}%, #10b981 ${consumedPct}% 100%)`;
+                // Exceso total: Se pinta TODO de rojo
+                let excesoTotal = t.k > (goal + bonus) ? t.k - (goal + bonus) : (t.k - goal);
+                lbl.innerText = "EXCESO"; val.innerText = Math.round(excesoTotal);
+                
+                ring.classList.add('danger');
+                ring.style.background = `conic-gradient(#ef4444 0% 100%)`; // Rojo base
+                
+                if (bonus > 0) {
+                    extraTxt.style.display = 'block'; extraTxt.style.color = '#ef4444';
+                    extraTxt.innerText = `BONUS AGOTADO`;
+                    innerRing.style.background = `conic-gradient(#ef4444 0% 100%)`; // Rojo interno
+                } else { extraTxt.style.display = 'none'; innerRing.style.background = 'transparent'; }
             }
         }
         
@@ -649,36 +700,63 @@ window.Stats = {
         const wVal = parseFloat(document.getElementById('w-today').value);
         const waistVal = parseFloat(document.getElementById('waist-today').value);
         
-        if((!wVal || wVal <= 0) && (!waistVal || waistVal <= 0)) return alert("Introduce al menos un valor válido (peso o cintura)");
-        
+        // ELIMINAMOS EL BLOQUEO: Ya no da error si está vacío, ahora procede a borrar.
         const dStr = document.getElementById('st-date').value;
         const ref = fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr);
         
-        // 1. Guardar en el diario histórico usando MERGE TRUE para no pisar las comidas
-        let updateData = {};
-        if (wVal > 0) updateData.weight = wVal;
-        if (waistVal > 0) updateData.waist = waistVal;
+        // 1. Guardar en el diario (o establecer como null para borrarlos)
+        let updateData = {
+            weight: wVal > 0 ? wVal : null,
+            waist: waistVal > 0 ? waistVal : null
+        };
 
         await fire.setDoc(ref, updateData, { merge: true });
         
         if (dStr === window.S.d.toISOString().split('T')[0]) {
-            if (wVal > 0) window.S.day.weight = wVal;
-            if (waistVal > 0) window.S.day.waist = waistVal;
+            window.S.day.weight = wVal > 0 ? wVal : null;
+            window.S.day.waist = waistVal > 0 ? waistVal : null;
         }
         
-        // 2. MAGIA: Auto-actualizar el perfil y recalcular metabolismo
-        if (window.S.u) {
+        // 2. Sincronizar (o borrar) en el Tracker de Medidas (Silueta)
+        try {
+            const medidasRef = fire.doc(db, "medidas_corporales", window.S.uid);
+            const medidasSnap = await fire.getDoc(medidasRef);
+            let registros = [];
+            if (medidasSnap.exists() && medidasSnap.data().registros) {
+                registros = medidasSnap.data().registros;
+            }
+            
+            let recIndex = registros.findIndex(r => r.date === dStr);
+            
+            if (recIndex >= 0) {
+                // Si el registro existe, actualizamos o borramos sus propiedades
+                if (wVal > 0) registros[recIndex]['Peso'] = wVal; 
+                else delete registros[recIndex]['Peso'];
+                
+                if (waistVal > 0) registros[recIndex]['Abdomen (Ombligo)'] = waistVal;
+                else delete registros[recIndex]['Abdomen (Ombligo)'];
+                
+                // Si al borrar nos hemos quedado solo con la fecha (vacío), borramos el registro entero de ese día
+                if (Object.keys(registros[recIndex]).length <= 1) {
+                    registros.splice(recIndex, 1);
+                }
+            } else if (wVal > 0 || waistVal > 0) {
+                // Crear un registro nuevo solo si estamos añadiendo datos reales
+                let rec = { date: dStr };
+                if (wVal > 0) rec['Peso'] = wVal;
+                if (waistVal > 0) rec['Abdomen (Ombligo)'] = waistVal;
+                registros.push(rec);
+            }
+            
+            registros.sort((a, b) => new Date(b.date) - new Date(a.date));
+            await fire.setDoc(medidasRef, { registros: registros, ultima_actualizacion: new Date() }, { merge: true });
+        } catch(e) { console.error("Error al sincronizar con silueta:", e); }
+
+        // 3. Auto-actualizar el perfil (Solo lo hacemos si introduces un dato. Si estás borrando, no tocamos tu perfil principal)
+        if (window.S.u && (wVal > 0 || waistVal > 0)) {
             let userUpdated = false;
-            if (wVal > 0) {
-                window.S.u.w = wVal;
-                if (!window.S.u.iw) window.S.u.iw = wVal;
-                userUpdated = true;
-            }
-            if (waistVal > 0) {
-                window.S.u.waist = waistVal;
-                if (!window.S.u.iwaist) window.S.u.iwaist = waistVal;
-                userUpdated = true;
-            }
+            if (wVal > 0) { window.S.u.w = wVal; if (!window.S.u.iw) window.S.u.iw = wVal; userUpdated = true; }
+            if (waistVal > 0) { window.S.u.waist = waistVal; if (!window.S.u.iwaist) window.S.u.iwaist = waistVal; userUpdated = true; }
 
             if (userUpdated) {
                 await fire.setDoc(fire.doc(db, 'usuarios', window.S.uid), window.S.u, { merge: true }); 
@@ -686,10 +764,13 @@ window.Stats = {
             }
         }
 
-        window.UI.showToast('⚖️ Métricas guardadas y ajustadas'); 
+        // Mostramos un mensaje diferente si ha guardado o si ha borrado
+        const estaBorrando = (!wVal || wVal <= 0) && (!waistVal || waistVal <= 0);
+        window.UI.showToast(estaBorrando ? '🗑️ Medidas de este día eliminadas' : '⚖️ Medidas guardadas y sincronizadas'); 
+        
         window.Stats.updateView();
     },
-    updateView: async () => {
+   updateView: async () => {
         try {
             const dateInput = document.getElementById('st-date').value;
             const dStr = dateInput || window.S.d.toISOString().split('T')[0];
@@ -707,13 +788,13 @@ window.Stats = {
             for(let h of hist){ if(h.weight){ firstW = h.weight; break; } }
             for(let h of hist){ if(h.weight && h.id < dStr) prevW = h.weight; }
             if(currW) {
-                const diff = (c, b) => { const d=c-b; const col = d > 0 ? 'text-bad' : 'text-ok'; return `<b class="${col}">${d>0?'+':''}${d.toFixed(1)}kg</b>`; };
+                // Aquí están los 2 decimales correctos (.toFixed(2))
+                const diff = (c, b) => { const d=c-b; const col = d > 0 ? 'text-bad' : 'text-ok'; return `<b class="${col}">${d>0?'+':''}${d.toFixed(2)}kg</b>`; };
                 if(prevW) html+=`<span>vs Ant: ${diff(currW,prevW)}</span>`;
-                html+=`<span>vs Ini (${firstW}): ${diff(currW, firstW)}</span>`;
+                html+=`<span>vs Ini (${firstW.toFixed(2)}): ${diff(currW, firstW)}</span>`;
             }
             fb.innerHTML = html;
 
-            // --- NUEVA LÓGICA DE BONUS Y DESGLOSE EN EL GRÁFICO DIARIO ---
             let dayBurned = 0;
             try {
                 const wSnap = await fire.getDoc(fire.doc(db, 'entrenamientos_diarios', window.S.uid));
@@ -726,10 +807,8 @@ window.Stats = {
             let dayCal=0; if(cur) MEALS.forEach(m=>{ if(cur[m.k]) cur[m.k].forEach(i=>dayCal+=i.k); });
             
             const goal = window.S.u.calc.goal;
-            const totalGoal = goal + dayBonus;
-            const isOver = dayCal > totalGoal;
-
-            // --- INYECCIÓN DEL PANEL DE DESGLOSE DETALLADO ---
+            
+           // --- PANEL DE DESGLOSE DETALLADO ---
             let breakdownBox = document.getElementById('bonus-breakdown');
             if (!breakdownBox) {
                 breakdownBox = document.createElement('div');
@@ -737,63 +816,71 @@ window.Stats = {
                 document.querySelector('.rings-container').insertAdjacentElement('beforebegin', breakdownBox);
             }
 
-            if (dayBonus > 0 || dayCal > goal) {
-                let usedBonus = dayCal > goal ? Math.min(dayCal - goal, dayBonus) : 0;
-                let realExcess = dayCal > totalGoal ? dayCal - totalGoal : 0;
+            let usedBase = Math.min(dayCal, goal);
+            let remainingBase = Math.max(0, goal - dayCal);
+            let usedBonus = dayCal > goal ? Math.min(dayCal - goal, dayBonus) : 0;
+            let remainingBonus = Math.max(0, dayBonus - usedBonus);
+            let realExcess = dayCal > (goal + dayBonus) ? dayCal - (goal + dayBonus) : 0;
 
-                breakdownBox.innerHTML = `
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; margin-bottom:20px; font-size:0.85rem;">
-                        <h4 style="margin:0 0 10px 0; color:#0f172a; font-size:0.9rem; text-align:center;">🔍 Desglose Calórico</h4>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>🎯 Meta Base:</span> <b>${goal} kcal</b></div>
-                        ${dayBonus > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#10b981;"><span>🏃‍♂️ Bonus Entrenamiento:</span> <b>+${Math.round(dayBonus)} kcal</b></div>` : ''}
+            breakdownBox.innerHTML = `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; margin-bottom:20px; font-size:0.85rem;">
+                    <h4 style="margin:0 0 10px 0; color:#0f172a; font-size:0.95rem; text-align:center;">🔍 Desglose Calórico Diario</h4>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#3b82f6;"><span>🎯 Meta Base Estricta:</span> <b>${goal} kcal</b></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#8b5cf6;"><span>🍽️ Consumido de la Base:</span> <b>${Math.round(usedBase)} kcal</b></div>
+                    ${remainingBase > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#3b82f6;"><span>✅ Base Restante:</span> <b>${Math.round(remainingBase)} kcal</b></div>` : ''}
+                    
+                    <div style="height:1px; background:#e2e8f0; margin:8px 0;"></div>
+                    
+                    ${dayBonus > 0 ? `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#10b981;"><span>🏃‍♂️ Bonus Ejercicio Ganado:</span> <b>+${Math.round(dayBonus)} kcal</b></div>
+                        ${usedBonus > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#059669;"><span>⚠️ Bonus Consumido:</span> <b>${Math.round(usedBonus)} kcal</b></div>` : ''}
+                        ${remainingBonus > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#10b981;"><span>🎁 Bonus Restante:</span> <b>${Math.round(remainingBonus)} kcal</b></div>` : ''}
+                    ` : `<div style="display:flex; justify-content:center; margin-bottom:5px; color:#94a3b8; font-style:italic;">Sin bonus de ejercicio hoy</div>`}
+                    
+                    ${realExcess > 0 ? `
                         <div style="height:1px; background:#e2e8f0; margin:8px 0;"></div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>🍽️ Total Consumido:</span> <b>${Math.round(dayCal)} kcal</b></div>
-                        ${usedBonus > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#eab308;"><span>⚠️ Bonus Gastado:</span> <b>${Math.round(usedBonus)} kcal</b></div>` : ''}
-                        ${realExcess > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#ef4444;"><span>🚨 Exceso Real:</span> <b>+${Math.round(realExcess)} kcal</b></div>` : ''}
-                    </div>
-                `;
-                breakdownBox.style.display = 'block';
-            } else {
-                breakdownBox.style.display = 'none';
-            }
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#ef4444; font-size:0.95rem;"><span>🚨 Exceso Real:</span> <b>+${Math.round(realExcess)} kcal</b></div>
+                    ` : ''}
+                    <div style="margin-top:10px; text-align:center; font-weight:800; font-size:1.05rem; color:#0f172a;">TOTAL INGERIDO: ${Math.round(dayCal)} kcal</div>
+                </div>
+            `;
+            breakdownBox.style.display = 'block';
 
-            // --- LÓGICA DE COLORES DEL DONUT ---
+            // --- GRÁFICO TIPO DONUT MULTI-CAPA (DIARIO) ---
             const ctxD = document.getElementById('chart-daily');
             if(window.Stats.chartDaily) window.Stats.chartDaily.destroy();
             
-            let chartData = []; let chartColors = [];
+            document.getElementById('daily-txt').innerHTML=`
+                <span class="srt-val" style="line-height:1">${Math.round(dayCal)}</span>
+                <span class="srt-lbl">de ${goal} Base</span>
+            `;
 
-            if (dayCal <= goal) {
-                chartData = [dayCal, goal - dayCal];
-                chartColors = ['#3b82f6', '#e2e8f0']; // Azul (Base Usada), Gris (Base Restante)
-                if (dayBonus > 0) {
-                    chartData.push(dayBonus);
-                    chartColors.push('#10b981'); // Verde (Bonus intacto)
-                }
-            } else if (dayCal <= totalGoal) {
-                let usedBonus = dayCal - goal;
-                let remainingBonus = totalGoal - dayCal;
-                chartData = [goal, usedBonus, remainingBonus];
-                chartColors = ['#3b82f6', '#eab308', '#10b981']; // Azul (Base llena), Amarillo (Bonus usado), Verde (Bonus restante)
-            } else {
-                let excess = dayCal - totalGoal;
-                if (dayBonus > 0) {
-                    chartData = [goal, dayBonus, excess];
-                    chartColors = ['#3b82f6', '#eab308', '#ef4444']; // Azul (Base llena), Amarillo (Bonus gastado), Rojo (Exceso total)
-                } else {
-                    chartData = [goal, excess];
-                    chartColors = ['#3b82f6', '#ef4444']; // Azul (Base llena), Rojo (Exceso)
-                }
+            let outerSum = Math.max(goal, dayCal);
+            let datasetOuter = {
+                data: [usedBase, remainingBase, realExcess > 0 ? realExcess : 0],
+                backgroundColor: ['#8b5cf6', '#3b82f6', '#ef4444'], // Morado(Usado), Azul(Libre), Rojo(Exceso)
+                borderWidth: 1, borderColor: '#ffffff'
+            };
+            let datasets = [datasetOuter];
+
+            if (dayBonus > 0) {
+                let dummySpace = outerSum - usedBonus - remainingBonus;
+                let datasetInner = {
+                    data: [usedBonus, remainingBonus, dummySpace],
+                    backgroundColor: ['#059669', '#10b981', 'transparent'], // VerdeOscuro(Usado), VerdeNormal(Libre)
+                    borderWidth: 1, borderColor: '#ffffff',
+                    weight: 0.4
+                };
+                if (realExcess > 0) datasetInner.backgroundColor = ['#ef4444', 'transparent', 'transparent'];
+                datasets.push(datasetInner);
             }
 
             window.Stats.chartDaily = new Chart(ctxD, { 
                 type:'doughnut', 
-                data:{ datasets:[{data:chartData, backgroundColor:chartColors, borderWidth:0}] }, 
-                options:{cutout:'75%', plugins:{legend:{display:false}}, animation: false} 
+                data:{ datasets: datasets }, 
+                options:{ cutout:'60%', plugins:{legend:{display:false}}, animation: false } 
             });
-            
-            document.getElementById('daily-txt').innerHTML=`<span class="srt-val">${Math.round(dayCal)}</span><span class="srt-lbl">de ${Math.round(totalGoal)}</span>`;
-
+            // --- GRÁFICO SEMANAL (El que había desaparecido) ---
             const dObj = new Date(dStr); const dayNum = dObj.getDay()||7; dObj.setDate(dObj.getDate()-dayNum+1);
             let wCal=0, wGoal=goal*7;
             for(let i=0;i<7;i++){ const tD=new Date(dObj); tD.setDate(dObj.getDate()+i); const k=tD.toISOString().split('T')[0]; const h=hist.find(x=>x.id===k); if(h) MEALS.forEach(m=>{if(h[m.k]) h[m.k].forEach(x=>wCal+=x.k)}); }
@@ -801,6 +888,7 @@ window.Stats = {
             window.Stats.chartWeekly = new Chart(document.getElementById('chart-weekly'), { type:'doughnut', data:{labels:['S','R'],datasets:[{data:[wCal, Math.max(0, wGoal-wCal)], backgroundColor:['#8b5cf6','#e2e8f0']}]}, options:{cutout:'75%', plugins:{legend:{display:false}}} });
             document.getElementById('weekly-txt').innerHTML=`<span class="srt-val">${Math.round(wCal)}</span><span class="srt-lbl">de ${wGoal}</span>`;
 
+            // --- GRÁFICO EVOLUCIÓN PESO (El que había desaparecido) ---
             const cD=[], cW=[]; for(let i=29; i>=0; i--) { const tD=new Date(dStr); tD.setDate(tD.getDate()-i); const k=tD.toISOString().split('T')[0]; cD.push(k.slice(5)); const h=hist.find(x=>x.id===k); cW.push(h?h.weight:null); }
             if(window.Stats.chartWeight) window.Stats.chartWeight.destroy();
             const canvasW = document.getElementById('chart-weight'); const ctxW = canvasW.getContext('2d');
