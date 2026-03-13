@@ -245,7 +245,7 @@ window.Render = {
         
         if(!window.S.u||!window.S.u.calc)return;
         
-       // --- NUEVA LÓGICA DE BONUS SEPARADA ---
+      // --- NUEVA LÓGICA DE BONUS SEPARADA ---
         let burnedKcal = 0;
         if (window.S.workouts) { window.S.workouts.forEach(w => { burnedKcal += (w.kcal || 0); }); }
         let bonus = burnedKcal >= 350 ? burnedKcal - 350 : 0;
@@ -261,7 +261,6 @@ window.Render = {
         
         let bonusHtml = '';
         if (bonus > 0) {
-            // Texto del bonus superior ahora es Verde
             bonusHtml += `<div style="color:#10b981; display:flex; align-items:center; gap:5px" title="Bonus Disponible"><i class="fas fa-running"></i> Bonus: +${Math.round(bonus)}</div>`;
         }
 
@@ -278,6 +277,13 @@ window.Render = {
         const lbl = document.getElementById('l-restan');
         const val = document.getElementById('v-rem');
         lbl.style.color = ""; val.style.color = ""; 
+        
+        // --- AJUSTE DE TAMAÑOS PARA QUE EL TEXTO RESPIRE ---
+        ring.style.width = '120px'; 
+        ring.style.height = '120px';
+        ringIn.style.width = '100px'; 
+        ringIn.style.height = '100px';
+        lbl.style.fontSize = '0.55rem'; // Letra un poco más pequeña
         
         ringIn.style.position = 'relative';
         ringIn.style.zIndex = '10';
@@ -298,12 +304,12 @@ window.Render = {
             extraTxt = document.createElement('div');
             extraTxt.id = 'v-bonus-txt';
             extraTxt.style.fontWeight = '900';
-            extraTxt.style.fontSize = '0.75rem';
-            extraTxt.style.marginTop = '4px';
+            extraTxt.style.fontSize = '0.70rem'; // Letra ajustada
+            extraTxt.style.marginTop = '2px';
             ringIn.appendChild(extraTxt);
         }
 
-        // LÓGICA DE COLORES DEL ANILLO (Azul, Morado, Verde, Rojo)
+        // LÓGICA DE COLORES DEL ANILLO
         if (t.k <= goal) {
             // Estás dentro de la base: Morado consumido, Azul restante
             ring.classList.remove('danger');
@@ -314,35 +320,37 @@ window.Render = {
             if (bonus > 0) {
                 extraTxt.style.display = 'block'; extraTxt.style.color = '#10b981';
                 extraTxt.innerText = `+${Math.round(bonus)} BONUS`;
-                innerRing.style.background = `conic-gradient(#10b981 0% 100%)`; // Bonus entero verde
+                innerRing.style.background = `conic-gradient(#10b981 0% 100%)`; // Bonus intacto Verde
             } else { extraTxt.style.display = 'none'; innerRing.style.background = 'transparent'; }
             
         } else {
-            // Te has pasado de la base.
+            // Te has pasado de la base. ¿Hay bonus salvavidas?
             if (bonus > 0 && t.k <= (goal + bonus)) {
-                // Usando bonus: El anillo principal base se vuelve Morado completo
+                lbl.innerText = "USANDO BONUS"; val.innerText = Math.round(bonusRestante);
+                
+                // Anillo exterior base se queda Morado lleno
                 ring.classList.remove('danger');
                 ring.style.background = `conic-gradient(#8b5cf6 0% 100%)`; 
                 
-                lbl.innerText = "USANDO BONUS"; val.innerText = Math.round(bonusRestante);
-                extraTxt.style.display = 'block'; extraTxt.style.color = '#10b981';
+                extraTxt.style.display = 'block'; extraTxt.style.color = '#f59e0b'; // Texto naranja
                 extraTxt.innerText = `USADO: ${Math.round(bonusUsado)}`;
                 
-                // Anillo interno: Verde Oscuro (gastado) y Verde Normal (restante)
+                // Anillo interior: Naranja gastado, Verde sobrante
                 const pctBonus = (bonusUsado / bonus) * 100;
-                innerRing.style.background = `conic-gradient(#059669 0% ${pctBonus}%, #10b981 ${pctBonus}% 100%)`; 
+                innerRing.style.background = `conic-gradient(#f59e0b 0% ${pctBonus}%, #10b981 ${pctBonus}% 100%)`; 
             } else {
-                // Exceso total: Se pinta TODO de rojo
+                // Exceso total (ya sea porque agotaste el bonus o porque hoy no tenías bonus)
                 let excesoTotal = t.k > (goal + bonus) ? t.k - (goal + bonus) : (t.k - goal);
                 lbl.innerText = "EXCESO"; val.innerText = Math.round(excesoTotal);
                 
+                // Todo en Rojo
                 ring.classList.add('danger');
-                ring.style.background = `conic-gradient(#ef4444 0% 100%)`; // Rojo base
+                ring.style.background = `conic-gradient(#ef4444 0% 100%)`; 
                 
                 if (bonus > 0) {
                     extraTxt.style.display = 'block'; extraTxt.style.color = '#ef4444';
                     extraTxt.innerText = `BONUS AGOTADO`;
-                    innerRing.style.background = `conic-gradient(#ef4444 0% 100%)`; // Rojo interno
+                    innerRing.style.background = `conic-gradient(#ef4444 0% 100%)`; 
                 } else { extraTxt.style.display = 'none'; innerRing.style.background = 'transparent'; }
             }
         }
@@ -808,7 +816,7 @@ window.Stats = {
             
             const goal = window.S.u.calc.goal;
             
-           // --- PANEL DE DESGLOSE DETALLADO ---
+          // --- PANEL DE DESGLOSE DETALLADO ---
             let breakdownBox = document.getElementById('bonus-breakdown');
             if (!breakdownBox) {
                 breakdownBox = document.createElement('div');
@@ -833,7 +841,7 @@ window.Stats = {
                     
                     ${dayBonus > 0 ? `
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#10b981;"><span>🏃‍♂️ Bonus Ejercicio Ganado:</span> <b>+${Math.round(dayBonus)} kcal</b></div>
-                        ${usedBonus > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#059669;"><span>⚠️ Bonus Consumido:</span> <b>${Math.round(usedBonus)} kcal</b></div>` : ''}
+                        ${usedBonus > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#f59e0b;"><span>⚠️ Bonus Consumido:</span> <b>${Math.round(usedBonus)} kcal</b></div>` : ''}
                         ${remainingBonus > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#10b981;"><span>🎁 Bonus Restante:</span> <b>${Math.round(remainingBonus)} kcal</b></div>` : ''}
                     ` : `<div style="display:flex; justify-content:center; margin-bottom:5px; color:#94a3b8; font-style:italic;">Sin bonus de ejercicio hoy</div>`}
                     
@@ -858,7 +866,7 @@ window.Stats = {
             let outerSum = Math.max(goal, dayCal);
             let datasetOuter = {
                 data: [usedBase, remainingBase, realExcess > 0 ? realExcess : 0],
-                backgroundColor: ['#8b5cf6', '#3b82f6', '#ef4444'], // Morado(Usado), Azul(Libre), Rojo(Exceso)
+                backgroundColor: ['#8b5cf6', '#3b82f6', '#ef4444'], // Morado, Azul, Rojo
                 borderWidth: 1, borderColor: '#ffffff'
             };
             let datasets = [datasetOuter];
@@ -867,7 +875,7 @@ window.Stats = {
                 let dummySpace = outerSum - usedBonus - remainingBonus;
                 let datasetInner = {
                     data: [usedBonus, remainingBonus, dummySpace],
-                    backgroundColor: ['#059669', '#10b981', 'transparent'], // VerdeOscuro(Usado), VerdeNormal(Libre)
+                    backgroundColor: ['#f59e0b', '#10b981', 'transparent'], // Naranja(Usado), Verde(Libre)
                     borderWidth: 1, borderColor: '#ffffff',
                     weight: 0.4
                 };
