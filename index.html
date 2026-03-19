@@ -57,9 +57,14 @@
     <div class="modal" id="m-stats">
         <div class="sheet" style="max-width:600px">
             <div class="modal-h"><h3>Balance & Progreso</h3><button class="close-x" onclick="window.UI.closeAll()">&times;</button></div>
-            <button class="btn pri" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #8b5cf6;" onclick="window.location.href='MEDIDAS.html'">
-            <i class="fas fa-ruler-combined"></i> Ver Tracker de Medidas Corporales
-        </button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+    <button class="btn pri" style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; background: #8b5cf6; font-size: 0.85rem; padding: 12px 5px;" onclick="window.location.href='MEDIDAS.html'">
+        <i class="fas fa-ruler-combined"></i> Tracker Medidas
+    </button>
+    <button class="btn pri" style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; background: #06b6d4; font-size: 0.85rem; padding: 12px 5px;" onclick="window.location.href='SUPLEMENTOS.html'">
+        <i class="fas fa-pills"></i> Suplementos
+    </button>
+</div>
             <div class="day-stepper" style="margin-bottom:15px; justify-content:center">
                 <button class="day-btn" onclick="window.Stats.changeDate(-1)"><</button>
                 <input type="date" id="st-date" style="border:none;background:transparent;font-weight:bold;font-size:1.1rem" onchange="window.Stats.updateView()">
