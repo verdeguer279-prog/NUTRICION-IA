@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Control Nutricional - RAFA G279</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --primary: #0f172a;
+            --accent: #06b6d4;
+            --pendiente: #ef4444;
+            --tomado: #10b981;
+            --text: #1e293b;
+            --card-bg: #ffffff;
+            --card-border: #f1f5f9;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+            padding-top: 10px;
+        }
+
+        /* Botón Volver */
+        .btn-volver {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #e2e8f0;
+            color: #475569;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
+        .btn-volver:hover { background: #cbd5e1; }
+
+        h1 { text-align: center; color: var(--primary); font-size: 1.6em; margin-bottom: 20px; font-weight: 800; }
+        
+        .date-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .date-header button {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .date-info { text-align: center; flex: 1; }
+        .date-text { display: block; font-size: 0.95rem; font-weight: 700; text-transform: capitalize; }
+        .date-picker { background: transparent; border: none; color: white; font-size: 0.8rem; opacity: 0.8; cursor: pointer; }
+
+        .card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+        }
+        .card-header { cursor: pointer; color: var(--primary); font-weight: 700; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;}
+        
+        #form-container { display: none; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;}
+        input[type="text"], input[type="number"], select {
+            width: 100%; padding: 12px; margin: 8px 0 15px;
+            border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;
+        }
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .checkbox-label {
+            display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 10px; border-radius: 10px; font-size: 0.85rem; cursor: pointer;
+        }
+
+        .btn-submit {
+            background-color: var(--primary); color: white; border: none;
+            padding: 14px; width: 100%; font-size: 1rem; border-radius: 12px; cursor: pointer; font-weight: 800;
+        }
+
+        /* Dashboard Items Mejorados (NUEVO ESTILO RECTIFICADO) */
+        .meal-section { margin-bottom: 25px; }
+        .meal-title {
+            font-size: 1.1rem; font-weight: 800; color: var(--primary); border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+        }
+        
+        .sup-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid var(--card-border);
+            /* Marco lateral de color recuperado */
+            border-left: 6px solid #cbd5e1; 
+            padding: 12px 15px;
+            transition: 0.3s ease;
+        }
+
+        /* Colores dinámicos del marco lateral */
+        .sup-item.tomado { border-left-color: var(--tomado); }
+        .sup-item.pendiente { border-left-color: var(--pendiente); }
+
+        .sup-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .sup-info strong { display: block; font-size: 1rem; color: var(--primary); margin-bottom: 2px;}
+        .sup-info span { font-size: 0.85rem; color: #64748b; font-weight: 700; }
+        
+        .sup-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-estado {
+            border: none;
+            min-width: 100px;
+            height: 36px;
+            border-radius: 18px; /* Vuelve la píldora redondeada */
+            font-weight: 800;
+            color: white;
+            cursor: pointer;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 15px;
+            transition: 0.2s;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-estado.pendiente { background-color: var(--pendiente); }
+        .btn-estado.tomado { background-color: var(--tomado); }
+        
+        .btn-edit-tool {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            width: 36px; height: 36px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver a Nutr-IA
+    </a>
+
+    <h1>📋 Control de Suplementos</h1>
+
+    <div class="date-header">
+        <button id="btn-prev"><i class="fas fa-chevron-left"></i></button>
+        <div class="date-info">
+            <span class="date-text" id="display-date">Cargando...</span>
+            <input type="date" id="input-date" class="date-picker">
+        </div>
+        <button id="btn-next"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <div class="card">
+        <div class="card-header" onclick="toggleForm()">
+            <span>⚙️ Configurar mi plan de suplementación (Añadir/Editar)</span>
+            <span id="form-icon">▼</span>
+        </div>
+        
+        <div id="form-container">
+            <form id="sup-form">
+                <input type="hidden" id="edit-id">
+                <label style="font-size:0.85rem; font-weight:700">Nombre del Suplemento</label>
+                <input type="text" id="nombre" placeholder="Ej. Magnesio, Proteína..." required>
+
+                <label style="font-size:0.85rem; font-weight:700">Cantidad y Unidad</label>
+                <div style="display:flex; gap:10px">
+                    <input type="number" id="cantidad-num" placeholder="30" step="0.1" required style="flex:1">
+                    <select id="cantidad-unidad" style="flex:1">
+                        <option value="mg">mg</option>
+                        <option value="g">g</option>
+                        <option value="cápsula(s)">cápsula(s)</option>
+                    </select>
+                </div>
+
+                <label style="font-size:0.85rem; font-weight:700">¿Cuándo tomarlo?</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label"><input type="checkbox" value="Desayuno" class="momento-chk"> 🌅 Desayuno</label>
+                    <label class="checkbox-label"><input type="checkbox" value="Post-Entreno" class="momento-chk"> 🏋️ Post</label>
+                    <label class="checkbox-label"><input type="checkbox" value="Comida" class="momento-chk"> 🍲 Comida</label>
+                    <label class="checkbox-label"><input type="checkbox" value="Merienda" class="momento-chk"> 🍎 Merienda</label>
+                    <label class="checkbox-label"><input type="checkbox" value="Cena" class="momento-chk"> 🌙 Cena</label>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btn-save">Guardar en el Plan</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-diario"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
+            authDomain: "nutricion-f6e70.firebaseapp.com",
+            projectId: "nutricion-f6e70",
+            storageBucket: "nutricion-f6e70.firebasestorage.app",
+            messagingSenderId: "926932712073",
+            appId: "1:926932712073:web:d660418820d91ec4ec6458",
+            measurementId: "G-MFB78MVX9S"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const userId = "RAFA G279";
+        const basePlanRef = collection(db, 'usuarios', userId, 'suplementos_base');
+        const diarioRef = collection(db, 'usuarios', userId, 'diario_tomas');
+
+        let fechaActual = new Date();
+        let planBase = [];
+        let tomasDelDia = {};
+        let editMode = false;
+
+        const ordenComidas = [
+            { id: "Desayuno", icono: "🌅" },
+            { id: "Post-Entreno", icono: "🏋️" },
+            { id: "Comida", icono: "🍲" },
+            { id: "Merienda", icono: "🍎" },
+            { id: "Cena", icono: "🌙" }
+        ];
+
+        const formatearFechaString = (fecha) => {
+            const yyyy = fecha.getFullYear();
+            const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dd = String(fecha.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        };
+
+        const actualizarUIFecha = () => {
+            const opciones = { weekday: 'long', day: 'numeric', month: 'short' };
+            document.getElementById('display-date').innerText = fechaActual.toLocaleDateString('es-ES', opciones);
+            document.getElementById('input-date').value = formatearFechaString(fechaActual);
+        };
+
+        const cambiarDia = (dias) => {
+            fechaActual.setDate(fechaActual.getDate() + dias);
+            actualizarUIFecha();
+            cargarDatosDelDia();
+        };
+
+        document.getElementById('btn-prev').onclick = () => cambiarDia(-1);
+        document.getElementById('btn-next').onclick = () => cambiarDia(1);
+        document.getElementById('input-date').onchange = (e) => {
+            fechaActual = new Date(e.target.value);
+            actualizarUIFecha();
+            cargarDatosDelDia();
+        };
+
+        const cargarDatosDelDia = async () => {
+            const dashboard = document.getElementById('dashboard-diario');
+            dashboard.innerHTML = '<p style="text-align:center; opacity:0.5; margin-top:20px;">Actualizando...</p>';
+            try {
+                if(planBase.length === 0) {
+                    const planSnapshot = await getDocs(basePlanRef);
+                    planBase = planSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+                const fechaStr = formatearFechaString(fechaActual);
+                const docDia = await getDoc(doc(diarioRef, fechaStr));
+                tomasDelDia = docDia.exists() ? docDia.data() : {};
+                renderizarDashboard();
+            } catch (error) { console.error(error); }
+        };
+
+        const renderizarDashboard = () => {
+            const dashboard = document.getElementById('dashboard-diario');
+            dashboard.innerHTML = '';
+            if(planBase.length === 0) {
+                dashboard.innerHTML = '<div class="card" style="text-align:center; color:#94a3b8">Tu plan maestro está vacío.</div>';
+                return;
+            }
+
+            ordenComidas.forEach(comida => {
+                const suplementosComida = planBase.filter(sup => sup.momentos.includes(comida.id));
+                if(suplementosComida.length > 0) {
+                    let seccionHTML = `<div class="meal-section"><div class="meal-title">${comida.icono} ${comida.id}</div>`;
+                    suplementosComida.forEach(sup => {
+                        const claveToma = `${sup.id}_${comida.id}`;
+                        const estaTomado = tomasDelDia[claveToma] === true;
+                        const estadoClase = estaTomado ? 'tomado' : 'pendiente';
+
+                        // ICONOS COLORIDOS DINÁMICOS
+                        let iconoHtml = '';
+                        if (sup.unidad && sup.unidad.includes('cápsula')) {
+                            // Cápsula en color coral/rosa vibrante
+                            iconoHtml = `<i class="fas fa-capsules" style="font-size: 1.6rem; color: #ff4d6d; margin-right: 15px; width: 30px; text-align: center;"></i>`;
+                        } else {
+                            // Cuchara/Cazo en color ámbar/oro
+                            iconoHtml = `<i class="fas fa-spoon" style="font-size: 1.6rem; color: #ffb703; margin-right: 15px; width: 30px; text-align: center;"></i>`;
+                        }
+
+                        seccionHTML += `
+                            <div class="sup-item ${estadoClase}">
+                                ${iconoHtml}
+                                <div class="sup-info">
+                                    <strong>${sup.nombre}</strong>
+                                    <span>${sup.cantidad} ${sup.unidad}</span>
+                                </div>
+                                <div class="sup-actions">
+                                    <button class="btn-estado ${estaTomado?'tomado':'pendiente'}" onclick="marcarToma('${sup.id}', '${comida.id}', ${estaTomado})">
+                                        ${estaTomado?'TOMADO':'PENDIENTE'}
+                                    </button>
+                                    <button class="btn-edit-tool" onclick="editarSuplemento('${sup.id}')"><i class="fas fa-edit"></i></button>
+                                </div>
+                            </div>`;
+                    });
+                    seccionHTML += `</div>`;
+                    dashboard.innerHTML += seccionHTML;
+                }
+            });
+        };
+
+        window.marcarToma = async (idSup, comida, estadoActual) => {
+            const fechaStr = formatearFechaString(fechaActual);
+            const claveToma = `${idSup}_${comida}`;
+            tomasDelDia[claveToma] = !estadoActual;
+            renderizarDashboard();
+            try { await setDoc(doc(diarioRef, fechaStr), { [claveToma]: !estadoActual }, { merge: true }); } catch (e) {}
+        };
+
+        document.getElementById('sup-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const cantidad = document.getElementById('cantidad-num').value;
+            const unidad = document.getElementById('cantidad-unidad').value;
+            const momentosMarcados = Array.from(document.querySelectorAll('.momento-chk:checked')).map(chk => chk.value);
+            if(momentosMarcados.length === 0) return alert("Selecciona una comida");
+
+            try {
+                if(!editMode) {
+                    await setDoc(doc(basePlanRef), { nombre, cantidad, unidad, momentos: momentosMarcados });
+                } else {
+                    const idEdit = document.getElementById('edit-id').value;
+                    await setDoc(doc(basePlanRef, idEdit), { nombre, cantidad, unidad, momentos: momentosMarcados }, { merge: true });
+                }
+                location.reload();
+            } catch (e) {}
+        };
+
+        window.editarSuplemento = (id) => {
+            const sup = planBase.find(s => s.id === id);
+            document.getElementById('edit-id').value = sup.id;
+            document.getElementById('nombre').value = sup.nombre;
+            document.getElementById('cantidad-num').value = sup.cantidad;
+            document.getElementById('cantidad-unidad').value = sup.unidad;
+            document.querySelectorAll('.momento-chk').forEach(chk => chk.checked = sup.momentos.includes(chk.value));
+            editMode = true;
+            document.getElementById('btn-save').innerText = 'Actualizar Suplemento';
+            if(document.getElementById('form-container').style.display !== 'block') toggleForm();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if(!document.getElementById('btn-del')) {
+                const b = document.createElement('button'); b.id='btn-del'; b.innerText='🗑️ Eliminar';
+                b.style.cssText='background:#fee2e2; color:#ef4444; border:none; padding:12px; width:100%; border-radius:12px; margin-top:10px; font-weight:800; cursor:pointer';
+                b.onclick = async () => { if(confirm("¿Borrar?")) { await deleteDoc(doc(basePlanRef, id)); location.reload(); }};
+                document.getElementById('sup-form').appendChild(b);
+            }
+        };
+
+        window.toggleForm = () => {
+            const f = document.getElementById('form-container');
+            const i = document.getElementById('form-icon');
+            f.style.display = (f.style.display==='none'||f.style.display==='')?'block':'none';
+            i.innerText = f.style.display==='block'?'▲':'▼';
+        };
+
+        actualizarUIFecha();
+        cargarDatosDelDia();
+    </script>
+</body>
+</html>
