@@ -410,10 +410,19 @@ window.Render = {
                         <button style="width:32px; height:32px; border:1px solid #e2e8f0; background:white; border-radius:8px; color:#f59e0b; cursor:pointer;" onclick="window.Logic.openItemAct('${m.k}',${idx})">⇄</button>
                         <button style="width:32px; height:32px; border:1px solid #e2e8f0; background:white; border-radius:8px; color:#64748b; cursor:pointer;" onclick="window.Logic.editItem('${m.k}',${idx})">✏️</button>
                         <button style="width:32px; height:32px; border:1px solid #fee2e2; background:white; border-radius:8px; color:#ef4444; cursor:pointer;" onclick="window.Logic.delItem('${m.k}',${idx})">🗑️</button>
-                    </div>
+                   </div>
                 </div>`; 
             });
             
+            // SUGERENCIA DE AYER PARA COMIDAS ESPECÍFICAS
+            if (arr.length === 0 && ['01_desayuno', '02_almuerzo', '04_merienda'].includes(m.k)) {
+               rows = `<div style="padding:12px 15px;">
+    <button onclick="window.Logic.repeatHabitual('${m.k}')" style="background:#f0f9ff; border:1px dashed #bae6fd; color:#0284c7; padding:12px; border-radius:12px; font-weight:700; font-size:0.9rem; cursor:pointer; width:100%; text-align:center; transition:0.2s;">
+        🪄 Sugerencia: Repetir ${m.n} habitual
+    </button>
+</div>`;
+            }
+
             const mealHeader = `
                 <div class="c-head" style="padding:15px; background:white; border-bottom:1px solid #f1f5f9;">
                     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
@@ -1006,7 +1015,41 @@ const html = `
         reader.readAsText(file); 
     },
     wipe: async () => { if(confirm("Borrar día?")) { await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, window.S.d.toISOString().split('T')[0]), {}); window.Sys.sync(); window.UI.closeAll(); }},
-    execImport: async () => { const d = document.getElementById('imp-date').value, m = document.getElementById('imp-meal').value; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, d)); if(s.exists() && s.data()[m]) { window.S.day[m] = [...(window.S.day[m]||[]), ...s.data()[m]]; await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); } else alert("Sin datos"); }
+    execImport: async () => { const d = document.getElementById('imp-date').value, m = document.getElementById('imp-meal').value; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, d)); if(s.exists() && s.data()[m]) { window.S.day[m] = [...(window.S.day[m]||[]), ...s.data()[m]]; await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); } else alert("Sin datos"); },
+    
+    repeatHabitual: async (mk) => {
+        document.getElementById('loading-screen').style.display='flex';
+        try {
+            let habitualItems = null;
+            // Clonamos la fecha actual para no mover el calendario de la app mientras buscamos
+            let searchDate = new Date(window.S.d.getTime()); 
+            
+            // Buscamos hacia atrás (máximo 15 días) hasta encontrar esa comida con datos
+            for (let i = 0; i < 15; i++) {
+                searchDate.setDate(searchDate.getDate() - 1);
+                const dStr = searchDate.toISOString().split('T')[0];
+                const snap = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/diario`, dStr));
+                
+                if (snap.exists() && snap.data()[mk] && snap.data()[mk].length > 0) {
+                    habitualItems = snap.data()[mk];
+                    break; // ¡Encontrado! Paramos de buscar.
+                }
+            }
+            
+            if (habitualItems) {
+                window.S.day[mk] = [...habitualItems];
+                await window.DB.setDay();
+                window.Sys.sync();
+                window.UI.showToast('🪄 Hábito recuperado con éxito');
+            } else {
+                window.UI.showToast('No hay registros en los últimos 15 días', true);
+            }
+        } catch(e) { 
+            console.error(e);
+            window.UI.showToast('Error al conectar con el historial', true);
+        }
+        document.getElementById('loading-screen').style.display='none';
+    }
 };
 
 // --- 8. STATS ---
