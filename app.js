@@ -240,6 +240,13 @@ window.Render = {
     all: () => {
         document.getElementById('h-day').innerText = window.S.d.toLocaleDateString('es-ES', {weekday:'long'});
         document.getElementById('h-full').innerText = window.S.d.toLocaleDateString('es-ES');
+        
+        const dp = document.getElementById('main-date-picker');
+        if(dp) {
+            const y = window.S.d.getFullYear(), m = String(window.S.d.getMonth() + 1).padStart(2, '0'), d = String(window.S.d.getDate()).padStart(2, '0');
+            dp.value = `${y}-${m}-${d}`;
+        }
+
         if(window.S.u) document.getElementById('h-av').innerText = window.S.u.name.charAt(0).toUpperCase();
         let t={k:0, p:0, c:0, f:0}; Object.values(window.S.day).forEach(arr=>{if(Array.isArray(arr))arr.forEach(i=>{t.k+=i.k;t.p+=i.p;t.c+=i.c;t.f+=i.f;});});
         
@@ -355,9 +362,17 @@ window.Render = {
             }
         }
         
-        document.getElementById('v-p').innerText=`${Math.round(t.p)}/${Math.round(tg.p)}`; document.getElementById('b-p').style.width=Math.min((t.p/tg.p)*100,100)+'%'; 
-        document.getElementById('v-c').innerText=`${Math.round(t.c)}/${Math.round(tg.c)}`; document.getElementById('b-c').style.width=Math.min((t.c/tg.c)*100,100)+'%'; 
-        document.getElementById('v-f').innerText=`${Math.round(t.f)}/${Math.round(tg.f)}`; document.getElementById('b-f').style.width=Math.min((t.f/tg.f)*100,100)+'%';
+        const setMacroBar = (valId, barId, cur, max, color) => {
+            document.getElementById(valId).innerText = `${Math.round(cur)}/${Math.round(max)}`;
+            const bar = document.getElementById(barId);
+            bar.style.width = Math.min((cur / max) * 100, 100) + '%';
+            // Si llega al máximo, aplicamos el degradado para que la punta sea roja
+            bar.style.background = cur >= max ? `linear-gradient(to right, ${color} 70%, #ef4444 100%)` : color;
+        };
+        
+        setMacroBar('v-p', 'b-p', t.p, tg.p, 'var(--pro)');
+        setMacroBar('v-c', 'b-c', t.c, tg.c, 'var(--car)');
+        setMacroBar('v-f', 'b-f', t.f, tg.f, 'var(--fat)');
         
         const feed=document.getElementById('feed'); feed.innerHTML='';
         const shortDate = window.S.d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
@@ -431,6 +446,12 @@ window.Render = {
 // --- 7. LOGIC ---
 window.Logic = {
     day: (n) => { window.S.d.setDate(window.S.d.getDate() + n); window.Sys.sync(); },
+    setDate: (dateStr) => { 
+        if(!dateStr) return; 
+        const [y, m, d] = dateStr.split('-'); 
+        window.S.d = new Date(y, m - 1, d); 
+        window.Sys.sync(); 
+    },
     autoSave: async () => { await window.DB.setDay(); window.Render.all(); },
     
     filterType: 'all',      
@@ -626,22 +647,262 @@ window.Logic = {
     savePlateToDb: async () => { const n=document.getElementById('plate-name').value; const chk=document.querySelectorAll('#plate-ingredients-list input:checked'); let its=[],tk=0,tp=0,tc=0,tf=0; chk.forEach(c=>{const i=window.S.day[window.S.srcMeal][c.value]; its.push(i); tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f;}); window.S.platos.push({n, k:tk, p:tp, c:tc, f:tf, items:its}); await window.DB.savePlates(); window.UI.closeAll(); alert("Plato guardado"); },
     openItemAct: (mk,i) => { window.S.tm=mk; window.S.eIdx=i; window.S.item=window.S.day[mk][i]; document.getElementById('ia-name').innerText=window.S.item.n; document.getElementById('ia-date').valueAsDate=window.S.d; document.getElementById('ia-meal').value=mk; window.UI.open('m-item-act'); },
     execItemAct: async (m) => { const d=document.getElementById('ia-date').value, tm=document.getElementById('ia-meal').value; let td=(d===window.S.d.toISOString().split('T')[0])?window.S.day:(await fire.getDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d))).data()||{}; if(!td[tm])td[tm]=[]; td[tm].push(window.S.item); if(m=='move')window.S.day[window.S.tm].splice(window.S.eIdx,1); await fire.setDoc(fire.doc(db,`usuarios/${window.S.uid}/diario`,d),td); await window.DB.setDay(); window.UI.closeAll(); window.Sys.sync(); },
-    pdf: () => { const el = document.getElementById('feed'); if(!el || el.innerText.trim() === "") return alert("Vacío"); const opt = { margin: 10, filename: `Diario_${window.S.d.toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }; html2pdf().set(opt).from(el).save(); },
+pdf: async () => {
+        document.getElementById('loading-screen').style.display='flex';
+        try {
+            const dateStr = window.S.d.toISOString().split('T')[0];
+            const niceDate = window.S.d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            // 1. Obtener Alimentación
+            let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
+            let mealsHtml = '';
+            const MEALS = [ { k: '01_desayuno', n: 'Desayuno' }, { k: '02_almuerzo', n: 'Almuerzo' }, { k: '03_comida', n: 'Comida' }, { k: '04_merienda', n: 'Merienda' }, { k: '05_cena', n: 'Cena' } ];
+
+            MEALS.forEach(m => {
+                if(window.S.day[m.k] && window.S.day[m.k].length > 0) {
+                    let mk = 0, mp = 0, mc = 0, mf = 0;
+                    let itemsHtml = '<table style="width: 100%; border-collapse: collapse;">';
+                    window.S.day[m.k].forEach(i => {
+                        mk += i.k; mp += i.p; mc += i.c; mf += i.f;
+                        itemsHtml += `
+                            <tr>
+                                <td style="padding: 6px 0; border-bottom: 1px dashed #cbd5e1; font-size: 11px; color: #334155; width: 75%;">
+                                    <b>${i.n}</b> <span style="color:#94a3b8">(${i.q}${i.u})</span>
+                                </td>
+                                <td style="padding: 6px 20px 6px 0; border-bottom: 1px dashed #cbd5e1; font-size: 11px; font-weight: bold; color: #475569; text-align: right; width: 25%;">
+                                    ${Math.round(i.k)} kcal
+                                </td>
+                            </tr>`;
+                    });
+                    itemsHtml += '</table>';
+                    totalKcal += mk; totalP += mp; totalC += mc; totalF += mf;
+                    
+                    mealsHtml += `
+                        <div style="page-break-inside: avoid; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #f8fafc;">
+                            <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #cbd5e1; margin-bottom: 8px;">
+                                <tr>
+                                    <td style="padding-bottom: 6px;">
+                                        <b style="font-size: 13px; color: #0f172a;">${m.n}</b>
+                                        <div style="font-size: 9px; color: #64748b; margin-top: 3px; font-weight:bold;">PRO: ${Math.round(mp)}g | CAR: ${Math.round(mc)}g | GRA: ${Math.round(mf)}g</div>
+                                    </td>
+                                    <td style="padding-bottom: 6px; text-align: right; vertical-align: top; width: 30%;">
+                                        <b style="color: #3b82f6; font-size: 13px; padding-right: 20px;">${Math.round(mk)} kcal</b>
+                                    </td>
+                                </tr>
+                            </table>
+                            ${itemsHtml}
+                        </div>`;
+                }
+            });
+
+            // 2. Obtener Entrenamientos
+            let workoutsHtml = '';
+            let steps = 0, extraKcal = 0;
+            const entrenosSnap = await fire.getDoc(fire.doc(db, "entrenamientos_diarios", window.S.uid));
+            if (entrenosSnap.exists() && entrenosSnap.data()[dateStr]) {
+                const todayBlocks = entrenosSnap.data()[dateStr];
+                todayBlocks.forEach(b => {
+                    if (b.type === 'Pasos') {
+                        steps = b.steps; extraKcal += (b.kcal || 0);
+                    } else {
+                        extraKcal += (b.kcal || 0);
+                        let subDetails = '';
+                        if (b.type === 'Fuerza' && b.exercises && b.exercises.length > 0) {
+                            subDetails = `<table style="width: 100%; margin-top: 5px; font-size: 10px; color: #64748b; border-collapse: collapse; table-layout: fixed;"><tbody>`;
+                            for(let j=0; j < b.exercises.length; j+=2) {
+                                let e1 = b.exercises[j];
+                                let e2 = b.exercises[j+1];
+                                subDetails += `<tr>
+                                    <td style="width: 50%; padding: 2px 5px 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">&bull; ${e1.name} (${e1.sets} - ${e1.weight}kg)</td>
+                                    <td style="width: 50%; padding: 2px 0 2px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${e2 ? `&bull; ${e2.name} (${e2.sets} - ${e2.weight}kg)` : ''}</td>
+                                </tr>`;
+                            }
+                            subDetails += `</tbody></table>`;
+                        }
+                        workoutsHtml += `
+                            <div style="page-break-inside: avoid; border-bottom: 1px dashed #e2e8f0; padding: 8px 0;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="font-size: 11px; color: #334155; width: 75%;">
+                                            <b>${b.type}:</b> ${b.name} <span style="color:#94a3b8; font-size:9px;">(${b.start} - ${b.end})</span>
+                                        </td>
+                                        <td style="font-size: 11px; color: #ef4444; font-weight: 900; text-align: right; width: 25%; padding-right: 20px;">
+                                            🔥 ${b.kcal} kcal
+                                        </td>
+                                    </tr>
+                                </table>
+                                ${subDetails}
+                            </div>`;
+                    }
+                });
+            }
+
+            // 3. Obtener Medidas Corporales (4 COLUMNAS)
+            let compTable = ''; let tapeTable = '';
+            const medidasSnap = await fire.getDoc(fire.doc(db, "medidas_corporales", window.S.uid));
+
+            if (medidasSnap.exists() && medidasSnap.data().registros) {
+                let allRecords = medidasSnap.data().registros.sort((a, b) => new Date(b.date) - new Date(a.date));
+                const compMetrics = ['Peso', 'IMC', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'Músculo Esquelético (%)', 'Peso Corporal sin Grasa (kg)', 'Grasa Subcutánea (%)', 'Grasa Visceral', 'Agua Corporal (%)', 'Masa Ósea (kg)', 'Proteína (%)', 'Tasa Metabólica Basal (kcal)', 'Edad Metabólica'];
+                const tapeMetrics = ['Cuello', 'Hombro', 'Pecho / Pectoral', 'Brazo Izquierdo', 'Brazo Derecho', 'Cintura', 'Abdomen (Ombligo)', 'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'];
+
+                let resolvedData = {};
+                [...compMetrics, ...tapeMetrics].forEach(p => {
+                    for (let r of allRecords) {
+                        if (r.date <= dateStr && r[p] !== undefined && r[p] !== null && r[p] !== 0) {
+                            resolvedData[p] = { val: r[p], isToday: (r.date === dateStr), dateText: (r.date === dateStr) ? 'Hoy' : `${r.date.split('-').reverse().slice(0,2).join('/')}`, label: p.replace(' (%)','').replace(' (kg)','').replace(' (kcal)','') };
+                            break;
+                        }
+                    }
+                });
+
+                const buildRows4 = (metrics) => {
+                    let rows = '';
+                    for(let i=0; i<metrics.length; i+=4) {
+                        rows += '<tr>';
+                        for(let j=0; j<4; j++) {
+                            let m = metrics[i+j]; let d = m ? resolvedData[m] : null;
+                            if(!d) {
+                                rows += `<td style="width:25%; padding:4px; border:1px solid #e2e8f0; background:#ffffff;"></td>`;
+                            } else {
+                                let color = d.isToday ? '#10b981' : '#ef4444';
+                                rows += `<td style="width:25%; padding:6px; border:1px solid #e2e8f0; background:${d.isToday?'#ecfdf5':'#fef2f2'};">
+                                    <div style="font-size:7px; font-weight:bold; color:#475569; text-transform:uppercase; letter-spacing:0.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${d.label}">${d.label}</div>
+                                    <div style="font-size:13px; font-weight:900; color:${color}; line-height:1.2;">${d.val} <span style="float:right; font-size:10px; font-weight:900; color:#334155; margin-top:1px;">${d.dateText}</span></div>
+                                </td>`;
+                            }
+                        }
+                        rows += '</tr>';
+                    }
+                    return rows;
+                };
+
+                let compRows = buildRows4(compMetrics.filter(m => resolvedData[m]));
+                if(compRows) compTable = `<div style="margin-bottom:12px;"><table style="width:100%; border-collapse:collapse; font-family:sans-serif; table-layout: fixed;"><tbody>${compRows}</tbody></table></div>`;
+
+                let tapeRows = buildRows4(tapeMetrics.filter(m => resolvedData[m]));
+                if(tapeRows) tapeTable = `<div style="margin-bottom:12px;"><table style="width:100%; border-collapse:collapse; font-family:sans-serif; table-layout: fixed;"><tbody>${tapeRows}</tbody></table></div>`;
+            }
+
+            if (!mealsHtml) mealsHtml = '<p style="font-size:11px; color:#94a3b8; font-style:italic;">No hay registros de comidas.</p>';
+            if (!workoutsHtml && steps === 0) workoutsHtml = '<p style="font-size:11px; color:#94a3b8; font-style:italic;">No hay entrenamientos registrados.</p>';
+            if (!compTable) compTable = '<p style="font-size:11px; color:#94a3b8; font-style:italic;">No hay medidas corporales registradas hasta esta fecha.</p>';
+
+            const h2Style = "font-size:13px; color:#0f172a; margin:0 0 6px 0; text-transform:uppercase; border-bottom:1px solid #e2e8f0; padding-bottom:4px;";
+
+           // 4. HTML - AJUSTADO A 700px DE ANCHO PARA EVITAR CORTE
+const html = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; background: #ffffff; width: 700px; max-width: 700px; box-sizing: border-box; margin: 0 auto;">
+                    <div>
+                        <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #0f172a; margin-bottom: 12px;">
+                            <tr>
+                                <td style="padding-bottom: 8px; vertical-align: bottom;">
+                                    <h1 style="margin:0; color:#0f172a; font-size:22px; font-weight:900; letter-spacing:-0.5px;">Resumen Diario</h1>
+                                    <p style="margin:2px 0 0 0; font-size:13px; font-weight:bold; color:#3b82f6;">Nutr-IA Analytics System</p>
+                                </td>
+                                <td style="padding-bottom: 8px; text-align: right; vertical-align: bottom; width: 40%; padding-right: 10px;">
+                                    <h3 style="margin:0; color:#475569; font-weight:500; text-transform:capitalize; font-size:12px;">${niceDate}</h3>
+                                    <p style="margin:2px 0 0 0; font-size:10px; color:#94a3b8;">Usuario: <b>${window.S.u.name}</b></p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="margin-bottom: 12px;">
+                            <table style="width: 100%; border-collapse: collapse; border: none;">
+                                <tr>
+                                    <td style="width: 48%; padding: 0; border: none;">
+                                        <div style="background: #0f172a; color: white; padding: 10px; border-radius: 10px; text-align: center;">
+                                            <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; font-weight:bold; letter-spacing:1px; margin-bottom:2px;">Calorías Ingeridas</div>
+                                            <div style="font-size:26px; font-weight:900; margin:0; line-height:1;">${Math.round(totalKcal)} <span style="font-size:11px; font-weight:normal; color:#cbd5e1;">kcal</span></div>
+                                            <div style="font-size:10px; font-weight:bold; margin-top:3px;">
+                                                <span style="color:#c4b5fd;">P:${Math.round(totalP)}g</span> &nbsp;|&nbsp; <span style="color:#bae6fd;">C:${Math.round(totalC)}g</span> &nbsp;|&nbsp; <span style="color:#fed7aa;">G:${Math.round(totalF)}g</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="width: 4%; border: none;"></td>
+                                    <td style="width: 48%; padding: 0; border: none;">
+                                        <div style="background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; padding: 10px; border-radius: 10px; text-align: center;">
+                                            <div style="font-size:10px; color:#fda4af; text-transform:uppercase; font-weight:bold; letter-spacing:1px; margin-bottom:2px;">Calorías Quemadas</div>
+                                            <div style="font-size:26px; font-weight:900; margin:0; line-height:1;">${Math.round(extraKcal)} <span style="font-size:11px; font-weight:normal; color:#f43f5e;">kcal</span></div>
+                                            <div style="font-size:11px; font-weight:bold; color:#e11d48; margin-top:3px;">👣 Pasos Totales: ${steps}</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <h2 style="${h2Style}">1. Análisis de Composición Corporal</h2>
+                        ${compTable}
+
+                        ${tapeTable ? `<h2 style="${h2Style}">2. Perímetros (Cinta Métrica)</h2>${tapeTable}` : ''}
+
+                        <h2 style="${h2Style}">3. Entrenamientos</h2>
+                        <div style="background:#f8fafc; padding:8px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+                            ${workoutsHtml}
+                        </div>
+                    </div>
+
+                    <div style="page-break-before: always; height: 10px;"></div>
+
+                    <div>
+                        <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #0f172a; margin-bottom: 15px;">
+                            <tr>
+                                <td style="padding-bottom: 8px; vertical-align: bottom;">
+                                    <h2 style="margin:0; font-size:18px; font-weight:900; color:#0f172a;">4. Desglose de Alimentación</h2>
+                                </td>
+                                <td style="padding-bottom: 8px; text-align: right; vertical-align: bottom; width: 40%; padding-right: 10px;">
+                                    <span style="font-size:11px; color:#64748b; font-weight:bold;">${niceDate}</span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        ${mealsHtml}
+                        
+                        <div style="margin-top: 40px; text-align:center; font-size:9px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:12px; font-weight:bold;">
+                            Informe generado automáticamente por Nutr-IA System • ID:${window.S.uid.slice(0,5)} • ${new Date().toLocaleString('es-ES')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // METODO ESTABLE: Crear div, no inyectarlo en el DOM, renderizar y liberar memoria.
+            const opt = { 
+                margin:       10, 
+                filename:     `Informe_NutrIA_${window.S.u.name}_${dateStr}.pdf`, 
+                image:        { type: 'jpeg', quality: 0.98 }, 
+                html2canvas:  { scale: 2, useCORS: true }, 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }; 
+            
+            const element = document.createElement('div');
+            element.innerHTML = html;
+            await html2pdf().set(opt).from(element).save();
+
+        } catch(e) { 
+            alert("Error al generar PDF: " + e.message); 
+            console.error(e);
+        }
+        document.getElementById('loading-screen').style.display='none';
+    },
+
     pdfHistory: async () => { if(!confirm("Generar historial completo?")) return; document.getElementById('loading-screen').style.display='flex'; try { const q = await fire.getDocs(fire.query(fire.collection(db, `usuarios/${window.S.uid}/diario`), fire.orderBy('__name__'))); let html = `<div style="padding:20px; font-family:sans-serif;"><h1>Historial - ${window.S.u.name}</h1><table style="width:100%; border-collapse:collapse; font-size:12px;"><tr style="background:#0f172a; color:white;"><th style="padding:8px">Fecha</th><th>Kcal</th><th>P</th><th>C</th><th>G</th><th>Peso</th><th>Cintura</th></tr>`; q.forEach(doc => { const d = doc.data(); let tk=0, tp=0, tc=0, tf=0; MEALS.forEach(m => { if(d[m.k]) d[m.k].forEach(i => { tk+=i.k; tp+=i.p; tc+=i.c; tf+=i.f; }); }); if(tk>0) html += `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${doc.id}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tk)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tp)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tc)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${Math.round(tf)}</td><td style="text-align:center;border-bottom:1px solid #ddd">${d.weight||'-'}</td><td style="text-align:center;border-bottom:1px solid #ddd">${d.waist||'-'}</td></tr>`; }); html += `</table></div>`; const tempDiv = document.createElement('div'); tempDiv.innerHTML = html; document.body.appendChild(tempDiv); await html2pdf().set({ margin: 10, filename: `Historial_${window.S.u.name}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(tempDiv).save(); document.body.removeChild(tempDiv); } catch(e) { alert("Error: " + e.message); } document.getElementById('loading-screen').style.display='none'; },
     
     exportJSON: async () => { 
         document.getElementById('loading-screen').style.display='flex'; 
         try { 
-            // 1. Historial del Diario
+            // 1. Historial del Diario (Alimentación)
             const q = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/diario`)); 
             let history = {}; 
             q.forEach(doc => { history[doc.id] = doc.data(); }); 
             
-            // 2. Medidas y Análisis Corporal
+            // 2. Medidas y Análisis Corporal (Crudo)
             const medidasRef = fire.doc(db, "medidas_corporales", window.S.uid);
             const medidasSnap = await fire.getDoc(medidasRef);
             let medidasHistory = [];
-            if (medidasSnap.exists() && medidasSnap.data().registros) { medidasHistory = medidasSnap.data().registros; }
+            if (medidasSnap.exists() && medidasSnap.data().registros) { 
+                // Ordenamos de más reciente a más antiguo para facilitar la herencia
+                medidasHistory = medidasSnap.data().registros.sort((a, b) => new Date(b.date) - new Date(a.date)); 
+            }
             
             // 3. Entrenamientos y Pasos
             const entrenosRef = fire.doc(db, "entrenamientos_diarios", window.S.uid);
@@ -652,16 +913,69 @@ window.Logic = {
                 delete entrenosHistory.ultima_modificacion; 
             }
 
-            // 4. Paquete Global
+            // 4. Suplementos (Plan Base y Tomas Diarias)
+            const supBaseSnap = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/suplementos_base`));
+            let suplementosBase = [];
+            supBaseSnap.forEach(doc => { suplementosBase.push({ id: doc.id, ...doc.data() }); });
+
+            const supTomasSnap = await fire.getDocs(fire.collection(db, `usuarios/${window.S.uid}/diario_tomas`));
+            let tomasDiarias = {};
+            supTomasSnap.forEach(doc => { tomasDiarias[doc.id] = doc.data(); });
+
+            // 5. Motor de Resolución de Medidas (Actuales vs Heredadas)
+            // Extraemos TODAS las fechas únicas donde haya habido alguna actividad
+            let fechasConDatos = new Set([
+                ...Object.keys(history), 
+                ...Object.keys(entrenosHistory), 
+                ...Object.keys(tomasDiarias), 
+                ...medidasHistory.map(m => m.date)
+            ]);
+            
+            let medidasResueltasPorDia = {};
+            const metricasAnalisis = [
+                'Peso', 'IMC', 'Grasa Corporal (%)', 'Masa Muscular (kg)', 'Músculo Esquelético (%)', 
+                'Peso Corporal sin Grasa (kg)', 'Grasa Subcutánea (%)', 'Grasa Visceral', 'Agua Corporal (%)', 
+                'Masa Ósea (kg)', 'Proteína (%)', 'Tasa Metabólica Basal (kcal)', 'Edad Metabólica', 
+                'Cuello', 'Hombro', 'Pecho / Pectoral', 'Brazo Izquierdo', 'Brazo Derecho', 'Cintura', 
+                'Abdomen (Ombligo)', 'Cadera', 'Muslo Izquierdo', 'Muslo Derecho', 'Gemelo Izquierdo', 'Gemelo Derecho'
+            ];
+
+            // Para cada día, buscamos su medida correspondiente hacia atrás en el tiempo
+            fechasConDatos.forEach(fecha => {
+                let medidasDelDia = {};
+                metricasAnalisis.forEach(m => {
+                    for (let entry of medidasHistory) {
+                        // Al estar ordenado del revés, el primero que encontremos <= a la fecha es el correcto
+                        if (entry.date <= fecha && entry[m] !== undefined && entry[m] !== null) {
+                            medidasDelDia[m] = {
+                                valor: entry[m],
+                                es_medida_actual: (entry.date === fecha), // true = Azul, false = Roja (heredada)
+                                fecha_origen: entry.date
+                            };
+                            break;
+                        }
+                    }
+                });
+                if(Object.keys(medidasDelDia).length > 0) {
+                    medidasResueltasPorDia[fecha] = medidasDelDia;
+                }
+            });
+
+            // 6. Paquete Global Enriquecido
             const exportData = { 
                 user: window.S.u, 
-                history: history, 
-                medidas: medidasHistory,
-                entrenamientos: entrenosHistory
+                history: history,                     // Alimentación (Retrocompatibilidad)
+                medidas: medidasHistory,              // Array Crudo (Retrocompatibilidad)
+                entrenamientos: entrenosHistory,      // Todo el timeline deportivo
+                suplementos: {
+                    plan_base: suplementosBase,
+                    tomas_diarias: tomasDiarias
+                },
+                medidas_detalladas_por_dia: medidasResueltasPorDia // El nuevo mapa analítico completo
             };
             
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2)); 
-            const a = document.createElement('a'); a.href = dataStr; a.download = `Backup_Global_${window.S.u.name}.json`; 
+            const a = document.createElement('a'); a.href = dataStr; a.download = `Data_Analitica_${window.S.u.name}.json`; 
             document.body.appendChild(a); a.click(); a.remove(); 
         } catch(e) { alert("Error al exportar: " + e.message); } 
         document.getElementById('loading-screen').style.display='none'; 
