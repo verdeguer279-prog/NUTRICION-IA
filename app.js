@@ -169,9 +169,12 @@ window.UI = {
     
     populateInputs: (item) => {
         try {
-            const val = (id, v) => { const el = document.getElementById(id); if(el) el.value = (v === undefined || v === null) ? '' : v; };
-            val('qty-name-in', item.n); val('qty-in', item.q); val('unit-in', item.u || 'g');
-            val('calc-kcal', Math.round(item.k)); val('calc-p', Math.round(item.p)); val('calc-c', Math.round(item.c)); val('calc-f', Math.round(item.f));
+            const val = (id, v) => { 
+                const el = document.getElementById(id); 
+                if(el) el.value = (v === undefined || v === null || (typeof v === 'number' && isNaN(v))) ? '' : v; 
+            };
+            val('qty-name-in', item.n); val('qty-in', item.q || 1); val('unit-in', item.u || 'g');
+            val('calc-kcal', Math.round(item.k || 0)); val('calc-p', Math.round(item.p || 0)); val('calc-c', Math.round(item.c || 0)); val('calc-f', Math.round(item.f || 0));
             if(item.baseWeight && item.u !== 'g' && item.u !== 'ml') { document.getElementById('unit-config-section').style.display = 'block'; val('unit-weight', item.baseWeight); } 
             else { document.getElementById('unit-config-section').style.display = 'none'; }
         } catch(e) { console.error("UI Populate Error:", e); }
@@ -565,55 +568,37 @@ window.Logic = {
         if (item.isPlate) {
             if(confirm(`¿Añadir plato "${item.n}" completo?`)){ item.items.forEach(it => window.S.day[window.S.tm].push(it)); window.Logic.autoSave(); window.UI.closeAll(); }
         } else {
-window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };            window.UI.populateInputs(window.S.item); window.UI.view('v-qty');
+            window.S.item = { ...item }; window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };
+            window.UI.populateInputs(window.S.item); window.UI.view('v-qty');
         }
     },
 
     smartCalc: () => {
-        const u = document.getElementById('unit-in').value; 
-        const isStd = (u === 'g' || u === 'ml');
+        const u = document.getElementById('unit-in').value; const isStd = (u === 'g' || u === 'ml');
         const configSection = document.getElementById('unit-config-section');
-        
         if (configSection) {
             if (!isStd && configSection.style.display === 'none') document.getElementById('qty-in').value = 1;
             configSection.style.display = isStd ? 'none' : 'block';
         }
-        
         if (!window.S.ref) return;
-        
         const qty = parseFloat(document.getElementById('qty-in').value) || 0;
         const weight = parseFloat(document.getElementById('unit-weight').value) || 0;
         const baseQ = window.S.ref.q || 100;
         
-        // Comprobamos si el alimento original venía en gramos/ml o ya era una porción
-        const refIsStd = (window.S.ref.u === 'g' || window.S.ref.u === 'ml');
         let ratio = 0;
-        
-        if (isStd) {
-            // Si quieres calcular en gramos...
-            if (refIsStd) {
-                ratio = qty / baseQ; // De gramos a gramos
-            } else {
-                // De porciones a gramos
-                ratio = qty / (baseQ * (window.S.ref.baseWeight || weight || 1));
-            }
+        if (window.S.ref.u === 'g' || window.S.ref.u === 'ml') {
+            if (isStd) ratio = qty / baseQ;
+            else ratio = (qty * weight) / baseQ;
         } else {
-            // Si quieres calcular en porciones...
-            if (refIsStd) {
-                // De gramos a porciones (Calculamos el peso total y dividimos por la base en g)
-                ratio = (qty * weight) / baseQ; 
-            } else {
-                // De porciones a porciones (Ratio directo, sin multiplicar por el peso)
-                ratio = qty / baseQ; 
-            }
+            if (isStd) ratio = qty / (baseQ * (window.S.ref.baseWeight || 1));
+            else ratio = qty / baseQ;
         }
 
         if (ratio === 0 && qty !== 0) return;
-        
-        document.getElementById('calc-kcal').value = Math.round(window.S.ref.k * ratio);
-        document.getElementById('calc-p').value = Math.round(window.S.ref.p * ratio);
-        document.getElementById('calc-c').value = Math.round(window.S.ref.c * ratio);
-        document.getElementById('calc-f').value = Math.round(window.S.ref.f * ratio);
+        document.getElementById('calc-kcal').value = Math.round((window.S.ref.k || 0) * ratio);
+        document.getElementById('calc-p').value = Math.round((window.S.ref.p || 0) * ratio);
+        document.getElementById('calc-c').value = Math.round((window.S.ref.c || 0) * ratio);
+        document.getElementById('calc-f').value = Math.round((window.S.ref.f || 0) * ratio);
     },
     
     updateCalculations: () => { window.Logic.smartCalc(); },
@@ -630,7 +615,7 @@ window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: it
 
     saveCurrentToLib: async () => {
         const n = document.getElementById('qty-name-in').value; if(!n) return alert("Ponle nombre");
-        const q = parseFloat(document.getElementById('qty-in').value), u = document.getElementById('unit-in').value, k = parseFloat(document.getElementById('calc-kcal').value), p = parseFloat(document.getElementById('calc-p').value), c = parseFloat(document.getElementById('calc-c').value), f = parseFloat(document.getElementById('calc-f').value), bw = parseFloat(document.getElementById('unit-weight').value); 
+        const q = parseFloat(document.getElementById('qty-in').value), u = document.getElementById('unit-in').value, k = parseFloat(document.getElementById('calc-kcal').value)||0, p = parseFloat(document.getElementById('calc-p').value)||0, c = parseFloat(document.getElementById('calc-c').value)||0, f = parseFloat(document.getElementById('calc-f').value)||0, bw = parseFloat(document.getElementById('unit-weight').value)||null; 
         const newItem = { n, q, u, k, p, c, f, baseWeight: bw };
         const idx = window.S.lib.findIndex(x => x.n.toLowerCase() === n.toLowerCase());
         if(idx >= 0) { if(confirm("Ya existe en TUS favoritos. ¿Sobrescribir?")) window.S.lib[idx] = newItem; else return; } else { window.S.lib.push(newItem); }
@@ -639,7 +624,8 @@ window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: it
 
     editItem: (mk, i) => {
         window.S.edit = true; window.S.tm = mk; window.S.eIdx = i; const item = window.S.day[mk][i]; window.S.item = { ...item };
-window.S.ref = { q: item.q || 1, u: item.u, k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
+        window.S.ref = { q: item.q || 1, u: item.u, k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };
+        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
     delFromDb: async (i) => {
@@ -653,7 +639,8 @@ window.S.ref = { q: item.q || 1, u: item.u, k: item.k, p: item.p, c: item.c, f: 
 
     openEditLib: (i) => {
         const item = window.S.lastSearch[i]; window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
-window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
+        window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };
+        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
     saveLibEdit: async () => {
