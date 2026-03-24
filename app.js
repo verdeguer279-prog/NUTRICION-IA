@@ -125,17 +125,35 @@ window.DB = {
     },
 
     lib: async () => { 
-        try {
-            const sys = await fire.getDoc(fire.doc(db, 'sistema', 'biblioteca'));
-            window.S.sysLib = sys.exists() ? sys.data().items : [];
-        } catch(e) { window.S.sysLib = []; }
+    try {
+        // 1. Cargar catálogo global
+        const sys = await fire.getDoc(fire.doc(db, 'sistema', 'biblioteca'));
+        window.S.sysLib = sys.exists() ? sys.data().items : [];
+    } catch(e) { console.error("Error catálogo global:", e); }
 
-        if(!window.S.uid) { window.S.lib = []; return; }
-        try {
-            const priv = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`)); 
-            window.S.lib = priv.exists() ? priv.data().items : []; 
-        } catch(e) { window.S.lib = []; }
-    },
+    if(!window.S.uid) { 
+        console.warn("No hay UID definido aún para cargar favoritos");
+        window.S.lib = []; 
+        return; 
+    }
+
+    try {
+        // 2. Cargar TUS favoritos (Aseguramos la ruta correcta)
+        console.log("Intentando cargar favoritos para el usuario:", window.S.uid);
+        const priv = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`)); 
+        
+        if (priv.exists()) {
+            window.S.lib = priv.data().items || [];
+            console.log("✅ Favoritos cargados:", window.S.lib.length, "ítems encontrados");
+        } else {
+            console.log("⚠️ El documento de favoritos no existe en Firebase para este ID");
+            window.S.lib = [];
+        }
+    } catch(e) { 
+        console.error("❌ Error crítico cargando favoritos:", e);
+        window.S.lib = []; 
+    }
+},
     
     saveLib: async () => { if(!window.S.uid) return; await fire.setDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/biblioteca`), { items: window.S.lib }, { merge: true }); },
     getPlates: async () => { try { if(!window.S.uid) return; const s = await fire.getDoc(fire.doc(db, `usuarios/${window.S.uid}/mis_datos/platos`)); window.S.platos = s.exists() ? s.data().items : []; } catch (e) { window.S.platos = []; } },
