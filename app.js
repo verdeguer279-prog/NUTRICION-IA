@@ -547,26 +547,51 @@ window.Logic = {
         if (item.isPlate) {
             if(confirm(`¿Añadir plato "${item.n}" completo?`)){ item.items.forEach(it => window.S.day[window.S.tm].push(it)); window.Logic.autoSave(); window.UI.closeAll(); }
         } else {
-            window.S.item = { ...item }; window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f };
-            window.UI.populateInputs(window.S.item); window.UI.view('v-qty');
+window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };            window.UI.populateInputs(window.S.item); window.UI.view('v-qty');
         }
     },
 
     smartCalc: () => {
-        const u = document.getElementById('unit-in').value; const isStd = (u === 'g' || u === 'ml');
+        const u = document.getElementById('unit-in').value; 
+        const isStd = (u === 'g' || u === 'ml');
         const configSection = document.getElementById('unit-config-section');
+        
         if (configSection) {
             if (!isStd && configSection.style.display === 'none') document.getElementById('qty-in').value = 1;
             configSection.style.display = isStd ? 'none' : 'block';
         }
+        
         if (!window.S.ref) return;
+        
         const qty = parseFloat(document.getElementById('qty-in').value) || 0;
         const weight = parseFloat(document.getElementById('unit-weight').value) || 0;
         const baseQ = window.S.ref.q || 100;
-        let totalGrams = 0;
-        if (isStd) totalGrams = qty; else if (weight > 0) totalGrams = weight * qty;
-        if (totalGrams === 0 && qty !== 0) return;
-        const ratio = totalGrams / baseQ;
+        
+        // Comprobamos si el alimento original venía en gramos/ml o ya era una porción
+        const refIsStd = (window.S.ref.u === 'g' || window.S.ref.u === 'ml');
+        let ratio = 0;
+        
+        if (isStd) {
+            // Si quieres calcular en gramos...
+            if (refIsStd) {
+                ratio = qty / baseQ; // De gramos a gramos
+            } else {
+                // De porciones a gramos
+                ratio = qty / (baseQ * (window.S.ref.baseWeight || weight || 1));
+            }
+        } else {
+            // Si quieres calcular en porciones...
+            if (refIsStd) {
+                // De gramos a porciones (Calculamos el peso total y dividimos por la base en g)
+                ratio = (qty * weight) / baseQ; 
+            } else {
+                // De porciones a porciones (Ratio directo, sin multiplicar por el peso)
+                ratio = qty / baseQ; 
+            }
+        }
+
+        if (ratio === 0 && qty !== 0) return;
+        
         document.getElementById('calc-kcal').value = Math.round(window.S.ref.k * ratio);
         document.getElementById('calc-p').value = Math.round(window.S.ref.p * ratio);
         document.getElementById('calc-c').value = Math.round(window.S.ref.c * ratio);
@@ -596,8 +621,7 @@ window.Logic = {
 
     editItem: (mk, i) => {
         window.S.edit = true; window.S.tm = mk; window.S.eIdx = i; const item = window.S.day[mk][i]; window.S.item = { ...item };
-        window.S.ref = { q: item.q || 1, u: item.u, k: item.k, p: item.p, c: item.c, f: item.f };
-        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
+window.S.ref = { q: item.q || 1, u: item.u, k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
     delFromDb: async (i) => {
@@ -611,8 +635,7 @@ window.Logic = {
 
     openEditLib: (i) => {
         const item = window.S.lastSearch[i]; window.S.editLib = true; window.S.editLibItem = item; window.S.item = item;
-        window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f };
-        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
+window.S.ref = { q: item.q || 100, u: item.u || 'g', k: item.k, p: item.p, c: item.c, f: item.f, baseWeight: item.baseWeight };        window.UI.populateInputs(item); window.UI.view('v-qty'); window.UI.open('m-add');
     },
 
     saveLibEdit: async () => {
