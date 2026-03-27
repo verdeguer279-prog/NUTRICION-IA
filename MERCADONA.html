@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mercadona Pro V15 - Sincronización Total</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+
+    <style>
+        :root { --m-green: #007a33; --m-orange: #f29100; --bg: #f4f6f8; --card-bg: #ffffff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: #333; padding-bottom: 20px;}
+        
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: white; }
+        .btn-login { background: white; border: 1px solid #ddd; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        header { background: var(--m-green); color: white; padding: 15px 20px; position: sticky; top: 0; z-index: 90; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .tabs-mobile { display: flex; background: rgba(0,0,0,0.1); padding: 5px; margin: 10px 15px; border-radius: 10px; gap: 5px; overflow-x: auto;}
+        .tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; color: #666; transition: 0.2s; white-space: nowrap; }
+        .tab.active { background: white; color: var(--m-green); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .app-grid { padding: 15px; max-width: 1200px; margin: 0 auto; }
+        .panel { display: none; background: transparent; }
+        .panel.active { display: block; }
+        .panel-title { display: none; color: var(--m-green); margin-top: 0; border-bottom: 2px solid var(--m-green); padding-bottom: 10px; }
+
+        @media (min-width: 768px) {
+            .tabs-mobile { display: none; }
+            .app-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; }
+            .panel { display: block !important; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+            .panel-title { display: block; }
+        }
+
+        .card { background: var(--card-bg); border-radius: 10px; padding: 12px 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: transform 0.1s; border: 1px solid #eee; }
+        .card-info { flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-weight: 500; font-size: 16px; text-transform: capitalize; margin-bottom: 2px; }
+        .card-ticket-name { font-size: 11px; color: #999; text-transform: uppercase; }
+        .crossed { text-decoration: line-through; color: #aaa; }
+
+        .btn-add, .btn-edit { border: none; width: 36px; height: 36px; border-radius: 8px; font-size: 18px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .btn-add { background: var(--m-green); color: white; border-radius: 50%; }
+        .btn-add.in-list { background: #eaf5eb; color: var(--m-green); border: 2px solid var(--m-green); }
+        .btn-edit { background: transparent; color: #888; border: 1px solid #ddd; font-size: 14px; }
+        .btn-cart { background: #f0f0f0; border: 2px solid #ddd; width: 44px; height: 44px; border-radius: 12px; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; filter: grayscale(100%); opacity: 0.6; }
+        .btn-cart.active { background: #fff4e5; border-color: var(--m-orange); filter: grayscale(0%); opacity: 1; }
+
+        .btn-discreet-trash { background: transparent; border: none; cursor: pointer; font-size: 16px; opacity: 0.4; padding: 5px 10px; transition: 0.2s; }
+        .btn-discreet-trash:hover { opacity: 1; transform: scale(1.1); }
+
+        .controls-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .search-bar, .select-bar { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; background: #fff; }
+        .search-bar { flex: 2; }
+        .select-bar { flex: 1; color: #444; font-weight: bold; cursor: pointer; }
+        .primary { background: var(--m-green); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .hidden { display: none !important; }
+        .badge { font-size:14px; background:var(--m-green); color:white; padding:4px 10px; border-radius:20px; }
+
+        .upload-area { border: 2px dashed var(--m-green); background: #f9fdfa; padding: 25px 15px; text-align: center; border-radius: 12px; color: var(--m-green); font-weight: 600; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        .upload-area.dragover { background: #d0ead2; border-color: #005b26; }
+
+        /* Estilos del Historial Comprimido */
+        .history-card { background: white; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 15px; overflow: hidden; }
+        .history-header { background: #f4f6f8; padding: 15px; font-weight: bold; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .history-header:hover { background: #eef2f5; }
+        .history-body { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .history-col h4 { margin: 0 0 10px 0; font-size: 13px; color: #666; text-transform: uppercase; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
+        .history-item { font-size: 14px; padding: 4px 0; border-bottom: 1px solid #eee; text-transform: capitalize; }
+        .history-item:last-child { border-bottom: none; }
+        .history-empty { grid-column: 1 / -1; text-align: center; color: #999; font-style: italic; font-size: 14px; }
+        .btn-trash { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+
+        @media (max-width: 768px) {
+            .history-body { grid-template-columns: 1fr; }
+        }
+
+        /* Modal Edición */
+        #modal-edicion { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-input { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .action-row { display: flex; gap: 10px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h2>🔐 Autenticación Requerida</h2>
+        <button class="btn-login" onclick="login()">Entrar con Google</button>
+    </div>
+
+    <div id="modal-edicion" class="hidden">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:var(--m-green);">Editar Producto</h3>
+            <label style="font-size:12px; font-weight:bold; color:#d9534f;">Nombre Original (Del Ticket PDF - Bloqueado)</label>
+            <input type="text" id="edit-original" class="modal-input" disabled style="background:#eee; color:#666; font-family:monospace;">
+            
+            <label style="font-size:12px; font-weight:bold; color:#555;">Tu Descripción / Nombre Visible</label>
+            <input type="text" id="edit-visible" class="modal-input" placeholder="Ej. Yogur Griego de Fresa...">
+            
+            <div style="display:flex; gap:10px;">
+                <button class="primary" style="background:#dc3545; flex:0.3;" onclick="eliminarProducto()">🗑️</button>
+                <button class="primary" style="background:#888; margin-top:0; flex:0.7;" onclick="cerrarModal()">Cancelar</button>
+                <button class="primary" style="margin-top:0; flex:1;" onclick="guardarEdicion()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="hidden">
+        <header>
+            <strong style="font-size: 18px;">🛒 Lista Mercadona V15</strong>
+            <button onclick="logout()" style="background:none; border:none; color:white; opacity: 0.8; font-size:14px; cursor:pointer;">Salir</button>
+        </header>
+
+        <div class="tabs-mobile">
+            <div class="tab active" onclick="switchTab('catalogo')" id="tab-catalogo">📖 Catálogo</div>
+            <div class="tab" onclick="switchTab('lista')" id="tab-lista">🛒 Mi Lista</div>
+            <div class="tab" onclick="switchTab('historial')" id="tab-historial">📦 Historial</div>
+        </div>
+
+        <div class="app-grid">
+            
+            <div id="panel-catalogo" class="panel active">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <h3 class="panel-title" style="margin:0; border:none;">Catálogo</h3>
+                    <span class="badge"><span id="contador-productos">0</span> productos</span>
+                </div>
+                
+                <div class="controls-row">
+                    <input type="text" id="buscador" class="search-bar" placeholder="🔍 Buscar alimento..." onkeyup="filtrarCatalogo()">
+                    <select id="orden-catalogo" class="select-bar" onchange="renderizarCatalogo()">
+                        <option value="alfa">A - Z</option>
+                        <option value="consumos">⭐ Más Comprados</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="nuevo-producto" class="search-bar" style="margin:0;" placeholder="Nuevo producto...">
+                    <button class="primary" style="width: auto; margin:0;" onclick="crearProductoEnCatalogo()">Añadir</button>
+                </div>
+
+                <div id="items-catalogo"></div>
+            </div>
+
+            <div id="panel-lista" class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <div>
+                        <h3 class="panel-title" style="margin:0; border:none;">Compra Actual</h3>
+                        <div style="font-size: 12px; color: #888; margin-top: 2px;">Crea y edita tu lista</div>
+                    </div>
+                    <span class="badge" style="background:var(--m-orange);"><span id="contador-lista">0</span> en lista</span>
+                </div>
+                
+                <div id="no-list" class="hidden" style="text-align: center; padding: 40px 0;">
+                    <span style="font-size: 40px;">📝</span>
+                    <p style="color: #666;">No hay ninguna lista en curso</p>
+                    <button class="primary" onclick="crearNuevaLista()">Crear Lista Vacía</button>
+                    <button class="primary" style="background:#555; margin-top:10px;" onclick="cargarUltimoTicket(true)">🔄 Empezar con el último ticket</button>
+                </div>
+
+                <div id="active-list" class="hidden">
+                    <div style="background: #fff4e5; border-left: 4px solid var(--m-orange); padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; color: #555;">
+                        <span id="fecha-lista"></span>
+                    </div>
+                    
+                    <div class="action-row">
+                        <button class="primary" style="background:#f29100; margin:0;" onclick="cargarUltimoTicket(false)">🔄 Último Ticket</button>
+                        <button class="primary" style="background:#dc3545; margin:0;" onclick="vaciarListaActual()">🗑️ Vaciar Lista</button>
+                    </div>
+
+                    <div id="items-comprando"></div>
+
+                    <div class="upload-area" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                        📄 Toca o arrastra aquí tu ticket (PDF)<br>
+                        <span style="font-size: 12px; font-weight: normal; color: #666;">(Extraerá los productos al instante)</span>
+                        <input type="file" id="file-input" class="hidden" accept="application/pdf" onchange="procesarArchivo(this.files[0])">
+                    </div>
+                    <div id="ticket-status" style="text-align:center; margin-top:10px; font-size:14px; font-weight:bold; word-wrap: break-word;"></div>
+
+                    <button class="primary" style="background: #222; margin-top: 25px;" onclick="finalizarLista()">📦 ARCHIVAR LISTA TERMINADA</button>
+                </div>
+            </div>
+
+            <div id="panel-historial" class="panel">
+                <h3 class="panel-title">Historial de Compras</h3>
+                <div id="lista-historial"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD4hCPs_xAHkRroAhk3me5pGnF0Bf81AGw",
+            authDomain: "markarma279.firebaseapp.com",
+            databaseURL: "https://markarma279-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "markarma279",
+            messagingSenderId: "280620278315",
+            appId: "1:280620278315:web:42adbb1aacb3ac2239806e"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let idListaActual = null;
+        let datosListaActual = null;
+        let catalogoProductos = {};
+        let historialArchivado = {};
+        let productoEditandoId = null;
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                iniciarApp();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app').classList.add('hidden');
+            }
+        });
+
+        function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function logout() { auth.signOut(); }
+
+        function limpiarKey(texto) {
+            return texto.toLowerCase().trim().replace(/[.#$[\]]/g, '').replace(/\s+/g, '_');
+        }
+
+        function iniciarApp() {
+            db.ref('mercadona/listas').orderByChild('estado').equalTo('activa').on('value', snap => {
+                const listas = snap.val();
+                if (listas) {
+                    const keys = Object.keys(listas);
+                    idListaActual = keys[0]; 
+                    datosListaActual = listas[idListaActual];
+                    document.getElementById('no-list').classList.add('hidden');
+                    document.getElementById('active-list').classList.remove('hidden');
+                } else {
+                    idListaActual = null;
+                    datosListaActual = null;
+                    document.getElementById('no-list').classList.remove('hidden');
+                    document.getElementById('active-list').classList.add('hidden');
+                    document.getElementById('contador-lista').innerText = "0";
+                }
+                renderizarListaActual();
+                renderizarCatalogo(); 
+            });
+
+            // EL ARREGLO ESTÁ AQUÍ: Al cargar el catálogo, mandamos a repintar TODO.
+            db.ref('mercadona/catalogo').on('value', snap => {
+                catalogoProductos = snap.val() || {};
+                document.getElementById('contador-productos').innerText = Object.keys(catalogoProductos).length;
+                renderizarCatalogo();
+                renderizarListaActual(); // ← Esto arregla lo de "Desconocido" al pulsar F5
+                renderizarHistorial(historialArchivado); 
+            });
+
+            db.ref('mercadona/listas').orderByChild('estado').equalTo('archivada').on('value', snap => {
+                historialArchivado = snap.val() || {};
+                renderizarHistorial(historialArchivado);
+            });
+        }
+
+        function abrirEdicion(id) {
+            const p = catalogoProductos[id];
+            productoEditandoId = id;
+            const nombreInterno = p.nombreOriginal || p.nombre || "Desconocido";
+            const nombreVisual = p.nombrePersonalizado || p.nombre || "";
+            document.getElementById('edit-original').value = nombreInterno.toUpperCase();
+            document.getElementById('edit-visible').value = nombreVisual;
+            document.getElementById('modal-edicion').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-edicion').classList.add('hidden');
+            productoEditandoId = null;
+        }
+
+        function guardarEdicion() {
+            const nuevoVisible = document.getElementById('edit-visible').value.trim();
+            if (nuevoVisible && productoEditandoId) {
+                db.ref(`mercadona/catalogo/${productoEditandoId}`).update({
+                    nombrePersonalizado: nuevoVisible
+                }).then(() => cerrarModal());
+            }
+        }
+
+        function eliminarProducto() {
+            if (productoEditandoId && confirm("⚠️ ¿Seguro que quieres eliminar este producto definitivamente de tu catálogo?")) {
+                db.ref(`mercadona/catalogo/${productoEditandoId}`).remove().then(() => cerrarModal());
+            }
+        }
+
+        function vaciarCatalogoCompleto() {
+            const codigo = Math.floor(1000 + Math.random() * 9000);
+            const respuesta = prompt(`⚠️ ¡ALERTA DE SEGURIDAD!\nVas a borrar TODOS los productos de tu base de datos.\nSi estás seguro, escribe este número: ${codigo}`);
+            if (respuesta === codigo.toString()) {
+                db.ref('mercadona/catalogo').remove();
+                alert("El catálogo ha sido vaciado por completo.");
+            }
+        }
+
+        function toggleProductoEnLista(idProducto) {
+            const consumosActuales = catalogoProductos[idProducto].consumos || 0;
+            db.ref(`mercadona/catalogo/${idProducto}/consumos`).set(consumosActuales + 1);
+
+            if (!idListaActual) {
+                crearNuevaLista().then((nuevaKey) => {
+                    db.ref(`mercadona/listas/${nuevaKey}/productos/${idProducto}`).set({ comprado: false });
+                });
+                return;
+            }
+            const estaEnLista = datosListaActual.productos && datosListaActual.productos[idProducto];
+            if (estaEnLista) db.ref(`mercadona/listas/${idListaActual}/productos/${idProducto}`).remove();
+            else db.ref(`mercadona/listas/${idListaActual}/productos/${idProducto}`).set({ comprado: false });
+        }
+
+        function toggleCarrito(idProducto, estadoActual) {
+            if (!idListaActual) return;
+            const nuevoEstado = !estadoActual;
+            const updates = {};
+            if (nuevoEstado === true && (!datosListaActual.fechaCompra || datosListaActual.fechaCompra === '')) {
+                updates[`mercadona/listas/${idListaActual}/fechaCompra`] = new Date().toISOString().split('T')[0];
+            }
+            updates[`mercadona/listas/${idListaActual}/productos/${idProducto}/comprado`] = nuevoEstado;
+            db.ref().update(updates);
+        }
+
+        function eliminarDeListaActual(idProducto) {
+            if (!idListaActual) return;
+            db.ref(`mercadona/listas/${idListaActual}/productos/${idProducto}`).remove();
+        }
+
+        function renderizarCatalogo() {
+            const cont = document.getElementById('items-catalogo');
+            cont.innerHTML = '';
+            const busqueda = document.getElementById('buscador').value.toLowerCase();
+            const orden = document.getElementById('orden-catalogo').value;
+            
+            let keys = Object.keys(catalogoProductos);
+            if (orden === 'alfa') keys.sort((a,b) => (catalogoProductos[a].nombrePersonalizado || catalogoProductos[a].nombre || "").localeCompare(catalogoProductos[b].nombrePersonalizado || catalogoProductos[b].nombre || ""));
+            else keys.sort((a,b) => (catalogoProductos[b].consumos || 0) - (catalogoProductos[a].consumos || 0));
+
+            keys.forEach(key => {
+                const prod = catalogoProductos[key];
+                const nombreVisual = prod.nombrePersonalizado || prod.nombre || prod.nombreOriginal;
+                const nombreOculto = prod.nombreOriginal || prod.nombre || "";
+
+                if (nombreVisual.toLowerCase().includes(busqueda) || nombreOculto.toLowerCase().includes(busqueda)) {
+                    const estaEnLista = datosListaActual && datosListaActual.productos && datosListaActual.productos[key];
+                    const btnClass = estaEnLista ? 'btn-add in-list' : 'btn-add';
+                    const btnText = estaEnLista ? '📝' : '+';
+
+                    cont.innerHTML += `
+                        <div class="card">
+                            <div class="card-info" onclick="toggleProductoEnLista('${key}')" style="cursor:pointer;">
+                                <div class="card-title">${nombreVisual}</div>
+                                <div class="card-ticket-name">🎟️ TICKET: ${nombreOculto}</div>
+                            </div>
+                            <button class="btn-edit" onclick="abrirEdicion('${key}')">✏️</button>
+                            <button class="${btnClass}" onclick="toggleProductoEnLista('${key}')">${btnText}</button>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function renderizarListaActual() {
+            if (!datosListaActual) return;
+            const fCreada = datosListaActual.fechaCreacion;
+            const fCompra = datosListaActual.fechaCompra;
+            document.getElementById('fecha-lista').innerHTML = fCompra ? `📅 Compra real: <b>${fCompra}</b>` : `Borrador del: ${fCreada}`;
+            
+            const cont = document.getElementById('items-comprando');
+            cont.innerHTML = '';
+            
+            const prods = datosListaActual.productos || {};
+            document.getElementById('contador-lista').innerText = Object.keys(prods).length;
+
+            const keys = Object.keys(prods).sort((a,b) => prods[a].comprado - prods[b].comprado);
+            keys.forEach(key => {
+                const p = prods[key];
+                const catProd = catalogoProductos[key] || {};
+                // Si aún no ha cargado el catálogo, mostramos "Cargando..." en vez de "Desconocido" para no asustar
+                const nombreVisual = catProd.nombrePersonalizado || catProd.nombre || catProd.nombreOriginal || "Cargando nombre...";
+
+                cont.innerHTML += `
+                    <div class="card">
+                        <div class="card-info">
+                            <div class="card-title ${p.comprado ? 'crossed' : ''}">${nombreVisual}</div>
+                        </div>
+                        <button class="btn-discreet-trash" title="Quitar de la lista" onclick="eliminarDeListaActual('${key}')">🗑️</button>
+                        <button class="btn-cart ${p.comprado ? 'active' : ''}" onclick="toggleCarrito('${key}', ${p.comprado})">🛒</button>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleHistorial(idBody) {
+            document.getElementById(idBody).classList.toggle('hidden');
+        }
+
+        function borrarHistorial(key, event) {
+            event.stopPropagation();
+            if(confirm('⚠️ ¿Seguro que quieres borrar este historial de compra definitivamente?')) {
+                db.ref(`mercadona/listas/${key}`).remove();
+            }
+        }
+
+        function repetirCompraHistorial(keyLista) {
+            db.ref(`mercadona/listas/${keyLista}`).once('value', snap => {
+                const data = snap.val();
+                const prodsParaAñadir = data.ticket_extraido || Object.keys(data.productos || {});
+                if(!prodsParaAñadir || prodsParaAñadir.length === 0) return;
+
+                const promesa = idListaActual ? Promise.resolve(idListaActual) : crearNuevaLista();
+                
+                promesa.then(idDestino => {
+                    prodsParaAñadir.forEach(prod => {
+                        let safeKey = (typeof prod === 'string') ? limpiarKey(prod) : prod;
+                        if(catalogoProductos[safeKey]) {
+                            db.ref(`mercadona/listas/${idDestino}/productos/${safeKey}`).set({ comprado: false });
+                        }
+                    });
+                    alert("✅ Productos del historial añadidos a tu compra actual.");
+                    switchTab('lista');
+                });
+            });
+        }
+
+        function renderizarHistorial(listasArchivadas) {
+            const cont = document.getElementById('lista-historial');
+            cont.innerHTML = '';
+
+            const keys = Object.keys(listasArchivadas).sort((a,b) => {
+                const fechaA = listasArchivadas[a].fechaCompra || listasArchivadas[a].fechaCreacion;
+                const fechaB = listasArchivadas[b].fechaCompra || listasArchivadas[b].fechaCreacion;
+                return new Date(fechaB) - new Date(fechaA);
+            });
+
+            if(keys.length === 0) {
+                cont.innerHTML = "<p style='text-align:center; color:#999; margin-top:30px;'>Aún no tienes compras archivadas.</p>";
+                return;
+            }
+
+            keys.forEach(key => {
+                const lista = listasArchivadas[key];
+                const fechaMostrar = lista.fechaCompra || lista.fechaCreacion || "Fecha desconocida";
+                
+                const prodsPlaneados = lista.productos ? Object.keys(lista.productos).map(k => {
+                    const catProd = catalogoProductos[k] || {};
+                    const tachado = lista.productos[k].comprado ? 'text-decoration:line-through; color:#aaa;' : '';
+                    const nVis = catProd.nombrePersonalizado || catProd.nombreOriginal || "Cargando...";
+                    return `<div class="history-item" style="${tachado}">- ${nVis}</div>`;
+                }).join('') : '<div class="history-empty">Nada en la lista</div>';
+
+                const prodsReales = lista.ticket_extraido ? lista.ticket_extraido.map(nombre => {
+                    return `<div class="history-item">- ${nombre}</div>`;
+                }).join('') : '<div class="history-empty">No se adjuntó ticket</div>';
+
+                cont.innerHTML += `
+                    <div class="history-card">
+                        <div class="history-header" onclick="toggleHistorial('hist-${key}')">
+                            <span>📅 ${fechaMostrar}</span>
+                            <div>
+                                <span style="font-size:12px; color:#888; font-weight:normal; margin-right:10px;">Ver detalles ▼</span>
+                                <button class="btn-trash" onclick="borrarHistorial('${key}', event)">🗑️</button>
+                            </div>
+                        </div>
+                        
+                        <div id="hist-${key}" class="history-body hidden">
+                            <div class="history-col">
+                                <h4>Planeabas Comprar</h4>
+                                ${prodsPlaneados}
+                            </div>
+                            <div class="history-col">
+                                <h4>Compraste Realmente</h4>
+                                ${prodsReales}
+                            </div>
+                            <div style="grid-column: 1 / -1; margin-top:10px;">
+                                <button class="primary" style="background:var(--m-orange); margin:0;" onclick="repetirCompraHistorial('${key}')">🛒 Crear lista de compra sobre esta compra</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filtrarCatalogo() { renderizarCatalogo(); }
+        
+        function crearProductoEnCatalogo() {
+            const nombre = document.getElementById('nuevo-producto').value.trim();
+            if(nombre) { 
+                const safeKey = limpiarKey(nombre);
+                db.ref(`mercadona/catalogo/${safeKey}`).set({ 
+                    nombreOriginal: nombre.toLowerCase(), 
+                    nombrePersonalizado: nombre, 
+                    consumos: 1 
+                }); 
+                document.getElementById('nuevo-producto').value = ''; 
+            }
+        }
+
+        function crearNuevaLista() {
+            const date = new Date();
+            const nuevaKey = `${date.toISOString().split('T')[0]}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}`;
+            return db.ref(`mercadona/listas/${nuevaKey}`).set({ 
+                estado: 'activa', 
+                fechaCreacion: date.toISOString().split('T')[0], 
+                fechaCompra: '', 
+                productos: {} 
+            }).then(() => nuevaKey);
+        }
+
+        function vaciarListaActual() {
+            if (!idListaActual) return;
+            if (confirm("⚠️ ¿Seguro que quieres VACIAR toda la lista de la compra?")) {
+                db.ref(`mercadona/listas/${idListaActual}/productos`).remove();
+            }
+        }
+
+        function finalizarLista() { if(confirm("¿Archivar lista? Pasará a la pestaña de Historial.")) db.ref(`mercadona/listas/${idListaActual}/estado`).set('archivada'); }
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(`panel-${tab}`).classList.add('active');
+        }
+
+        function cargarUltimoTicket(crearListaSiNoExiste) {
+            const promesa = (crearListaSiNoExiste && !idListaActual) ? crearNuevaLista() : Promise.resolve(idListaActual);
+
+            db.ref('mercadona/ultimo_ticket/productos').once('value', snap => {
+                const prodsUltimo = snap.val();
+                if(!prodsUltimo || prodsUltimo.length === 0) {
+                    alert("No hay productos de un ticket reciente guardados.");
+                    return;
+                }
+
+                promesa.then(idDestino => {
+                    if (!idDestino) return;
+                    prodsUltimo.forEach(nombreProd => {
+                        const safeKey = limpiarKey(nombreProd);
+                        if (catalogoProductos[safeKey]) db.ref(`mercadona/listas/${idDestino}/productos/${safeKey}`).set({ comprado: false });
+                    });
+                });
+            });
+        }
+
+        // --- EXTRACCIÓN DEL PDF ---
+        const dropZone = document.getElementById('drop-zone');
+        const statusEl = document.getElementById('ticket-status');
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); procesarArchivo(e.dataTransfer.files[0]); });
+
+        async function procesarArchivo(file) {
+            if (!file || !idListaActual) return;
+            const safeFileName = limpiarKey(file.name);
+
+            const snap = await db.ref(`mercadona/tickets_subidos/${safeFileName}`).once('value');
+            if (snap.exists()) {
+                document.getElementById('file-input').value = ""; 
+                statusEl.innerText = "";
+                alert(`❌ OPERACIÓN CANCELADA: El ticket "${file.name}" ya ha sido procesado anteriormente.`);
+                return;
+            }
+
+            statusEl.style.color = "var(--m-orange)";
+            statusEl.innerText = "🔍 Analizando PDF y extrayendo productos...";
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                let textoCompleto = "";
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    textoCompleto += textContent.items.map(item => item.str).join(' ') + " ";
+                }
+                
+                const extraidos = await extraerYGuardarProductos(textoCompleto);
+
+                if(extraidos && extraidos.length > 0) {
+                    await db.ref(`mercadona/listas/${idListaActual}/ticket_extraido`).set(extraidos);
+                }
+                await db.ref(`mercadona/tickets_subidos/${safeFileName}`).set({ subidoEl: new Date().toISOString() });
+
+                statusEl.style.color = "var(--m-green)";
+                statusEl.innerText = "✅ ¡Ticket analizado y datos guardados al instante!";
+
+            } catch (err) { 
+                console.warn("Fallo lectura texto PDF", err);
+                statusEl.style.color = "red";
+                statusEl.innerText = "❌ Error: No se pudo leer el contenido del PDF.";
+            }
+        }
+
+        async function extraerYGuardarProductos(texto) {
+            const textoLimpio = texto.replace(/\s+/g, ' ');
+
+            const fechaMatch = textoLimpio.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/);
+            let fechaTicketIso = "1970-01-01"; 
+            if (fechaMatch) fechaTicketIso = `${fechaMatch[3]}-${fechaMatch[2]}-${fechaMatch[1]}`; 
+
+            const regex = /(\d+)\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9\s+%.\-+]{2,})\s+(\d+,\d{2})/g;
+            let match;
+            const extraidos = [];
+            const ignorar = ["MERCADONA", "TOTAL", "IMPORTE", "TARJETA", "FACTURA", "IVA", "BASE", "CUOTA"];
+
+            while ((match = regex.exec(textoLimpio)) !== null) {
+                const nombre = match[2].trim();
+                if (nombre.length > 3 && !ignorar.some(i => nombre.includes(i))) {
+                    extraidos.push(nombre.toLowerCase());
+                }
+            }
+
+            if (extraidos.length > 0) {
+                extraidos.forEach(limpio => {
+                    const safeKey = limpiarKey(limpio); 
+
+                    if (!catalogoProductos[safeKey]) {
+                        db.ref(`mercadona/catalogo/${safeKey}`).set({ 
+                            nombreOriginal: limpio, 
+                            nombrePersonalizado: limpio.charAt(0).toUpperCase() + limpio.slice(1), 
+                            consumos: 1 
+                        });
+                    } else {
+                        const consumosActuales = catalogoProductos[safeKey].consumos || 0;
+                        db.ref(`mercadona/catalogo/${safeKey}/consumos`).set(consumosActuales + 1);
+                    }
+                });
+
+                const snapUltimo = await db.ref('mercadona/ultimo_ticket').once('value');
+                const dataUltimo = snapUltimo.val();
+
+                if (!dataUltimo || !dataUltimo.fecha || fechaTicketIso >= dataUltimo.fecha) {
+                    await db.ref('mercadona/ultimo_ticket').set({ fecha: fechaTicketIso, productos: extraidos });
+                }
+            }
+            
+            return extraidos;
+        }
+    </script>
+</body>
+</html>
