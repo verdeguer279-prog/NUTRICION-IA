@@ -7,14 +7,15 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f8fafc;
+            --bg-color: #f1f5f9;
             --primary: #0f172a;
             --accent: #06b6d4;
             --pendiente: #ef4444;
             --tomado: #10b981;
+            --alerta: #ef4444;
             --text: #1e293b;
             --card-bg: #ffffff;
-            --card-border: #f1f5f9;
+            --card-border: #e2e8f0;
         }
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -22,154 +23,86 @@
             color: var(--text);
             max-width: 600px;
             margin: 0 auto;
-            padding: 15px;
-            padding-top: 10px;
+            padding: 10px;
         }
 
-        /* Botón Volver */
         .btn-volver {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #e2e8f0;
-            color: #475569;
-            text-decoration: none;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 8px; background: #e2e8f0; color: #475569;
+            text-decoration: none; padding: 10px 16px; border-radius: 12px; font-weight: 700;
+            font-size: 0.9rem; margin-bottom: 15px; transition: 0.2s;
         }
-        .btn-volver:hover { background: #cbd5e1; }
-
+        
         h1 { text-align: center; color: var(--primary); font-size: 1.6em; margin-bottom: 20px; font-weight: 800; }
         
         .date-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--primary);
-            color: white;
-            padding: 12px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center; background: var(--primary);
+            color: white; padding: 12px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
-        .date-header button {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            font-size: 1.2em;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .date-header button { background: rgba(255,255,255,0.1); border: none; color: white; font-size: 1.2em; cursor: pointer; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
         .date-info { text-align: center; flex: 1; }
         .date-text { display: block; font-size: 0.95rem; font-weight: 700; text-transform: capitalize; }
         .date-picker { background: transparent; border: none; color: white; font-size: 0.8rem; opacity: 0.8; cursor: pointer; }
 
-        .card {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            border: 1px solid var(--card-border);
-        }
-        .card-header { cursor: pointer; color: var(--primary); font-weight: 700; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;}
+        .card { background: var(--card-bg); padding: 15px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid var(--card-border); }
+        .card-header { cursor: pointer; color: var(--primary); font-weight: 700; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; user-select: none; }
         
-        #form-container { display: none; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;}
-        input[type="text"], input[type="number"], select {
-            width: 100%; padding: 12px; margin: 8px 0 15px;
-            border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;
-        }
+        #form-container { display: none; margin-top: 15px; border-top: 1px solid var(--card-border); padding-top: 15px;}
+        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; margin: 8px 0 15px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; font-family: inherit; font-size: 0.9rem; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { display: none; }
         .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .checkbox-label {
-            display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 10px; border-radius: 10px; font-size: 0.85rem; cursor: pointer;
-        }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 10px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; }
 
-        .btn-submit {
-            background-color: var(--primary); color: white; border: none;
-            padding: 14px; width: 100%; font-size: 1rem; border-radius: 12px; cursor: pointer; font-weight: 800;
-        }
+        .btn-submit { background-color: var(--primary); color: white; border: none; padding: 14px; width: 100%; font-size: 1rem; border-radius: 12px; cursor: pointer; font-weight: 800; }
 
-        /* Dashboard Items Mejorados (NUEVO ESTILO RECTIFICADO) */
+        /* Dashboard Items */
         .meal-section { margin-bottom: 25px; }
-        .meal-title {
-            font-size: 1.1rem; font-weight: 800; color: var(--primary); border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
-        }
+        .meal-title { font-size: 1.1rem; font-weight: 800; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         
         .sup-item {
-            display: flex;
-            align-items: center;
-            background: white;
-            border-radius: 14px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border: 1px solid var(--card-border);
-            /* Marco lateral de color recuperado */
-            border-left: 6px solid #cbd5e1; 
-            padding: 12px 15px;
-            transition: 0.3s ease;
+            display: flex; align-items: center; background: white; border-radius: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--card-border);
+            border-left: 6px solid #cbd5e1; padding: 12px 12px; transition: 0.3s ease;
         }
-
-        /* Colores dinámicos del marco lateral */
         .sup-item.tomado { border-left-color: var(--tomado); }
         .sup-item.pendiente { border-left-color: var(--pendiente); }
 
-        .sup-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .sup-info strong { display: block; font-size: 1rem; color: var(--primary); margin-bottom: 2px;}
-        .sup-info span { font-size: 0.85rem; color: #64748b; font-weight: 700; }
+        .sup-info { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding-right: 5px;}
+        .sup-info strong { display: block; font-size: 0.95rem; color: var(--primary); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .sup-info span { font-size: 0.8rem; color: #64748b; font-weight: 700; }
         
-        .sup-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .sup-actions-wrapper { display: flex; align-items: center; gap: 10px; }
+        .stock-mini { display: flex; flex-direction: column; align-items: flex-end; font-size: 0.7rem; color: #64748b; line-height: 1.3; text-align: right; min-width: 65px; }
+        .stock-mini strong { color: var(--primary); font-size: 0.75rem;}
+        .stock-mini.alerta strong, .stock-mini.alerta span { color: var(--alerta); font-weight: 800;}
+        
+        .sup-actions { display: flex; align-items: center; gap: 6px; }
         
         .btn-estado {
-            border: none;
-            min-width: 100px;
-            height: 36px;
-            border-radius: 18px; /* Vuelve la píldora redondeada */
-            font-weight: 800;
-            color: white;
-            cursor: pointer;
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 15px;
-            transition: 0.2s;
-            text-transform: uppercase;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: none; min-width: 85px; height: 36px; border-radius: 10px; font-weight: 800; color: white;
+            cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center;
+            padding: 0 10px; transition: 0.2s; text-transform: uppercase; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .btn-estado.pendiente { background-color: var(--pendiente); }
         .btn-estado.tomado { background-color: var(--tomado); }
         
         .btn-edit-tool {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            width: 36px; height: 36px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            border-radius: 50%;
+            background: #f8fafc; border: 1px solid #e2e8f0; width: 36px; height: 36px; cursor: pointer;
+            font-size: 0.8rem; display: flex; align-items: center; justify-content: center; color: #94a3b8; border-radius: 10px;
         }
+
+        /* --- NUEVA SECCIÓN: ESTADÍSTICAS Y COMPRAS --- */
+        #estadisticas-container { display: none; margin-top: 15px; border-top: 1px solid var(--card-border); padding-top: 15px; }
+        .est-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid; }
+        .est-item.urgente { background: #fee2e2; border-color: #ef4444; }
+        .est-item.aviso { background: #fef3c7; border-color: #f59e0b; }
+        .est-item.sano { background: #f1f5f9; border-color: #10b981; }
+        
+        .est-info strong { display: block; font-size: 0.9rem; color: var(--primary); }
+        .est-info span { font-size: 0.75rem; color: #475569; }
+        .est-estado { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; text-align: right; }
+        .urgente .est-estado { color: #ef4444; }
+        .aviso .est-estado { color: #f59e0b; }
+        .sano .est-estado { color: #10b981; }
     </style>
 </head>
 <body>
@@ -190,8 +123,16 @@
     </div>
 
     <div class="card">
+        <div class="card-header" onclick="toggleEstadisticas()">
+            <span>🛒 Previsión de Pedidos (Margen: 5 días)</span>
+            <span id="est-icon">▼</span>
+        </div>
+        <div id="estadisticas-container"></div>
+    </div>
+
+    <div class="card">
         <div class="card-header" onclick="toggleForm()">
-            <span>⚙️ Configurar mi plan de suplementación (Añadir/Editar)</span>
+            <span>⚙️ Añadir / Editar Suplemento</span>
             <span id="form-icon">▼</span>
         </div>
         
@@ -199,19 +140,31 @@
             <form id="sup-form">
                 <input type="hidden" id="edit-id">
                 <label style="font-size:0.85rem; font-weight:700">Nombre del Suplemento</label>
-                <input type="text" id="nombre" placeholder="Ej. Magnesio, Proteína..." required>
+                <input type="text" id="nombre" placeholder="Ej. Magnesio Citrato HSN" required>
 
-                <label style="font-size:0.85rem; font-weight:700">Cantidad y Unidad</label>
                 <div style="display:flex; gap:10px">
-                    <input type="number" id="cantidad-num" placeholder="30" step="0.1" required style="flex:1">
-                    <select id="cantidad-unidad" style="flex:1">
-                        <option value="mg">mg</option>
-                        <option value="g">g</option>
-                        <option value="cápsula(s)">cápsula(s)</option>
-                    </select>
+                    <div style="flex:1">
+                        <label style="font-size:0.85rem; font-weight:700">Dosis x Toma</label>
+                        <input type="number" id="cantidad-num" placeholder="1" step="1" required>
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:0.85rem; font-weight:700">Unidad</label>
+                        <input type="text" id="cantidad-unidad" placeholder="cáp/tab" required>
+                    </div>
                 </div>
 
-                <label style="font-size:0.85rem; font-weight:700">¿Cuándo tomarlo?</label>
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1">
+                        <label style="font-size:0.85rem; font-weight:700">Total Bote Nuevo</label>
+                        <input type="number" id="inv-total" placeholder="Ej. 120" step="1" required>
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:0.85rem; font-weight:700">Quedan ahora</label>
+                        <input type="number" id="inv-actual" placeholder="Stock real" step="1">
+                    </div>
+                </div>
+
+                <label style="font-size:0.85rem; font-weight:700; display:block">¿Cuándo tomarlo?</label>
                 <div class="checkbox-group">
                     <label class="checkbox-label"><input type="checkbox" value="Desayuno" class="momento-chk"> 🌅 Desayuno</label>
                     <label class="checkbox-label"><input type="checkbox" value="Post-Entreno" class="momento-chk"> 🏋️ Post</label>
@@ -220,7 +173,7 @@
                     <label class="checkbox-label"><input type="checkbox" value="Cena" class="momento-chk"> 🌙 Cena</label>
                 </div>
 
-                <button type="submit" class="btn-submit" id="btn-save">Guardar en el Plan</button>
+                <button type="submit" class="btn-submit" id="btn-save">Guardar Suplemento</button>
             </form>
         </div>
     </div>
@@ -289,26 +242,84 @@
 
         const cargarDatosDelDia = async () => {
             const dashboard = document.getElementById('dashboard-diario');
-            dashboard.innerHTML = '<p style="text-align:center; opacity:0.5; margin-top:20px;">Actualizando...</p>';
+            dashboard.innerHTML = '<p style="text-align:center; opacity:0.5; margin-top:20px;">Cargando...</p>';
             try {
-                if(planBase.length === 0) {
-                    const planSnapshot = await getDocs(basePlanRef);
-                    planBase = planSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                }
+                const planSnapshot = await getDocs(basePlanRef);
+                planBase = planSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
                 const fechaStr = formatearFechaString(fechaActual);
                 const docDia = await getDoc(doc(diarioRef, fechaStr));
                 tomasDelDia = docDia.exists() ? docDia.data() : {};
+                
+                renderizarEstadisticas();
                 renderizarDashboard();
             } catch (error) { console.error(error); }
+        };
+
+        // --- LÓGICA DE ESTADÍSTICAS Y PREVISIÓN ---
+        const renderizarEstadisticas = () => {
+            const container = document.getElementById('estadisticas-container');
+            container.innerHTML = '';
+            
+            if(planBase.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:0.85rem">No hay suplementos registrados.</p>';
+                return;
+            }
+
+            // Calculamos tiempos para cada producto
+            let previsiones = planBase.map(sup => {
+                const dosisDiariasPlaneadas = sup.momentos.length * sup.dosis;
+                const stock = sup.inv_actual || 0;
+                
+                // Si no tiene momentos asignados o dosis es 0, evitamos división por 0
+                const diasRestantes = dosisDiariasPlaneadas > 0 ? Math.floor(stock / dosisDiariasPlaneadas) : 999;
+                
+                // Restamos los 5 días de margen logístico para el envío
+                const diasParaPedir = diasRestantes - 5; 
+                
+                return { ...sup, diasRestantes, diasParaPedir };
+            });
+
+            // Ordenamos: los que hay que pedir antes, salen arriba
+            previsiones.sort((a, b) => a.diasParaPedir - b.diasParaPedir);
+
+            previsiones.forEach(item => {
+                // Filtro para ignorar productos sin programación (diasRestantes = 999)
+                if (item.diasRestantes === 999) return; 
+
+                let claseAlerta = "";
+                let textoEstado = "";
+
+                if (item.diasParaPedir <= 0) {
+                    claseAlerta = "urgente";
+                    textoEstado = "¡COMPRAR HOY!";
+                } else if (item.diasParaPedir <= 7) {
+                    claseAlerta = "aviso";
+                    textoEstado = `Pedir en ${item.diasParaPedir} días`;
+                } else {
+                    claseAlerta = "sano";
+                    textoEstado = `Pedir en ${item.diasParaPedir} días`;
+                }
+
+                container.innerHTML += `
+                    <div class="est-item ${claseAlerta}">
+                        <div class="est-info">
+                            <strong>${item.nombre}</strong>
+                            <span>Stock: ${item.inv_actual} ud (Fin en ${item.diasRestantes} días)</span>
+                        </div>
+                        <div class="est-estado">${textoEstado}</div>
+                    </div>
+                `;
+            });
         };
 
         const renderizarDashboard = () => {
             const dashboard = document.getElementById('dashboard-diario');
             dashboard.innerHTML = '';
-            if(planBase.length === 0) {
-                dashboard.innerHTML = '<div class="card" style="text-align:center; color:#94a3b8">Tu plan maestro está vacío.</div>';
-                return;
-            }
+            if(planBase.length === 0) { dashboard.innerHTML = '<div class="card" style="text-align:center;">Plan maestro vacío.</div>'; return; }
+
+            const hoy = new Date();
+            hoy.setHours(0,0,0,0);
 
             ordenComidas.forEach(comida => {
                 const suplementosComida = planBase.filter(sup => sup.momentos.includes(comida.id));
@@ -319,28 +330,46 @@
                         const estaTomado = tomasDelDia[claveToma] === true;
                         const estadoClase = estaTomado ? 'tomado' : 'pendiente';
 
-                        // ICONOS COLORIDOS DINÁMICOS
-                        let iconoHtml = '';
-                        if (sup.unidad && sup.unidad.includes('cápsula')) {
-                            // Cápsula en color coral/rosa vibrante
-                            iconoHtml = `<i class="fas fa-capsules" style="font-size: 1.6rem; color: #ff4d6d; margin-right: 15px; width: 30px; text-align: center;"></i>`;
-                        } else {
-                            // Cuchara/Cazo en color ámbar/oro
-                            iconoHtml = `<i class="fas fa-spoon" style="font-size: 1.6rem; color: #ffb703; margin-right: 15px; width: 30px; text-align: center;"></i>`;
+                        const dosisDiariasPlaneadas = sup.momentos.length * sup.dosis;
+                        const stockActual = sup.inv_actual || 0;
+                        let diasRestantes = dosisDiariasPlaneadas > 0 ? Math.floor(stockActual / dosisDiariasPlaneadas) : 0;
+                        
+                        let fechaFinStr = "N/D";
+                        let alertaClaseStock = "";
+                        
+                        if (stockActual > 0 && dosisDiariasPlaneadas > 0) {
+                            const fechaFin = new Date();
+                            fechaFin.setDate(hoy.getDate() + diasRestantes);
+                            fechaFinStr = fechaFin.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                            // Aviso en tarjeta si faltan 5 días o menos (coincide con el margen de pedido)
+                            if (diasRestantes <= 5) alertaClaseStock = "alerta";
+                        } else if (stockActual <= 0) {
+                            fechaFinStr = "Agotado";
+                            alertaClaseStock = "alerta";
                         }
+
+                        let iconoHtml = sup.unidad.toLowerCase().includes('cáp') || sup.unidad.toLowerCase().includes('tab') 
+                            ? `<i class="fas fa-capsules" style="font-size: 1.4rem; color: #ff4d6d; margin-right: 12px;"></i>` 
+                            : `<i class="fas fa-spoon" style="font-size: 1.4rem; color: #ffb703; margin-right: 12px;"></i>`;
 
                         seccionHTML += `
                             <div class="sup-item ${estadoClase}">
                                 ${iconoHtml}
                                 <div class="sup-info">
                                     <strong>${sup.nombre}</strong>
-                                    <span>${sup.cantidad} ${sup.unidad}</span>
+                                    <span>${sup.dosis} ${sup.unidad}</span>
                                 </div>
-                                <div class="sup-actions">
-                                    <button class="btn-estado ${estaTomado?'tomado':'pendiente'}" onclick="marcarToma('${sup.id}', '${comida.id}', ${estaTomado})">
-                                        ${estaTomado?'TOMADO':'PENDIENTE'}
-                                    </button>
-                                    <button class="btn-edit-tool" onclick="editarSuplemento('${sup.id}')"><i class="fas fa-edit"></i></button>
+                                <div class="sup-actions-wrapper">
+                                    <div class="stock-mini ${alertaClaseStock}">
+                                        <span>📦 <strong>${stockActual}</strong> ud</span>
+                                        <span>🗓️ Fin: ${fechaFinStr}</span>
+                                    </div>
+                                    <div class="sup-actions">
+                                        <button class="btn-estado ${estaTomado?'tomado':'pendiente'}" onclick="marcarToma('${sup.id}', '${comida.id}', ${estaTomado})">
+                                            ${estaTomado?'TOMADO':'PENDTE'}
+                                        </button>
+                                        <button class="btn-edit-tool" onclick="editarSuplemento('${sup.id}')"><i class="fas fa-edit"></i></button>
+                                    </div>
                                 </div>
                             </div>`;
                     });
@@ -353,26 +382,50 @@
         window.marcarToma = async (idSup, comida, estadoActual) => {
             const fechaStr = formatearFechaString(fechaActual);
             const claveToma = `${idSup}_${comida}`;
+            
             tomasDelDia[claveToma] = !estadoActual;
-            renderizarDashboard();
-            try { await setDoc(doc(diarioRef, fechaStr), { [claveToma]: !estadoActual }, { merge: true }); } catch (e) {}
+
+            const sup = planBase.find(s => s.id === idSup);
+            if(sup) {
+                const dosisATomar = sup.dosis;
+                let inventarioActual = sup.inv_actual || 0;
+                
+                if(!estadoActual) { inventarioActual -= dosisATomar; } 
+                else { inventarioActual += dosisATomar; }
+                
+                if(inventarioActual < 0) inventarioActual = 0;
+                sup.inv_actual = inventarioActual; 
+
+                renderizarEstadisticas();
+                renderizarDashboard(); 
+
+                try { 
+                    await setDoc(doc(diarioRef, fechaStr), { [claveToma]: !estadoActual }, { merge: true }); 
+                    await setDoc(doc(basePlanRef, idSup), { inv_actual: inventarioActual }, { merge: true });
+                } catch (e) { console.error(e); }
+            }
         };
 
         document.getElementById('sup-form').onsubmit = async (e) => {
             e.preventDefault();
+            const idEdit = document.getElementById('edit-id').value;
             const nombre = document.getElementById('nombre').value;
-            const cantidad = document.getElementById('cantidad-num').value;
+            const dosis = parseInt(document.getElementById('cantidad-num').value);
             const unidad = document.getElementById('cantidad-unidad').value;
+            const inv_total = parseInt(document.getElementById('inv-total').value);
+            
+            const invActualInput = document.getElementById('inv-actual').value;
+            const inv_actual = invActualInput === "" ? inv_total : parseInt(invActualInput);
+            
             const momentosMarcados = Array.from(document.querySelectorAll('.momento-chk:checked')).map(chk => chk.value);
-            if(momentosMarcados.length === 0) return alert("Selecciona una comida");
+            
+            if(momentosMarcados.length === 0) return alert("Selecciona al menos una comida");
+
+            const data = { nombre, dosis, unidad, momentos: momentosMarcados, inv_total, inv_actual };
 
             try {
-                if(!editMode) {
-                    await setDoc(doc(basePlanRef), { nombre, cantidad, unidad, momentos: momentosMarcados });
-                } else {
-                    const idEdit = document.getElementById('edit-id').value;
-                    await setDoc(doc(basePlanRef, idEdit), { nombre, cantidad, unidad, momentos: momentosMarcados }, { merge: true });
-                }
+                if(!editMode) await setDoc(doc(basePlanRef), data);
+                else await setDoc(doc(basePlanRef, idEdit), data, { merge: true });
                 location.reload();
             } catch (e) {}
         };
@@ -381,24 +434,34 @@
             const sup = planBase.find(s => s.id === id);
             document.getElementById('edit-id').value = sup.id;
             document.getElementById('nombre').value = sup.nombre;
-            document.getElementById('cantidad-num').value = sup.cantidad;
+            document.getElementById('cantidad-num').value = sup.dosis;
             document.getElementById('cantidad-unidad').value = sup.unidad;
+            document.getElementById('inv-total').value = sup.inv_total || 0;
+            document.getElementById('inv-actual').value = sup.inv_actual || 0;
             document.querySelectorAll('.momento-chk').forEach(chk => chk.checked = sup.momentos.includes(chk.value));
+            
             editMode = true;
             document.getElementById('btn-save').innerText = 'Actualizar Suplemento';
             if(document.getElementById('form-container').style.display !== 'block') toggleForm();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
             if(!document.getElementById('btn-del')) {
                 const b = document.createElement('button'); b.id='btn-del'; b.innerText='🗑️ Eliminar';
                 b.style.cssText='background:#fee2e2; color:#ef4444; border:none; padding:12px; width:100%; border-radius:12px; margin-top:10px; font-weight:800; cursor:pointer';
-                b.onclick = async () => { if(confirm("¿Borrar?")) { await deleteDoc(doc(basePlanRef, id)); location.reload(); }};
+                b.onclick = async () => { if(confirm("¿Borrar definitivamente?")) { await deleteDoc(doc(basePlanRef, id)); location.reload(); }};
                 document.getElementById('sup-form').appendChild(b);
             }
         };
 
         window.toggleForm = () => {
-            const f = document.getElementById('form-container');
-            const i = document.getElementById('form-icon');
+            const f = document.getElementById('form-container'); const i = document.getElementById('form-icon');
+            f.style.display = (f.style.display==='none'||f.style.display==='')?'block':'none';
+            i.innerText = f.style.display==='block'?'▲':'▼';
+        };
+        
+        // Función para el nuevo acordeón de estadísticas
+        window.toggleEstadisticas = () => {
+            const f = document.getElementById('estadisticas-container'); const i = document.getElementById('est-icon');
             f.style.display = (f.style.display==='none'||f.style.display==='')?'block':'none';
             i.innerText = f.style.display==='block'?'▲':'▼';
         };
