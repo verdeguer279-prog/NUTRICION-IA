@@ -10,6 +10,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="logo192.png">
 </head>
 <body>
 
@@ -332,5 +335,52 @@
     <div id="toast" style="position:fixed; bottom:-50px; left:50%; transform:translateX(-50%); background:#10b981; color:white; padding:12px 24px; border-radius:30px; font-weight:bold; font-size:0.9rem; z-index:10000; transition:all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow:0 10px 25px rgba(16, 185, 129, 0.4); opacity:0; pointer-events:none;"></div>
     
     <script type="module" src="app.js"></script>
+    <button id="btn-install" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 1rem; box-shadow: 0 10px 25px rgba(37,99,235,0.4); z-index: 10001; cursor: pointer;">
+        📲 Instalar Nutr-IA
+    </button>
+
+    <script>
+        // 1. Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado', reg))
+                    .catch(err => console.log('Error SW', err));
+            });
+        }
+
+        // 2. Lógica para mostrar el botón de instalación automático
+        let deferredPrompt;
+        const installBtn = document.getElementById('btn-install');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevenir que el navegador muestre su propio mini-aviso (opcional)
+            e.preventDefault();
+            // Guardar el evento para dispararlo luego
+            deferredPrompt = e;
+            // Mostrar nuestro propio botón flotante
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Ocultar nuestro botón
+                installBtn.style.display = 'none';
+                // Mostrar el prompt nativo de instalación
+                deferredPrompt.prompt();
+                // Esperar a que el usuario responda
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`El usuario ha ${outcome === 'accepted' ? 'aceptado' : 'rechazado'} la instalación`);
+                // Limpiar la variable
+                deferredPrompt = null;
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            // Si se instala correctamente, ocultar el botón por si acaso
+            installBtn.style.display = 'none';
+            console.log('¡PWA Instalada!');
+        });
+    </script>
 </body>
 </html>
