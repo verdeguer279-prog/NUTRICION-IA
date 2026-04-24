@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BioMonitor Pro - Cuerpos de Seguridad</title>
+    <title>Control Tensión Arterial</title>
+    
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./logo192.png">
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,26 +19,23 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 20px; }
         
-        /* Cabecera Profesional */
-        header { background: linear-gradient(135deg, var(--p), #0f172a); color: white; padding: 20px 15px; text-align: center; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin-bottom: 20px; }
+        /* Cabecera */
+        header { background: linear-gradient(135deg, #2563eb, #1e3a8a); color: white; padding: 20px 15px; text-align: center; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin-bottom: 20px; }
         header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
-        header p { margin: 5px 0 0 0; font-size: 0.85rem; opacity: 0.8; }
+        header p { margin: 5px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
 
         .container { max-width: 600px; margin: auto; padding: 0 15px; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         
-        /* Selector de Fecha */
         .date-nav { display: flex; justify-content: space-between; align-items: center; background: white; color: var(--p); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0; font-weight: bold; }
         .date-nav button { background: var(--p); color: white; border: none; border-radius: 6px; width: 35px; height: 35px; font-size: 1.2rem; cursor: pointer; }
         
-        /* Formularios */
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .grid-valida { display: grid; grid-template-columns: 1fr 1fr 1fr 1.2fr; gap: 8px; align-items: end; }
         label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: #64748b; }
         input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; }
         
-        /* Iconos y Botones */
         .activity-btn { display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
         .active { border-color: var(--p); background: #eff6ff; font-weight: bold; color: var(--p); }
         .tachado { text-decoration: line-through; opacity: 0.4; filter: grayscale(1); }
@@ -47,15 +48,11 @@
         .btn-outline { background: transparent; border: 1px solid var(--p); color: var(--p); padding: 8px; border-radius: 6px; flex: 1; }
         .btn-outline.active-tab { background: var(--p); color: white; }
 
-        /* Diagnóstico Visual (Semáforo) */
         .badge-status { padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; color: white; display: inline-block; margin-left: 10px; vertical-align: middle; }
 
-        /* Modal de Estadísticas */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.9); backdrop-filter: blur(5px); }
         .modal-content { background-color: var(--bg); margin: 0; padding: 20px; min-height: 100%; width: 100%; }
-        @media(min-width: 600px) {
-            .modal-content { margin: 5% auto; min-height: auto; width: 90%; max-width: 800px; border-radius: 15px; }
-        }
+        @media(min-width: 600px) { .modal-content { margin: 5% auto; min-height: auto; width: 90%; max-width: 800px; border-radius: 15px; } }
         .close-btn { color: #ef4444; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
         .stat-box { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .stat-box h4 { margin: 0 0 10px 0; color: var(--p); border-bottom: 1px solid #eee; padding-bottom: 5px; }
@@ -69,12 +66,11 @@
 <body>
 
 <header>
-    <h1>🚓 BioMonitor Pro</h1>
-    <p>Control Clínico y Análisis Táctico</p>
+    <h1>Control Tensión Arterial</h1>
+    <p>Registro Personal de Salud</p>
 </header>
 
 <div class="container">
-    
     <button class="btn btn-stats" onclick="openStatsModal()">📊 ABRIR PANEL DE ESTADÍSTICAS</button>
 
     <div class="date-nav">
@@ -93,7 +89,7 @@
                 <input type="time" id="medActualTime" value="13:15">
             </div>
             <div id="gymBtn" class="activity-btn" onclick="toggleActivity('gym')">🏋️ Gym</div>
-            <div id="workBtn" class="activity-btn" onclick="toggleActivity('work')">🚓 Trabajo</div>
+            <div id="workBtn" class="activity-btn" onclick="toggleActivity('work')">🩺 Trabajo</div>
         </div>
     </div>
 
@@ -157,7 +153,6 @@
 </div>
 
 <script>
-    // --- CONFIGURACIÓN FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyDmiDfja_EDSK31fjxBmMxumWvYryYurHU",
         authDomain: "nutricion-f6e70.firebaseapp.com",
@@ -231,7 +226,6 @@
         return { horas, mins, texto: `${horas}h ${mins}m` };
     }
 
-    // Clasificador de Tensión (Semáforo)
     function getStatusBadge(sys, dia) {
         if (sys >= 140 || dia >= 90) return `<span class="badge-status" style="background:#ef4444;">🔴 ALTA</span>`;
         if (sys >= 130 || dia >= 85) return `<span class="badge-status" style="background:#f59e0b;">🟡 LÍMITE</span>`;
@@ -280,7 +274,7 @@
                     <strong>💊 Pastilla:</strong> ${d.medTime} <span style="background:#fef08a; padding:2px 6px; border-radius:4px; font-size:0.8rem;">(hace ${diff.texto})</span><br>
                     <div style="margin-top:8px;">
                         ${d.gym ? '🏋️ Gym: SÍ' : '<span class="tachado">🏋️ Gym: NO</span>'} | 
-                        ${d.work ? '🚓 Trabajo: SÍ' : '<span class="tachado">🚓 Trabajo: NO</span>'}
+                        ${d.work ? '🩺 Trabajo: SÍ' : '<span class="tachado">🩺 Trabajo: NO</span>'}
                     </div>
                 </div>`;
         } else {
@@ -288,7 +282,6 @@
         }
     }
 
-    // --- EXPORTACIONES ---
     async function generatePDF() {
         if(globalData.length === 0) return alert("No hay datos para exportar.");
         const { jsPDF } = window.jspdf;
@@ -319,7 +312,6 @@
         anchor.remove();
     }
 
-    // --- ESTADÍSTICAS ---
     async function fetchAllData() {
         const snap = await db.collection("registros_tension").orderBy("date", "asc").get();
         globalData = [];
@@ -409,20 +401,14 @@
 
     window.onload = init;
 
-    // --- CÓDIGO NUEVO A PEGAR AQUÍ ---
+    // REGISTRO DEL SERVICE WORKER (Para instalar la app)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js', { scope: './' })
-                .then(reg => {
-                    console.log('App lista en la carpeta:', reg.scope);
-                })
-                .catch(err => {
-                    console.error('Error:', err);
-                });
+                .then(reg => console.log('App lista y vigilante activo'))
+                .catch(err => console.error('Fallo en el Service Worker', err));
         });
     }
-    // --- FIN DEL CÓDIGO NUEVO ---
-
 </script>
 </body>
 </html>
