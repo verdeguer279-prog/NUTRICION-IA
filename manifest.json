@@ -1,19 +1,20 @@
 {
-  "name": "Nutr-IA Analytics",
-  "short_name": "Nutr-IA",
-  "start_url": "./index.html",
+  "id": "/NUTRICION-IA/tension/",
+  "name": "Control Tensión Arterial",
+  "short_name": "Tensión",
+  "start_url": "/NUTRICION-IA/tension/index.html",
+  "scope": "/NUTRICION-IA/tension/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0f172a",
-  "description": "Sistema Inteligente de Nutrición",
+  "background_color": "#f1f5f9",
+  "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "logo192.png",
+      "src": "/NUTRICION-IA/tension/logo192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "logo512.png",
+      "src": "/NUTRICION-IA/tension/logo512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

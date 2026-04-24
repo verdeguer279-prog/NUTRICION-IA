@@ -1,24 +1,22 @@
-const CACHE_NAME = 'nutria-v1';
-const ASSETS = [
-    './',
-    './index.html',
-    './styles.css',
-    './app.js',
-    './manifest.json'
+const CACHE_NAME = 'tension-cache-v2';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
-// Instalación del Service Worker y cacheo de recursos
-self.addEventListener('install', (e) => {
-    e.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-    );
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
 });
 
-// Interceptar peticiones para servir desde caché si no hay red
-self.addEventListener('fetch', (e) => {
-    e.respondWith(
-        caches.match(e.request).then((response) => {
-            return response || fetch(e.request);
-        })
-    );
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });
